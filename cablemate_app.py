@@ -12,7 +12,10 @@ pf = st.number_input("Power Factor", value=0.85)
 length = st.number_input("Cable Length (m)", value=1200)
 fault = st.number_input("Fault Level (kA)", value=25)
 vd_limit = st.number_input("Voltage Drop Limit (%)", value=6)
-
+voltage = st.selectbox(
+    "Voltage Level (kV)",
+    [6.6, 11, 33]
+)
 # ------------------------
 # CableMate Functions
 # ------------------------
@@ -68,7 +71,7 @@ def cablemate_engine(inputs, catalog):
                 inputs["length"]
             )
 
-            vd_percent = (vd_volts / 11000) * 100
+            vd_percent = (vd_volts / (voltage * 1000)) * 100
 
             if vd_percent > inputs["vd_limit"]:
                 continue
@@ -157,12 +160,33 @@ if st.button("Calculate Cable Size"):
 
     solutions = cablemate_engine(inputs, catalog)
 
-    st.subheader("Cable Options")
+    solutions_sorted = sorted(
+        solutions,
+        key=lambda x: x["size"] * x["runs"]
+    )
 
-    for s in solutions[:5]:
+    if solutions_sorted:
 
-        st.write(
-        f"{s['runs']} × {s['size']} sqmm cable | "
-        f"Voltage Drop: {round(s['vd_percent'],2)} % | "
-        f"Capacity: {round(s['capacity'],1)} A"
+        best = solutions_sorted[0]
+
+        st.subheader("Recommended Cable")
+
+        st.success(
+            f"{best['runs']} × {best['size']} sqmm cable\n"
+            f"Voltage Drop: {round(best['vd_percent'],2)} %\n"
+            f"Capacity: {round(best['capacity'],1)} A"
         )
+
+        st.subheader("Other Available Options")
+
+        for s in solutions_sorted[1:5]:
+
+            st.info(
+                f"{s['runs']} × {s['size']} sqmm cable | "
+                f"Voltage Drop: {round(s['vd_percent'],2)} % | "
+                f"Capacity: {round(s['capacity'],1)} A"
+            )
+
+    else:
+
+        st.error("No suitable cable found for the given inputs.")
