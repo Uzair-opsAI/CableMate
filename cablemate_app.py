@@ -1,7 +1,7 @@
 import streamlit as st
 import math
 
-st.title("CableMate – MV Cable Sizing Tool")
+st.title("Uzair's CableMate – MV Cable Sizing Tool")
 
 # ------------------------
 # User Inputs
