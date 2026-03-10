@@ -1,5 +1,11 @@
 import streamlit as st
 import math
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+import tempfile
+import datetime
+
+st.set_page_config(page_title="CableMate", layout="wide")
 
 st.title("Uzair's CableMate – MV Cable Sizing Tool")
 
@@ -100,15 +106,17 @@ voltage = voltage_map[voltage_grade]
 # DERATING FACTORS
 # -----------------------------
 
+st.subheader("Derating Conditions")
+
 ambient_factor = st.slider(
-    "Ambient Temperature Derating",
+    "Ambient Temperature Factor",
     0.7,
     1.0,
     0.9
 )
 
 grouping_factor = st.slider(
-    "Cable Grouping Derating",
+    "Cable Grouping Factor",
     0.5,
     1.0,
     0.95
@@ -131,7 +139,8 @@ derating_factors = [
 ]
 
 # -----------------------------
-# CATALOG TABLES
+# CATALOGUE TABLES
+# (Replace values later with Oman catalogue data if needed)
 # -----------------------------
 
 catalog_tables = {
@@ -246,7 +255,6 @@ catalog_tables = {
 
 }
 
-# automatically choose catalog table
 catalog = catalog_tables.get(voltage_grade, catalog_tables["6/10 (12) kV"])
 
 # -----------------------------
@@ -288,6 +296,7 @@ def cablemate_engine(inputs, catalog):
 
         for size in catalog["sizes"]:
 
+            # Practical core size limits
             if core_type == "3 Core" and size > 240:
                 continue
 
@@ -332,6 +341,32 @@ def cablemate_engine(inputs, catalog):
 
 
 # -----------------------------
+# PDF REPORT GENERATION
+# -----------------------------
+
+def generate_pdf(data):
+
+    temp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    c = canvas.Canvas(temp.name, pagesize=A4)
+
+    y = 800
+
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, y, "CableMate Engineering Report")
+
+    y -= 40
+    c.setFont("Helvetica", 11)
+
+    for line in data:
+        c.drawString(50, y, line)
+        y -= 20
+
+    c.save()
+
+    return temp.name
+
+
+# -----------------------------
 # RUN CALCULATION
 # -----------------------------
 
@@ -350,10 +385,7 @@ if st.button("Calculate Cable Size"):
 
     solutions_sorted = sorted(
         solutions,
-        key=lambda x: (
-            x["size"] * x["runs"],
-            x["vd_percent"]
-        )
+        key=lambda x: (x["size"] * x["runs"], x["vd_percent"])
     )
 
     if solutions_sorted:
@@ -380,12 +412,28 @@ if st.button("Calculate Cable Size"):
 
         st.subheader("Design Summary")
 
-        st.write(f"Voltage Grade : {voltage_grade}")
-        st.write(f"Core Type : {core_type}")
-        st.write(f"Installation : {installation}")
-        st.write(f"Load Current : {load_current} A")
-        st.write(f"Cable Length : {length} m")
-        st.write(f"Fault Level : {fault} kA")
+        summary = [
+            f"Voltage Grade: {voltage_grade}",
+            f"Core Type: {core_type}",
+            f"Installation: {installation}",
+            f"Load Current: {load_current} A",
+            f"Cable Length: {length} m",
+            f"Fault Level: {fault} kA",
+            f"Voltage Drop Limit: {vd_limit} %",
+            f"Generated: {datetime.datetime.now()}"
+        ]
+
+        for line in summary:
+            st.write(line)
+
+        pdf_file = generate_pdf(summary)
+
+        with open(pdf_file, "rb") as file:
+            st.download_button(
+                "Download Engineering Report",
+                file,
+                "CableMate_Report.pdf"
+            )
 
     else:
 
