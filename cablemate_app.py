@@ -3,9 +3,9 @@ import math
 
 st.title("Uzair's CableMate – MV Cable Sizing Tool")
 
-# ------------------------
-# User Inputs
-# ------------------------
+# -----------------------------
+# INPUT SECTION
+# -----------------------------
 
 col1, col2 = st.columns(2)
 
@@ -14,7 +14,7 @@ with col1:
     load_current = st.number_input(
         "Load Current (A)",
         min_value=10,
-        max_value=1000,
+        max_value=2000,
         value=240
     )
 
@@ -27,19 +27,19 @@ with col1:
 
     length = st.number_input(
         "Cable Length (m)",
-        min_value=10,
-        max_value=10000,
+        min_value=1,
+        max_value=20000,
         value=1200
     )
-
-with col2:
 
     fault = st.number_input(
         "Fault Level (kA)",
         min_value=5,
-        max_value=50,
+        max_value=63,
         value=25
     )
+
+with col2:
 
     vd_limit = st.number_input(
         "Voltage Drop Limit (%)",
@@ -49,7 +49,7 @@ with col2:
     )
 
     voltage_grade = st.selectbox(
-        "Cable Voltage Grade (IEC 60502-2)",
+        "Voltage Grade (IEC 60502-2)",
         [
             "3.6/6 (7.2) kV",
             "6/10 (12) kV",
@@ -61,10 +61,31 @@ with col2:
 
     core_type = st.selectbox(
         "Cable Core Type",
-        ["3 Core", "Single Core"]
+        [
+            "1 Core",
+            "2 Core",
+            "3 Core",
+            "3.5 Core",
+            "4 Core",
+            "5 Core"
+        ]
     )
 
-# Convert voltage grade to nominal voltage
+    installation = st.selectbox(
+        "Installation Method",
+        [
+            "Direct Buried",
+            "Cable Tray",
+            "Air",
+            "Underground Duct",
+            "Tunnel"
+        ]
+    )
+
+# -----------------------------
+# VOLTAGE MAPPING
+# -----------------------------
+
 voltage_map = {
     "3.6/6 (7.2) kV": 6.6,
     "6/10 (12) kV": 11,
@@ -75,9 +96,43 @@ voltage_map = {
 
 voltage = voltage_map[voltage_grade]
 
-# ------------------------
-# CableMate Functions
-# ------------------------
+# -----------------------------
+# DERATING FACTORS
+# -----------------------------
+
+ambient_factor = st.slider(
+    "Ambient Temperature Derating",
+    0.7,
+    1.0,
+    0.9
+)
+
+grouping_factor = st.slider(
+    "Cable Grouping Derating",
+    0.5,
+    1.0,
+    0.95
+)
+
+installation_factor_map = {
+    "Direct Buried": 0.9,
+    "Cable Tray": 0.95,
+    "Air": 1.0,
+    "Underground Duct": 0.85,
+    "Tunnel": 0.9
+}
+
+installation_factor = installation_factor_map[installation]
+
+derating_factors = [
+    ambient_factor,
+    grouping_factor,
+    installation_factor
+]
+
+# -----------------------------
+# ENGINEERING FUNCTIONS
+# -----------------------------
 
 def derated_current(I_nom, derating):
 
@@ -102,7 +157,7 @@ def voltage_drop(I, R, X, pf, length):
 
 def sc_withstand(Isc_required, Isc_cable, runs):
 
-    # Slightly conservative current sharing
+    # Conservative current sharing
     return Isc_required <= Isc_cable * (runs ** 0.9)
 
 
@@ -119,7 +174,7 @@ def cablemate_engine(inputs, catalog):
             if core_type == "3 Core" and size > 240:
                 continue
 
-            if core_type == "Single Core" and size > 630:
+            if core_type == "1 Core" and size > 1000:
                 continue
 
             if size not in catalog["current"]:
@@ -133,15 +188,12 @@ def cablemate_engine(inputs, catalog):
             I_der = derated_current(I_nom, inputs["derating"])
             total_capacity = I_der * runs
 
-            # Current check
             if total_capacity < inputs["load_current"]:
                 continue
 
-            # Short circuit check
             if not sc_withstand(inputs["Isc_required"], Isc_cable, runs):
                 continue
 
-            # Voltage drop
             vd_volts = voltage_drop(
                 inputs["load_current"],
                 R / runs,
@@ -165,13 +217,13 @@ def cablemate_engine(inputs, catalog):
     return solutions
 
 
-# ------------------------
-# Cable Catalog (Example Data)
-# ------------------------
+# -----------------------------
+# OMAN CABLE CATALOG SAMPLE
+# -----------------------------
 
 catalog = {
 
-"sizes":[95,120,150,185,240,300,400,500,630],
+"sizes":[95,120,150,185,240,300,400,500,630,800,1000],
 
 "R":{
 95:0.193,
@@ -182,7 +234,9 @@ catalog = {
 300:0.060,
 400:0.047,
 500:0.036,
-630:0.029
+630:0.029,
+800:0.022,
+1000:0.018
 },
 
 "X":{
@@ -194,7 +248,9 @@ catalog = {
 300:0.090,
 400:0.087,
 500:0.084,
-630:0.082
+630:0.082,
+800:0.082,
+1000:0.080
 },
 
 "current":{
@@ -206,7 +262,9 @@ catalog = {
 300:360,
 400:455,
 500:520,
-630:590
+630:590,
+800:650,
+1000:720
 },
 
 "sc":{
@@ -218,14 +276,16 @@ catalog = {
 300:20.2,
 400:22,
 500:28,
-630:32
+630:32,
+800:36,
+1000:40
 }
 
 }
 
-# ------------------------
-# Run Calculation
-# ------------------------
+# -----------------------------
+# RUN CALCULATION
+# -----------------------------
 
 if st.button("Calculate Cable Size"):
 
@@ -235,7 +295,7 @@ if st.button("Calculate Cable Size"):
         "length": length,
         "Isc_required": fault,
         "vd_limit": vd_limit,
-        "derating": [0.92,0.95]
+        "derating": derating_factors
     }
 
     solutions = cablemate_engine(inputs, catalog)
@@ -260,7 +320,7 @@ if st.button("Calculate Cable Size"):
             f"Capacity: {round(best['capacity'],1)} A"
         )
 
-        st.subheader("Other Available Options")
+        st.subheader("Alternative Options")
 
         for s in solutions_sorted[1:5]:
 
@@ -269,6 +329,15 @@ if st.button("Calculate Cable Size"):
                 f"Voltage Drop: {round(s['vd_percent'],2)} % | "
                 f"Capacity: {round(s['capacity'],1)} A"
             )
+
+        st.subheader("Design Summary")
+
+        st.write(f"Voltage Grade : {voltage_grade}")
+        st.write(f"Core Type : {core_type}")
+        st.write(f"Installation : {installation}")
+        st.write(f"Load Current : {load_current} A")
+        st.write(f"Cable Length : {length} m")
+        st.write(f"Fault Level : {fault} kA")
 
     else:
 
