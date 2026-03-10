@@ -1,17 +1,17 @@
 import streamlit as st
 import math
+import datetime
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import tempfile
-import datetime
 
 st.set_page_config(page_title="CableMate", layout="wide")
 
 st.title("Uzair's CableMate – MV Cable Sizing Tool")
 
-# -----------------------------
+# ---------------------------------------------------
 # INPUT SECTION
-# -----------------------------
+# ---------------------------------------------------
 
 col1, col2 = st.columns(2)
 
@@ -57,10 +57,7 @@ with col2:
     voltage_grade = st.selectbox(
         "Voltage Grade (IEC 60502-2)",
         [
-            "3.6/6 (7.2) kV",
             "6/10 (12) kV",
-            "8.7/15 (17.5) kV",
-            "12/20 (24) kV",
             "18/30 (36) kV"
         ]
     )
@@ -88,46 +85,33 @@ with col2:
         ]
     )
 
-# -----------------------------
-# VOLTAGE MAPPING
-# -----------------------------
+# ---------------------------------------------------
+# VOLTAGE MAP
+# ---------------------------------------------------
 
 voltage_map = {
-    "3.6/6 (7.2) kV": 6.6,
     "6/10 (12) kV": 11,
-    "8.7/15 (17.5) kV": 15,
-    "12/20 (24) kV": 22,
     "18/30 (36) kV": 33
 }
 
 voltage = voltage_map[voltage_grade]
 
-# -----------------------------
+# ---------------------------------------------------
 # DERATING FACTORS
-# -----------------------------
+# ---------------------------------------------------
 
 st.subheader("Derating Conditions")
 
-ambient_factor = st.slider(
-    "Ambient Temperature Factor",
-    0.7,
-    1.0,
-    0.9
-)
+ambient_factor = st.slider("Ambient Temperature Factor",0.7,1.0,0.9)
 
-grouping_factor = st.slider(
-    "Cable Grouping Factor",
-    0.5,
-    1.0,
-    0.95
-)
+grouping_factor = st.slider("Cable Grouping Factor",0.5,1.0,0.95)
 
 installation_factor_map = {
-    "Direct Buried": 0.9,
-    "Cable Tray": 0.95,
-    "Air": 1.0,
-    "Underground Duct": 0.85,
-    "Tunnel": 0.9
+    "Direct Buried":0.9,
+    "Cable Tray":0.95,
+    "Air":1.0,
+    "Underground Duct":0.85,
+    "Tunnel":0.9
 }
 
 installation_factor = installation_factor_map[installation]
@@ -138,10 +122,9 @@ derating_factors = [
     installation_factor
 ]
 
-# -----------------------------
-# CATALOGUE TABLES
-# (Replace values later with Oman catalogue data if needed)
-# -----------------------------
+# ---------------------------------------------------
+# CATALOG DATA (SIMPLIFIED OMAN TABLE)
+# ---------------------------------------------------
 
 catalog_tables = {
 
@@ -255,11 +238,11 @@ catalog_tables = {
 
 }
 
-catalog = catalog_tables.get(voltage_grade, catalog_tables["6/10 (12) kV"])
+catalog = catalog_tables[voltage_grade]
 
-# -----------------------------
-# ENGINEERING FUNCTIONS
-# -----------------------------
+# ---------------------------------------------------
+# ENGINE FUNCTIONS
+# ---------------------------------------------------
 
 def derated_current(I_nom, derating):
 
@@ -270,127 +253,115 @@ def derated_current(I_nom, derating):
     return I
 
 
-def voltage_drop(I, R, X, pf, length):
+def voltage_drop(I,R,X,pf,length):
 
     angle = math.acos(pf)
 
-    vd = math.sqrt(3) * I * (
-        R * math.cos(angle) +
-        X * math.sin(angle)
-    ) * length / 1000
+    vd = math.sqrt(3)*I*(R*math.cos(angle)+X*math.sin(angle))*length/1000
 
     return vd
 
 
-def sc_withstand(Isc_required, Isc_cable, runs):
+def sc_withstand(Isc_required,Isc_cable,runs):
 
-    return Isc_required <= Isc_cable * (runs ** 0.9)
+    return Isc_required <= Isc_cable*(runs**0.9)
 
 
-def cablemate_engine(inputs, catalog):
+def cablemate_engine(inputs,catalog):
 
     max_runs = 4
-    solutions = []
+    solutions=[]
 
-    for runs in range(1, max_runs + 1):
+    for runs in range(1,max_runs+1):
 
         for size in catalog["sizes"]:
 
-            # Practical core size limits
-            if core_type == "3 Core" and size > 240:
+            if core_type=="3 Core" and size>240:
                 continue
 
-            if core_type == "1 Core" and size > 1000:
+            I_nom=catalog["current"][size]
+            R=catalog["R"][size]
+            X=catalog["X"][size]
+            Isc=catalog["sc"][size]
+
+            I_der=derated_current(I_nom,inputs["derating"])
+            capacity=I_der*runs
+
+            if capacity < inputs["load_current"]:
                 continue
 
-            I_nom = catalog["current"][size]
-            R = catalog["R"][size]
-            X = catalog["X"][size]
-            Isc_cable = catalog["sc"][size]
-
-            I_der = derated_current(I_nom, inputs["derating"])
-            total_capacity = I_der * runs
-
-            if total_capacity < inputs["load_current"]:
-                continue
-
-            if not sc_withstand(inputs["Isc_required"], Isc_cable, runs):
+            if not sc_withstand(inputs["Isc_required"],Isc,runs):
                 continue
 
             vd_volts = voltage_drop(
                 inputs["load_current"],
-                R / runs,
-                X / runs,
+                R/runs,
+                X/runs,
                 inputs["pf"],
                 inputs["length"]
             )
 
-            vd_percent = (vd_volts / (voltage * 1000)) * 100
+            vd_percent=(vd_volts/(voltage*1000))*100
 
             if vd_percent > inputs["vd_limit"]:
                 continue
 
             solutions.append({
-                "size": size,
-                "runs": runs,
-                "vd_percent": vd_percent,
-                "capacity": total_capacity
+                "size":size,
+                "runs":runs,
+                "vd_percent":vd_percent,
+                "capacity":capacity
             })
 
     return solutions
 
-
-# -----------------------------
-# PDF REPORT GENERATION
-# -----------------------------
+# ---------------------------------------------------
+# PDF REPORT
+# ---------------------------------------------------
 
 def generate_pdf(data):
 
-    temp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    c = canvas.Canvas(temp.name, pagesize=A4)
+    tmp=tempfile.NamedTemporaryFile(delete=False,suffix=".pdf")
 
-    y = 800
+    c=canvas.Canvas(tmp.name,pagesize=A4)
 
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(50, y, "CableMate Engineering Report")
-
-    y -= 40
-    c.setFont("Helvetica", 11)
+    y=800
 
     for line in data:
-        c.drawString(50, y, line)
-        y -= 20
+
+        c.drawString(50,y,line)
+
+        y-=20
 
     c.save()
 
-    return temp.name
+    return tmp.name
 
-
-# -----------------------------
+# ---------------------------------------------------
 # RUN CALCULATION
-# -----------------------------
+# ---------------------------------------------------
 
 if st.button("Calculate Cable Size"):
 
-    inputs = {
-        "load_current": load_current,
-        "pf": pf,
-        "length": length,
-        "Isc_required": fault,
-        "vd_limit": vd_limit,
-        "derating": derating_factors
+    inputs={
+        "load_current":load_current,
+        "pf":pf,
+        "length":length,
+        "Isc_required":fault,
+        "vd_limit":vd_limit,
+        "derating":derating_factors
     }
 
-    solutions = cablemate_engine(inputs, catalog)
+    solutions=cablemate_engine(inputs,catalog)
 
-    solutions_sorted = sorted(
+    solutions_sorted=sorted(
         solutions,
-        key=lambda x: (x["size"] * x["runs"], x["vd_percent"])
+        key=lambda x:(x["size"]*x["runs"],x["vd_percent"])
     )
 
     if solutions_sorted:
 
-        best = solutions_sorted[0]
+        best=solutions_sorted[0]
 
         st.subheader("Recommended Cable")
 
@@ -410,28 +381,23 @@ if st.button("Calculate Cable Size"):
                 f"Capacity: {round(s['capacity'],1)} A"
             )
 
-        st.subheader("Design Summary")
-
-        summary = [
+        summary=[
             f"Voltage Grade: {voltage_grade}",
             f"Core Type: {core_type}",
             f"Installation: {installation}",
             f"Load Current: {load_current} A",
             f"Cable Length: {length} m",
             f"Fault Level: {fault} kA",
-            f"Voltage Drop Limit: {vd_limit} %",
             f"Generated: {datetime.datetime.now()}"
         ]
 
-        for line in summary:
-            st.write(line)
+        pdf=generate_pdf(summary)
 
-        pdf_file = generate_pdf(summary)
+        with open(pdf,"rb") as f:
 
-        with open(pdf_file, "rb") as file:
             st.download_button(
                 "Download Engineering Report",
-                file,
+                f,
                 "CableMate_Report.pdf"
             )
 
