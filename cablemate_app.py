@@ -1,17 +1,67 @@
 import streamlit as st
 import math
-import datetime
+import pandas as pd
+import matplotlib.pyplot as plt
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import tempfile
+import datetime
 
-st.set_page_config(page_title="CableMate", layout="wide")
+# --------------------------------------------------
+# APP CONFIGURATION
+# --------------------------------------------------
 
-st.title("Uzair's CableMate – MV Cable Sizing Tool")
+st.set_page_config(
+    page_title="Uzair's CableMate",
+    page_icon="logo.png",
+    layout="wide"
+)
 
-# ---------------------------------------------------
-# INPUT SECTION
-# ---------------------------------------------------
+# --------------------------------------------------
+# HEADER
+# --------------------------------------------------
+
+col_logo, col_title = st.columns([1,6])
+
+with col_logo:
+    st.image("logo.png", width=110)
+
+with col_title:
+    st.title("Uzair's CableMate – MV Cable Sizing Tool")
+    st.caption("Engineering Cable Sizing Utility | IEC 60502")
+
+st.markdown("---")
+
+# --------------------------------------------------
+# SIDEBAR
+# --------------------------------------------------
+
+st.sidebar.image("logo.png", width=150)
+st.sidebar.title("CableMate")
+st.sidebar.write("MV Cable Engineering Utility")
+st.sidebar.markdown("---")
+
+# --------------------------------------------------
+# PROJECT INFORMATION
+# --------------------------------------------------
+
+st.header("Project Information")
+
+colA, colB = st.columns(2)
+
+with colA:
+    project = st.text_input("Project Name")
+    engineer = st.text_input("Engineer")
+
+with colB:
+    location = st.text_input("Location")
+    date = datetime.date.today()
+
+# --------------------------------------------------
+# ELECTRICAL PARAMETERS
+# --------------------------------------------------
+
+st.header("Electrical Parameters")
 
 col1, col2 = st.columns(2)
 
@@ -38,6 +88,8 @@ with col1:
         value=1200
     )
 
+with col2:
+
     fault = st.number_input(
         "Fault Level (kA)",
         min_value=5,
@@ -45,90 +97,111 @@ with col1:
         value=25
     )
 
-with col2:
-
-    vd_limit = st.number_input(
-        "Voltage Drop Limit (%)",
-        min_value=1,
-        max_value=10,
-        value=6
-    )
-
     voltage_grade = st.selectbox(
-        "Voltage Grade (IEC 60502-2)",
-        [
-            "6/10 (12) kV",
-            "18/30 (36) kV"
-        ]
+        "Voltage Grade",
+        ["6/10 (12) kV","18/30 (36) kV"]
     )
 
     core_type = st.selectbox(
         "Cable Core Type",
-        [
-            "1 Core",
-            "2 Core",
-            "3 Core",
-            "3.5 Core",
-            "4 Core",
-            "5 Core"
-        ]
+        ["1 Core","2 Core","2.5 Core","3 Core","3.5 Core","4 Core","5 Core"]
     )
 
-    installation = st.selectbox(
-        "Installation Method",
-        [
-            "Direct Buried",
-            "Cable Tray",
-            "Air",
-            "Underground Duct",
-            "Tunnel"
-        ]
-    )
+# --------------------------------------------------
+# INSTALLATION CONDITIONS
+# --------------------------------------------------
 
-# ---------------------------------------------------
+st.header("Installation Conditions")
+
+installation = st.selectbox(
+    "Installation Method",
+    ["Direct Buried","Cable Tray","Air","Underground Duct","Tunnel"]
+)
+
+vd_limit = st.number_input(
+    "Voltage Drop Limit (%)",
+    min_value=1,
+    max_value=10,
+    value=6
+)
+
+# --------------------------------------------------
+# DERATING FACTORS
+# --------------------------------------------------
+
+st.header("Project Specific Derating Factors")
+
+derating = []
+
+col5, col6, col7 = st.columns(3)
+
+with col5:
+
+    if st.checkbox("Ambient Temperature"):
+        ambient = st.number_input("Ambient Factor",0.5,1.2,0.9)
+        derating.append(ambient)
+
+    if st.checkbox("Cable Grouping"):
+        grouping = st.number_input("Grouping Factor",0.5,1.2,0.95)
+        derating.append(grouping)
+
+with col6:
+
+    if st.checkbox("Soil Thermal Resistivity"):
+        soil = st.number_input("Soil Factor",0.5,1.2,1.0)
+        derating.append(soil)
+
+    if st.checkbox("Depth of Laying"):
+        depth = st.number_input("Depth Factor",0.5,1.2,1.0)
+        derating.append(depth)
+
+with col7:
+
+    if st.checkbox("Installation Factor"):
+
+        inst_map = {
+        "Direct Buried":0.9,
+        "Cable Tray":0.95,
+        "Air":1.0,
+        "Underground Duct":0.85,
+        "Tunnel":0.9
+        }
+
+        inst_factor = inst_map[installation]
+
+        st.write("Installation Factor =",inst_factor)
+
+        derating.append(inst_factor)
+
+    if st.checkbox("Manual Factors"):
+
+        manual = st.text_input("Manual factors (comma separated)","1")
+
+        try:
+            extra = [float(x.strip()) for x in manual.split(",")]
+            derating.extend(extra)
+        except:
+            st.warning("Check manual factor format")
+
+if len(derating)==0:
+    derating=[1.0]
+
+# --------------------------------------------------
 # VOLTAGE MAP
-# ---------------------------------------------------
+# --------------------------------------------------
 
 voltage_map = {
-    "6/10 (12) kV": 11,
-    "18/30 (36) kV": 33
+"6/10 (12) kV":11,
+"18/30 (36) kV":33
 }
 
 voltage = voltage_map[voltage_grade]
 
-# ---------------------------------------------------
-# DERATING FACTORS
-# ---------------------------------------------------
+# --------------------------------------------------
+# CATALOG DATA
+# --------------------------------------------------
 
-st.subheader("Derating Conditions")
-
-ambient_factor = st.slider("Ambient Temperature Factor",0.7,1.0,0.9)
-
-grouping_factor = st.slider("Cable Grouping Factor",0.5,1.0,0.95)
-
-installation_factor_map = {
-    "Direct Buried":0.9,
-    "Cable Tray":0.95,
-    "Air":1.0,
-    "Underground Duct":0.85,
-    "Tunnel":0.9
-}
-
-installation_factor = installation_factor_map[installation]
-
-derating_factors = [
-    ambient_factor,
-    grouping_factor,
-    installation_factor
-]
-
-# ---------------------------------------------------
-# CATALOG DATA (SIMPLIFIED OMAN TABLE)
-# ---------------------------------------------------
-
-catalog_tables = {
-
-"6/10 (12) kV":{
+catalog = {
 
 "sizes":[95,120,150,185,240,300,400,500,630],
 
@@ -180,75 +253,18 @@ catalog_tables = {
 630:32
 }
 
-},
-
-"18/30 (36) kV":{
-
-"sizes":[95,120,150,185,240,300,400,500,630],
-
-"R":{
-95:0.193,
-120:0.153,
-150:0.124,
-185:0.099,
-240:0.075,
-300:0.060,
-400:0.047,
-500:0.036,
-630:0.029
-},
-
-"X":{
-95:0.129,
-120:0.124,
-150:0.120,
-185:0.116,
-240:0.112,
-300:0.108,
-400:0.105,
-500:0.102,
-630:0.100
-},
-
-"current":{
-95:190,
-120:220,
-150:240,
-185:270,
-240:300,
-300:340,
-400:420,
-500:480,
-630:540
-},
-
-"sc":{
-95:8.4,
-120:10.1,
-150:12.3,
-185:14.5,
-240:18,
-300:20.2,
-400:22,
-500:28,
-630:32
 }
 
-}
-
-}
-
-catalog = catalog_tables[voltage_grade]
-
-# ---------------------------------------------------
+# --------------------------------------------------
 # ENGINE FUNCTIONS
-# ---------------------------------------------------
+# --------------------------------------------------
 
-def derated_current(I_nom, derating):
+def derated_current(I_nom,derating):
 
     I = I_nom
+
     for d in derating:
-        I *= d
+        I*=d
 
     return I
 
@@ -262,145 +278,138 @@ def voltage_drop(I,R,X,pf,length):
     return vd
 
 
-def sc_withstand(Isc_required,Isc_cable,runs):
+def sc_withstand(Isc,Isc_cable,runs):
 
-    return Isc_required <= Isc_cable*(runs**0.9)
+    return Isc <= Isc_cable*(runs**0.9)
 
+# --------------------------------------------------
+# CABLE ENGINE
+# --------------------------------------------------
 
-def cablemate_engine(inputs,catalog):
+def cable_engine():
 
-    max_runs = 4
     solutions=[]
 
-    for runs in range(1,max_runs+1):
+    for runs in range(1,5):
 
         for size in catalog["sizes"]:
 
             if core_type=="3 Core" and size>240:
                 continue
 
-            I_nom=catalog["current"][size]
-            R=catalog["R"][size]
-            X=catalog["X"][size]
-            Isc=catalog["sc"][size]
+            I_nom = catalog["current"][size]
 
-            I_der=derated_current(I_nom,inputs["derating"])
-            capacity=I_der*runs
+            R = catalog["R"][size]
 
-            if capacity < inputs["load_current"]:
+            X = catalog["X"][size]
+
+            Isc_cable = catalog["sc"][size]
+
+            I_der = derated_current(I_nom,derating)
+
+            capacity = I_der*runs
+
+            if capacity < load_current:
                 continue
 
-            if not sc_withstand(inputs["Isc_required"],Isc,runs):
+            if not sc_withstand(fault,Isc_cable,runs):
                 continue
 
             vd_volts = voltage_drop(
-                inputs["load_current"],
+                load_current,
                 R/runs,
                 X/runs,
-                inputs["pf"],
-                inputs["length"]
+                pf,
+                length
             )
 
-            vd_percent=(vd_volts/(voltage*1000))*100
+            vd_percent = (vd_volts/(voltage*1000))*100
 
-            if vd_percent > inputs["vd_limit"]:
+            if vd_percent > vd_limit:
                 continue
 
             solutions.append({
-                "size":size,
-                "runs":runs,
-                "vd_percent":vd_percent,
-                "capacity":capacity
+                "Runs":runs,
+                "Size mm2":size,
+                "Capacity A":round(capacity,1),
+                "Voltage Drop %":round(vd_percent,2)
             })
 
     return solutions
 
-# ---------------------------------------------------
-# PDF REPORT
-# ---------------------------------------------------
-
-def generate_pdf(data):
-
-    tmp=tempfile.NamedTemporaryFile(delete=False,suffix=".pdf")
-
-    c=canvas.Canvas(tmp.name,pagesize=A4)
-
-    y=800
-
-    for line in data:
-
-        c.drawString(50,y,line)
-
-        y-=20
-
-    c.save()
-
-    return tmp.name
-
-# ---------------------------------------------------
+# --------------------------------------------------
 # RUN CALCULATION
-# ---------------------------------------------------
+# --------------------------------------------------
 
 if st.button("Calculate Cable Size"):
 
-    inputs={
-        "load_current":load_current,
-        "pf":pf,
-        "length":length,
-        "Isc_required":fault,
-        "vd_limit":vd_limit,
-        "derating":derating_factors
-    }
+    solutions = cable_engine()
 
-    solutions=cablemate_engine(inputs,catalog)
+    if solutions:
 
-    solutions_sorted=sorted(
-        solutions,
-        key=lambda x:(x["size"]*x["runs"],x["vd_percent"])
-    )
+        df = pd.DataFrame(solutions)
 
-    if solutions_sorted:
+        df["Copper"] = df["Runs"] * df["Size mm2"]
 
-        best=solutions_sorted[0]
+        df = df.sort_values(["Copper","Voltage Drop %"])
 
-        st.subheader("Recommended Cable")
+        best = df.iloc[0]
+
+        st.header("Recommended Cable")
 
         st.success(
-            f"{best['runs']} × {best['size']} mm² cable\n"
-            f"Voltage Drop: {round(best['vd_percent'],2)} %\n"
-            f"Capacity: {round(best['capacity'],1)} A"
+        f"{best['Runs']} × {best['Size mm2']} mm² cable\n"
+        f"Voltage Drop: {best['Voltage Drop %']} %"
         )
 
-        st.subheader("Alternative Options")
+        st.header("Cable Comparison")
 
-        for s in solutions_sorted[1:5]:
+        st.dataframe(df)
 
-            st.info(
-                f"{s['runs']} × {s['size']} mm² cable | "
-                f"Voltage Drop: {round(s['vd_percent'],2)} % | "
-                f"Capacity: {round(s['capacity'],1)} A"
-            )
+        st.header("Voltage Drop Graph")
 
-        summary=[
-            f"Voltage Grade: {voltage_grade}",
-            f"Core Type: {core_type}",
-            f"Installation: {installation}",
-            f"Load Current: {load_current} A",
-            f"Cable Length: {length} m",
-            f"Fault Level: {fault} kA",
-            f"Generated: {datetime.datetime.now()}"
+        fig,ax = plt.subplots()
+
+        ax.plot(df["Size mm2"],df["Voltage Drop %"])
+
+        ax.set_xlabel("Cable Size (mm²)")
+        ax.set_ylabel("Voltage Drop (%)")
+
+        st.pyplot(fig)
+
+        report_lines=[
+        f"Project: {project}",
+        f"Engineer: {engineer}",
+        f"Location: {location}",
+        f"Voltage Grade: {voltage_grade}",
+        f"Core Type: {core_type}",
+        f"Installation: {installation}",
+        f"Load Current: {load_current} A",
+        f"Fault Level: {fault} kA",
+        f"Recommended Cable: {best['Runs']} x {best['Size mm2']} mm2",
+        f"Voltage Drop: {best['Voltage Drop %']} %",
         ]
 
-        pdf=generate_pdf(summary)
+        tmp=tempfile.NamedTemporaryFile(delete=False,suffix=".pdf")
 
-        with open(pdf,"rb") as f:
+        c=canvas.Canvas(tmp.name,pagesize=A4)
+
+        y=800
+
+        for line in report_lines:
+            c.drawString(50,y,line)
+            y-=20
+
+        c.save()
+
+        with open(tmp.name,"rb") as f:
 
             st.download_button(
-                "Download Engineering Report",
-                f,
-                "CableMate_Report.pdf"
+            "Download Engineering Report",
+            f,
+            "CableMate_Report.pdf"
             )
 
     else:
 
-        st.error("No suitable cable found for the given inputs.")
+        st.error("No suitable cable found")
