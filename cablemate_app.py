@@ -393,7 +393,7 @@ if st.button("Calculate Cable Size"):
         with open(tmp.name,"rb") as f:
 
             st.download_button(
-            "Download Engineering Report",
+            "Download Result Report pdf",
             f,
             "CableMate_Report.pdf"
             )
