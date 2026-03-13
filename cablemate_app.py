@@ -365,17 +365,6 @@ if st.button("Calculate Cable Size"):
 
         st.dataframe(df)
 
-        st.header("Voltage Drop Graph")
-
-        fig,ax = plt.subplots()
-
-        ax.plot(df["Size mm2"],df["Voltage Drop %"])
-
-        ax.set_xlabel("Cable Size (mm²)")
-        ax.set_ylabel("Voltage Drop (%)")
-
-        st.pyplot(fig)
-
         report_lines=[
         f"Project: {project}",
         f"Engineer: {engineer}",
