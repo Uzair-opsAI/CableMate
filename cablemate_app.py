@@ -1,7 +1,6 @@
 import streamlit as st
 import math
 import pandas as pd
-import matplotlib.pyplot as plt
 import tempfile
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -172,15 +171,12 @@ catalog = {
 def full_load_current():
 
     if load_type=="Motor":
-
         return (power*1000)/(math.sqrt(3)*voltage*1000*pf*efficiency)
 
     elif load_type=="Transformer":
-
         return (power*1000)/(math.sqrt(3)*voltage*1000)
 
     else:
-
         return (power*1000)/(math.sqrt(3)*voltage*1000*pf)
 
 def derating():
@@ -195,7 +191,6 @@ def derating():
 def short_circuit():
 
     K=143
-
     return (fault*1000*math.sqrt(fault_time))/K
 
 def voltage_drop(I,R,X,runs):
@@ -209,7 +204,6 @@ def voltage_drop(I,R,X,runs):
 def start_drop(R,X,runs):
 
     Ist=6*full_load_current()
-
     pf_s=0.25
 
     ang=math.acos(pf_s)
@@ -234,7 +228,6 @@ def generate_pdf(result,I,S,kT):
     c.drawString(180,y,"CableMate Engineering Report")
 
     y-=40
-
     c.setFont("Helvetica",11)
 
     c.drawString(50,y,f"Feeder: {feeder_from} → {feeder_to}")
@@ -272,8 +265,6 @@ if st.button("Calculate Cable Size"):
 
     solutions=[]
 
-    vd_curve=[]
-
     for runs in range(1,4):
 
         for size in catalog["sizes"]:
@@ -290,8 +281,6 @@ if st.button("Calculate Cable Size"):
             X=catalog["X"][size]
 
             vd=voltage_drop(I,R,X,runs)
-
-            vd_curve.append((size,vd))
 
             if vd>5:
                 continue
@@ -320,7 +309,6 @@ if st.button("Calculate Cable Size"):
         solutions=sorted(solutions,key=lambda x:(x["runs"],x["size"]))
 
         budget=solutions[0]
-
         performance=sorted(solutions,key=lambda x:x["vd"])[0]
 
         st.header("Cable Recommendations")
@@ -330,21 +318,6 @@ if st.button("Calculate Cable Size"):
         df=pd.DataFrame(results)
 
         st.dataframe(df)
-
-        st.header("Voltage Drop Visualization")
-
-        sizes=[x[0] for x in vd_curve]
-        drops=[x[1] for x in vd_curve]
-
-        fig,ax=plt.subplots()
-
-        ax.plot(sizes,drops,marker="o")
-
-        ax.set_xlabel("Cable Size (mm²)")
-        ax.set_ylabel("Voltage Drop (%)")
-        ax.set_title("Voltage Drop vs Cable Size")
-
-        st.pyplot(fig)
 
         st.header("Design Summary")
 
