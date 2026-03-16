@@ -1,31 +1,27 @@
 import streamlit as st
 import math
 
-# ---------------------------------------------------
-# PAGE CONFIG
-# ---------------------------------------------------
+# --------------------------------------------------
+# PAGE SETTINGS
+# --------------------------------------------------
 
 st.set_page_config(page_title="Uzair CableMate", layout="wide")
 
-# ---------------------------------------------------
-# HEADER
-# ---------------------------------------------------
-
-col1, col2 = st.columns([1,6])
+col1,col2 = st.columns([1,6])
 
 with col1:
-    st.image("logo.png", width=120)
+    st.image("logo.png", width=110)
 
 with col2:
     st.title("Uzair CableMate – MV Cable Sizing Tool")
 
-# ---------------------------------------------------
+# --------------------------------------------------
 # INPUT SECTION
-# ---------------------------------------------------
+# --------------------------------------------------
 
 st.header("Project Inputs")
 
-col1, col2 = st.columns(2)
+col1,col2 = st.columns(2)
 
 with col1:
 
@@ -67,13 +63,13 @@ with col2:
         value=0.95
     )
 
-# ---------------------------------------------------
+# --------------------------------------------------
 # FAULT DATA
-# ---------------------------------------------------
+# --------------------------------------------------
 
 st.header("Fault Data")
 
-col3, col4 = st.columns(2)
+col3,col4 = st.columns(2)
 
 with col3:
 
@@ -89,9 +85,9 @@ with col4:
         value=0.4
     )
 
-# ---------------------------------------------------
+# --------------------------------------------------
 # INSTALLATION CONDITIONS
-# ---------------------------------------------------
+# --------------------------------------------------
 
 st.header("Installation Conditions")
 
@@ -125,9 +121,9 @@ with col8:
         [1,2,3,4]
     )
 
-# ---------------------------------------------------
-# CABLE DATA (Oman Catalogue simplified)
-# ---------------------------------------------------
+# --------------------------------------------------
+# CABLE DATA (Simplified Oman Catalogue)
+# --------------------------------------------------
 
 catalog = {
 
@@ -177,70 +173,79 @@ catalog = {
 
 }
 
-# ---------------------------------------------------
+# --------------------------------------------------
 # DERATING FACTOR
-# ---------------------------------------------------
+# --------------------------------------------------
 
 def derating_factor():
 
-    # Soil resistivity
-    k1 = 1.0 if soil_resistivity == 1.5 else 0.9
+    if soil_resistivity == 1.5:
+        k1 = 1
+    else:
+        k1 = 0.9
 
-    # Burial depth
     if burial_depth == 1.0:
         k2 = 0.98
     else:
-        k2 = 1.0
+        k2 = 1
 
-    # Grouping
     if cable_group == 4:
         k3 = 0.73
     elif cable_group == 3:
         k3 = 0.79
     else:
-        k3 = 1.0
+        k3 = 1
 
-    # Ground temperature
     if ground_temp == 40:
         k4 = 0.85
     else:
-        k4 = 1.0
+        k4 = 1
 
     return k1 * k2 * k3 * k4
 
-# ---------------------------------------------------
+# --------------------------------------------------
 # FULL LOAD CURRENT
-# ---------------------------------------------------
+# --------------------------------------------------
 
 def full_load_current():
 
     if feeder_to == "Motor":
 
-        I = (power * 1000) / (math.sqrt(3) * voltage * 1000 * power_factor * efficiency)
+        I = (power*1000) / (
+            math.sqrt(3) *
+            voltage*1000 *
+            power_factor *
+            efficiency
+        )
 
     else:
 
-        I = (power * 1000) / (math.sqrt(3) * voltage * 1000)
+        I = (power*1000) / (
+            math.sqrt(3) *
+            voltage*1000
+        )
 
     return I
 
-# ---------------------------------------------------
-# VOLTAGE DROP RUNNING
-# ---------------------------------------------------
+# --------------------------------------------------
+# RUNNING VOLTAGE DROP
+# --------------------------------------------------
 
-def voltage_drop(I,R,X,runs):
+def running_voltage_drop(I,R,X,runs):
 
     angle = math.acos(power_factor)
 
-    vd = (math.sqrt(3) * I *
-          (R*math.cos(angle) + X*math.sin(angle)) *
-          cable_length) / (1000 * runs * voltage)
+    vd = (
+        math.sqrt(3)*I*
+        (R*math.cos(angle)+X*math.sin(angle))*
+        cable_length
+    )/(1000*runs*voltage*1000)
 
-    return vd * 100
+    return vd*100
 
-# ---------------------------------------------------
-# MOTOR STARTING VOLTAGE DROP
-# ---------------------------------------------------
+# --------------------------------------------------
+# STARTING VOLTAGE DROP
+# --------------------------------------------------
 
 def starting_voltage_drop(R,X,runs):
 
@@ -250,27 +255,29 @@ def starting_voltage_drop(R,X,runs):
 
     angle = math.acos(pf_start)
 
-    vd = (math.sqrt(3) * Ist *
-          (R*math.cos(angle) + X*math.sin(angle)) *
-          cable_length) / (1000 * runs * voltage)
+    vd = (
+        math.sqrt(3)*Ist*
+        (R*math.cos(angle)+X*math.sin(angle))*
+        cable_length
+    )/(1000*runs*voltage*1000)
 
-    return vd * 100
+    return vd*100
 
-# ---------------------------------------------------
+# --------------------------------------------------
 # SHORT CIRCUIT SIZE
-# ---------------------------------------------------
+# --------------------------------------------------
 
 def short_circuit_size():
 
     K = 143
 
-    S = (fault_level * 1000 * math.sqrt(fault_time)) / K
+    S = (fault_level*1000*math.sqrt(fault_time))/K
 
-    return S
+    return S*0.95
 
-# ---------------------------------------------------
-# CALCULATION
-# ---------------------------------------------------
+# --------------------------------------------------
+# CALCULATION ENGINE
+# --------------------------------------------------
 
 if st.button("Calculate Cable Size"):
 
@@ -280,13 +287,13 @@ if st.button("Calculate Cable Size"):
 
     S_sc = short_circuit_size()
 
-    solutions = []
+    solutions=[]
 
     for runs in range(1,4):
 
         for size in catalog["sizes"]:
 
-            amp = catalog["ampacity"][size] * kT * runs
+            amp = catalog["ampacity"][size]*kT*runs
 
             if amp < I_load:
                 continue
@@ -294,24 +301,24 @@ if st.button("Calculate Cable Size"):
             if size < S_sc:
                 continue
 
-            R = catalog["R"][size]
-            X = catalog["X"][size]
+            R=catalog["R"][size]
+            X=catalog["X"][size]
 
-            vd = voltage_drop(I_load,R,X,runs)
+            vd = running_voltage_drop(I_load,R,X,runs)
 
-            if feeder_to == "Motor":
+            if vd > 5:
+                continue
 
-                vd_start = starting_voltage_drop(R,X,runs)
+            if feeder_to=="Motor":
 
-                if vd_start > 15:
+                vd_start=starting_voltage_drop(R,X,runs)
+
+                if vd_start>15:
                     continue
 
             else:
 
-                vd_start = 0
-
-            if vd > 5:
-                continue
+                vd_start=0
 
             solutions.append({
 
@@ -323,33 +330,70 @@ if st.button("Calculate Cable Size"):
 
             })
 
-    # ---------------------------------------------------
+    # --------------------------------------------------
 
     if solutions:
 
-        best = solutions[0]
+        solutions=sorted(
+            solutions,
+            key=lambda x:(x["runs"],x["size"])
+        )
 
-        # Core selection rule
-        if best["size"] <= 240:
-            cores = "3C"
+        best=solutions[0]
+
+        if best["size"]<=240:
+            cores="3C"
         else:
-            cores = "1C"
-
-        cable_name = f"{best['runs']}R x {cores} x {best['size']} sq.mm (CU/XLPE/SWA/PVC)"
+            cores="1C"
 
         st.success("Recommended Cable")
 
-        st.write(cable_name)
+        st.write(
+            f"{best['runs']}R x {cores} x {best['size']} sq.mm "
+            "(CU/XLPE/SWA/PVC)"
+        )
 
-        st.write("Derated Ampacity:",round(best["ampacity"],1),"A")
+        st.write(
+            "Derated Ampacity:",
+            round(best["ampacity"],1),
+            "A"
+        )
 
-        st.write("Running Voltage Drop:",round(best["vd"],3),"%")
+        st.write(
+            "Running Voltage Drop:",
+            round(best["vd"],3),
+            "%"
+        )
 
-        if feeder_to == "Motor":
-            st.write("Starting Voltage Drop:",round(best["vd_start"],3),"%")
+        if feeder_to=="Motor":
 
-        st.write("Minimum Cable Size from Short Circuit:",round(S_sc,1),"sq.mm")
+            st.write(
+                "Starting Voltage Drop:",
+                round(best["vd_start"],3),
+                "%"
+            )
+
+        st.write(
+            "Minimum SC Cable Size:",
+            round(S_sc,1),
+            "sq.mm"
+        )
+
+        st.subheader("Alternative Cable Options")
+
+        for s in solutions[1:4]:
+
+            if s["size"]<=240:
+                cores="3C"
+            else:
+                cores="1C"
+
+            st.write(
+                f"{s['runs']}R x {cores} x {s['size']} sq.mm "
+                f"| VD {round(s['vd'],2)} % "
+                f"| Capacity {round(s['ampacity'],1)} A"
+            )
 
     else:
 
-        st.error("No suitable cable found for the given inputs.")
+        st.error("No suitable cable found for the given inputs")
