@@ -1,6 +1,5 @@
 import streamlit as st
 import math
-import pandas as pd
 import tempfile
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -18,108 +17,102 @@ st.set_page_config(
 # HEADER
 # ------------------------------------------------
 
-col1,col2 = st.columns([1,6])
+header1,header2 = st.columns([1,7])
 
-with col1:
-    st.image("logo.png",width=110)
+with header1:
+    st.image("logo.png",width=90)
 
-with col2:
+with header2:
     st.title("CableMate – MV Cable Sizing Tool")
-    st.caption("Engineering cable sizing assistant for MV systems")
+    st.caption("Engineering Assistant for Medium Voltage Cable Design")
 
 st.divider()
 
 # ------------------------------------------------
-# INPUT PANELS
+# SIDEBAR INPUTS
 # ------------------------------------------------
 
-st.subheader("Project Inputs")
+st.sidebar.header("Project Inputs")
 
-left,right = st.columns(2)
+feeder_from = st.sidebar.selectbox(
+    "From Equipment",
+    ["Switchgear","Transformer","Generator"]
+)
 
-with left:
+feeder_to = st.sidebar.selectbox(
+    "To Equipment",
+    ["Motor","Transformer","Panel","Package"]
+)
 
-    feeder_from = st.selectbox(
-        "From Equipment",
-        ["Switchgear","Transformer","Generator"]
-    )
+voltage = st.sidebar.selectbox(
+    "System Voltage (kV)",
+    [3.3,6.6,11,33]
+)
 
-    feeder_to = st.selectbox(
-        "To Equipment",
-        ["Motor","Transformer","Panel","Package"]
-    )
+length = st.sidebar.number_input(
+    "Cable Length (m)",
+    value=450
+)
 
-    voltage = st.selectbox(
-        "System Voltage (kV)",
-        [3.3,6.6,11,33]
-    )
+load_type = st.sidebar.selectbox(
+    "Load Type",
+    ["Motor","Transformer","Generic Load"]
+)
 
-    length = st.number_input(
-        "Cable Length (m)",
-        value=450
-    )
+power = st.sidebar.number_input(
+    "Load Power (kW / kVA)",
+    value=400
+)
 
-with right:
+pf = st.sidebar.number_input(
+    "Power Factor",
+    value=0.9
+)
 
-    load_type = st.selectbox(
-        "Load Type",
-        ["Motor","Transformer","Generic Load"]
-    )
+efficiency = st.sidebar.number_input(
+    "Efficiency",
+    value=0.95
+)
 
-    power = st.number_input(
-        "Load Power (kW / kVA)",
-        value=400
-    )
+st.sidebar.divider()
 
-    pf = st.number_input(
-        "Power Factor",
-        value=0.9
-    )
+st.sidebar.subheader("Fault Conditions")
 
-    efficiency = st.number_input(
-        "Efficiency",
-        value=0.95
-    )
+fault = st.sidebar.number_input(
+    "Fault Level (kA)",
+    value=40
+)
 
-st.divider()
+fault_time = st.sidebar.number_input(
+    "Fault Duration (sec)",
+    value=0.4
+)
 
-# ------------------------------------------------
-# FAULT CONDITIONS
-# ------------------------------------------------
+st.sidebar.divider()
 
-st.subheader("Fault Conditions")
+st.sidebar.subheader("Installation")
 
-f1,f2 = st.columns(2)
+soil = st.sidebar.selectbox(
+    "Soil Resistivity",
+    [1.0,1.5,2]
+)
 
-with f1:
-    fault = st.number_input("Fault Level (kA)",value=40)
+depth = st.sidebar.selectbox(
+    "Burial Depth",
+    [0.8,1.0,1.25]
+)
 
-with f2:
-    fault_time = st.number_input("Fault Duration (sec)",value=0.4)
+temp = st.sidebar.selectbox(
+    "Ground Temperature",
+    [20,30,40]
+)
 
-st.divider()
+group = st.sidebar.selectbox(
+    "Cable Group",
+    [1,2,3,4]
+)
 
-# ------------------------------------------------
-# INSTALLATION CONDITIONS
-# ------------------------------------------------
-
-st.subheader("Installation Conditions")
-
-d1,d2,d3,d4 = st.columns(4)
-
-with d1:
-    soil = st.selectbox("Soil Resistivity",[1.0,1.5,2])
-
-with d2:
-    depth = st.selectbox("Burial Depth",[0.8,1.0,1.25])
-
-with d3:
-    temp = st.selectbox("Ground Temperature",[20,30,40])
-
-with d4:
-    group = st.selectbox("Cable Group",[1,2,3,4])
-
-st.divider()
+run_button = st.sidebar.button("Run CableMate Analysis")
 
 # ------------------------------------------------
 # CABLE CATALOG
@@ -205,7 +198,7 @@ def voltage_drop(I,R,X,runs):
     return vd*100
 
 # ------------------------------------------------
-# PDF REPORT GENERATOR
+# PDF REPORT
 # ------------------------------------------------
 
 def generate_report(inputs,budget,performance,I,S,kT):
@@ -231,13 +224,13 @@ def generate_report(inputs,budget,performance,I,S,kT):
     c.drawString(50,y,f"Voltage: {inputs['voltage']} kV")
 
     y-=20
-    c.drawString(50,y,f"Load Power: {inputs['power']}")
+    c.drawString(50,y,f"Power: {inputs['power']}")
 
     y-=20
     c.drawString(50,y,f"Cable Length: {inputs['length']} m")
 
     y-=30
-    c.drawString(50,y,"CABLE SELECTION")
+    c.drawString(50,y,"RECOMMENDED CABLES")
 
     y-=20
     c.drawString(50,y,f"Budget Cable: {budget['runs']}R x 3C x {budget['size']} sq.mm")
@@ -246,7 +239,7 @@ def generate_report(inputs,budget,performance,I,S,kT):
     c.drawString(50,y,f"Performance Cable: {performance['runs']}R x 3C x {performance['size']} sq.mm")
 
     y-=30
-    c.drawString(50,y,"ENGINEERING REASONING")
+    c.drawString(50,y,"DESIGN SUMMARY")
 
     y-=20
     c.drawString(50,y,f"Load Current = {round(I,1)} A")
@@ -255,23 +248,23 @@ def generate_report(inputs,budget,performance,I,S,kT):
     c.drawString(50,y,f"Derating Factor = {round(kT,2)}")
 
     y-=20
-    c.drawString(50,y,f"Minimum Short Circuit Size = {round(S,1)} mm2")
+    c.drawString(50,y,f"Minimum Short Circuit Size = {round(S,1)} mm²")
 
     y-=20
-    c.drawString(50,y,"Budget cable minimizes cost while meeting all design constraints.")
+    c.drawString(50,y,"Budget cable minimizes cost while satisfying all design checks.")
 
     y-=20
-    c.drawString(50,y,"Performance cable reduces voltage drop and provides higher margin.")
+    c.drawString(50,y,"Performance cable offers lower voltage drop and higher safety margin.")
 
     c.save()
 
     return temp.name
 
 # ------------------------------------------------
-# CALCULATION ENGINE
+# MAIN CALCULATION
 # ------------------------------------------------
 
-if st.button("Run CableMate Analysis"):
+if run_button:
 
     I = full_load_current()
     kT = derating()
@@ -310,27 +303,27 @@ if st.button("Run CableMate Analysis"):
         budget=solutions[0]
         performance=sorted(solutions,key=lambda x:x["vd"])[0]
 
-        st.subheader("Recommended Cables")
+        st.subheader("Cable Recommendations")
 
-        st.success(
-            f"Budget Optimized: {budget['runs']}R x 3C x {budget['size']} sq.mm"
-        )
+        c1,c2 = st.columns(2)
 
-        st.info(
-            f"Performance Optimized: {performance['runs']}R x 3C x {performance['size']} sq.mm"
-        )
+        with c1:
+            st.success(f"Budget Optimized\n\n{budget['runs']}R x 3C x {budget['size']} sq.mm")
 
-        st.subheader("Engineering Reasoning")
+        with c2:
+            st.info(f"Performance Optimized\n\n{performance['runs']}R x 3C x {performance['size']} sq.mm")
+
+        st.divider()
+
+        st.subheader("Engineering Summary")
 
         st.write("Load Current:",round(I,1),"A")
-
         st.write("Derating Factor:",round(kT,2))
-
         st.write("Minimum Short Circuit Size:",round(S,1),"mm²")
 
-        st.write("Budget cable minimizes cable size and project cost while meeting all design constraints.")
+        st.write("Budget cable minimizes project cost while satisfying all design constraints.")
 
-        st.write("Performance cable provides reduced voltage drop and higher reliability margin.")
+        st.write("Performance cable reduces voltage drop and increases reliability margin.")
 
         inputs={
             "from":feeder_from,
