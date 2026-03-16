@@ -3,6 +3,7 @@ import math
 import tempfile
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+import streamlit.components.v1 as components
 
 # ------------------------------------------------
 # PAGE CONFIG
@@ -11,6 +12,34 @@ from reportlab.pdfgen import canvas
 st.set_page_config(
     page_title="CableMate",
     layout="wide"
+)
+
+# ------------------------------------------------
+# CLOSE TAB WARNING
+# ------------------------------------------------
+
+components.html(
+"""
+<script>
+
+let formChanged = false;
+
+document.addEventListener("input", function() {
+    formChanged = true;
+});
+
+window.addEventListener("beforeunload", function (e) {
+
+    if (formChanged) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+
+});
+
+</script>
+""",
+height=0
 )
 
 # ------------------------------------------------
@@ -239,7 +268,7 @@ def generate_report(inputs,budget,performance,I,S,kT):
     c.drawString(50,y,f"Performance Cable: {performance['runs']}R x 3C x {performance['size']} sq.mm")
 
     y-=30
-    c.drawString(50,y,"DESIGN SUMMARY")
+    c.drawString(50,y,"ENGINEERING REASONING")
 
     y-=20
     c.drawString(50,y,f"Load Current = {round(I,1)} A")
@@ -251,10 +280,10 @@ def generate_report(inputs,budget,performance,I,S,kT):
     c.drawString(50,y,f"Minimum Short Circuit Size = {round(S,1)} mm²")
 
     y-=20
-    c.drawString(50,y,"Budget cable minimizes cost while satisfying all design checks.")
+    c.drawString(50,y,"Budget cable minimizes cable size and project cost while satisfying design constraints.")
 
     y-=20
-    c.drawString(50,y,"Performance cable offers lower voltage drop and higher safety margin.")
+    c.drawString(50,y,"Performance cable provides lower voltage drop and additional reliability margin.")
 
     c.save()
 
@@ -305,25 +334,27 @@ if run_button:
 
         st.subheader("Cable Recommendations")
 
-        c1,c2 = st.columns(2)
+        col1,col2 = st.columns(2)
 
-        with c1:
+        with col1:
             st.success(f"Budget Optimized\n\n{budget['runs']}R x 3C x {budget['size']} sq.mm")
 
-        with c2:
+        with col2:
             st.info(f"Performance Optimized\n\n{performance['runs']}R x 3C x {performance['size']} sq.mm")
 
         st.divider()
 
-        st.subheader("Engineering Summary")
+        st.subheader("Engineering Reasoning")
 
-        st.write("Load Current:",round(I,1),"A")
-        st.write("Derating Factor:",round(kT,2))
-        st.write("Minimum Short Circuit Size:",round(S,1),"mm²")
+        st.write("Calculated Load Current:",round(I,1),"A")
 
-        st.write("Budget cable minimizes project cost while satisfying all design constraints.")
+        st.write("Total Derating Factor:",round(kT,2))
 
-        st.write("Performance cable reduces voltage drop and increases reliability margin.")
+        st.write("Minimum Conductor Size for Short Circuit:",round(S,1),"mm²")
+
+        st.write("Budget cable minimizes cost while still satisfying ampacity, short circuit withstand and voltage drop limits.")
+
+        st.write("Performance cable provides lower voltage drop and greater thermal margin for future load growth.")
 
         inputs={
             "from":feeder_from,
@@ -345,4 +376,4 @@ if run_button:
 
     else:
 
-        st.error("No suitable cable found")
+        st.error("No suitable cable found for the given design conditions.")
