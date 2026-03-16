@@ -1,402 +1,348 @@
 import streamlit as st
 import math
-import pandas as pd
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-import tempfile
-import datetime
 
-# --------------------------------------------------
-# APP CONFIGURATION
-# --------------------------------------------------
+# -----------------------------------------------------
+# PAGE CONFIG
+# -----------------------------------------------------
 
-st.set_page_config(
-    page_title="Uzair's CableMate",
-    page_icon="logo.png",
-    layout="wide"
-)
+st.set_page_config(page_title="Uzair CableMate", layout="wide")
 
-# --------------------------------------------------
-# HEADER
-# --------------------------------------------------
+# -----------------------------------------------------
+# HEADER WITH LOGO
+# -----------------------------------------------------
 
 col_logo, col_title = st.columns([1,6])
 
 with col_logo:
-    st.image("logo.png", width=110)
+    st.image("logo.png", width=120)
 
 with col_title:
-    st.title("Uzair's CableMate – MV Cable Sizing Tool")
-    st.caption("Engineering Cable Sizing Utility | IEC 60502")
+    st.title("Uzair CableMate – MV Cable Sizing Tool")
 
-st.markdown("---")
 
-# --------------------------------------------------
-# SIDEBAR
-# --------------------------------------------------
+# -----------------------------------------------------
+# INPUT SECTION
+# -----------------------------------------------------
 
-st.sidebar.image("logo.png", width=150)
-st.sidebar.title("CableMate")
-st.sidebar.write("MV Cable Engineering Utility")
-st.sidebar.markdown("---")
-
-# --------------------------------------------------
-# PROJECT INFORMATION
-# --------------------------------------------------
-
-st.header("Project Information")
-
-colA, colB = st.columns(2)
-
-with colA:
-    project = st.text_input("Project Name")
-    engineer = st.text_input("Engineer")
-
-with colB:
-    location = st.text_input("Location")
-    date = datetime.date.today()
-
-# --------------------------------------------------
-# ELECTRICAL PARAMETERS
-# --------------------------------------------------
-
-st.header("Electrical Parameters")
+st.header("Project Inputs")
 
 col1, col2 = st.columns(2)
 
 with col1:
 
-    load_current = st.number_input(
-        "Load Current (A)",
-        min_value=10,
-        max_value=2000,
-        value=240
+    feeder_from = st.selectbox(
+        "From Equipment",
+        ["Switchgear","Transformer","Generator"]
     )
 
-    pf = st.number_input(
-        "Power Factor",
-        min_value=0.7,
-        max_value=1.0,
-        value=0.85
+    feeder_to = st.selectbox(
+        "To Equipment",
+        ["Motor","Transformer","Package","Panel"]
     )
 
-    length = st.number_input(
+    voltage = st.selectbox(
+        "System Voltage (kV)",
+        [3.3,6.6,11,33]
+    )
+
+    cable_length = st.number_input(
         "Cable Length (m)",
         min_value=1,
-        max_value=20000,
-        value=1200
+        value=450
     )
+
 
 with col2:
 
-    fault = st.number_input(
+    power_kw = st.number_input(
+        "Motor Power (kW) / Transformer kVA",
+        min_value=1,
+        value=400
+    )
+
+    power_factor = st.number_input(
+        "Power Factor",
+        value=0.9
+    )
+
+    efficiency = st.number_input(
+        "Efficiency",
+        value=0.95
+    )
+
+# -----------------------------------------------------
+# FAULT DATA
+# -----------------------------------------------------
+
+st.header("Fault Data")
+
+col3,col4 = st.columns(2)
+
+with col3:
+
+    fault_level = st.number_input(
         "Fault Level (kA)",
-        min_value=5,
-        max_value=63,
-        value=25
+        value=40
     )
 
-    voltage_grade = st.selectbox(
-        "Voltage Grade",
-        ["6/10 (12) kV","18/30 (36) kV"]
+with col4:
+
+    fault_time = st.number_input(
+        "Fault Clearing Time (sec)",
+        value=0.4
     )
 
-    core_type = st.selectbox(
-        "Cable Core Type",
-        ["1 Core","2 Core","2.5 Core","3 Core","3.5 Core","4 Core","5 Core"]
-    )
-
-# --------------------------------------------------
+# -----------------------------------------------------
 # INSTALLATION CONDITIONS
-# --------------------------------------------------
+# -----------------------------------------------------
 
 st.header("Installation Conditions")
 
-installation = st.selectbox(
-    "Installation Method",
-    ["Direct Buried","Cable Tray","Air","Underground Duct","Tunnel"]
-)
-
-vd_limit = st.number_input(
-    "Voltage Drop Limit (%)",
-    min_value=1,
-    max_value=10,
-    value=6
-)
-
-# --------------------------------------------------
-# DERATING FACTORS
-# --------------------------------------------------
-
-st.header("Project Specific Derating Factors")
-
-derating = []
-
-col5, col6, col7 = st.columns(3)
+col5,col6,col7,col8 = st.columns(4)
 
 with col5:
 
-    if st.checkbox("Ambient Temperature"):
-        ambient = st.number_input("Ambient Factor",0.5,1.2,0.9)
-        derating.append(ambient)
-
-    if st.checkbox("Cable Grouping"):
-        grouping = st.number_input("Grouping Factor",0.5,1.2,0.95)
-        derating.append(grouping)
+    soil_resistivity = st.selectbox(
+        "Soil Resistivity",
+        [1.0,1.5,2.0]
+    )
 
 with col6:
 
-    if st.checkbox("Soil Thermal Resistivity"):
-        soil = st.number_input("Soil Factor",0.5,1.2,1.0)
-        derating.append(soil)
-
-    if st.checkbox("Depth of Laying"):
-        depth = st.number_input("Depth Factor",0.5,1.2,1.0)
-        derating.append(depth)
+    burial_depth = st.selectbox(
+        "Burial Depth (m)",
+        [0.8,1.0,1.25]
+    )
 
 with col7:
 
-    if st.checkbox("Installation Factor"):
+    ground_temp = st.selectbox(
+        "Ground Temperature",
+        [20,30,40]
+    )
 
-        inst_map = {
-        "Direct Buried":0.9,
-        "Cable Tray":0.95,
-        "Air":1.0,
-        "Underground Duct":0.85,
-        "Tunnel":0.9
-        }
+with col8:
 
-        inst_factor = inst_map[installation]
+    cable_group = st.selectbox(
+        "No. of Cables in Group",
+        [1,2,3,4]
+    )
 
-        st.write("Installation Factor =",inst_factor)
-
-        derating.append(inst_factor)
-
-    if st.checkbox("Manual Factors"):
-
-        manual = st.text_input("Manual factors (comma separated)","1")
-
-        try:
-            extra = [float(x.strip()) for x in manual.split(",")]
-            derating.extend(extra)
-        except:
-            st.warning("Check manual factor format")
-
-if len(derating)==0:
-    derating=[1.0]
-
-# --------------------------------------------------
-# VOLTAGE MAP
-# --------------------------------------------------
-
-voltage_map = {
-"6/10 (12) kV":11,
-"18/30 (36) kV":33
-}
-
-voltage = voltage_map[voltage_grade]
-
-# --------------------------------------------------
-# CATALOG DATA
-# --------------------------------------------------
+# -----------------------------------------------------
+# CABLE CATALOGUE DATA
+# -----------------------------------------------------
 
 catalog = {
 
-"sizes":[95,120,150,185,240,300,400,500,630],
+"sizes":[50,70,95,120,150,185,240,300,400],
 
 "R":{
+
+50:0.387,
+70:0.268,
 95:0.193,
 120:0.153,
 150:0.124,
-185:0.099,
-240:0.075,
-300:0.060,
-400:0.047,
-500:0.036,
-630:0.029
+185:0.0991,
+240:0.0754,
+300:0.0601,
+400:0.047
+
 },
 
 "X":{
-95:0.106,
-120:0.103,
-150:0.100,
-185:0.097,
-240:0.094,
-300:0.090,
-400:0.087,
-500:0.084,
-630:0.082
+
+50:0.111,
+70:0.106,
+95:0.094,
+120:0.091,
+150:0.089,
+185:0.086,
+240:0.083,
+300:0.082,
+400:0.080
+
 },
 
-"current":{
-95:210,
-120:240,
-150:260,
-185:290,
-240:320,
-300:360,
-400:455,
-500:520,
-630:590
-},
+"ampacity":{
 
-"sc":{
-95:8.4,
-120:10.1,
-150:12.3,
-185:14.5,
-240:18,
-300:20.2,
-400:22,
-500:28,
-630:32
+50:181,
+70:220,
+95:263,
+120:298,
+150:332,
+185:374,
+240:431,
+300:482,
+400:541
+
 }
 
 }
 
-# --------------------------------------------------
-# ENGINE FUNCTIONS
-# --------------------------------------------------
+# -----------------------------------------------------
+# DERATING FACTOR CALCULATION
+# -----------------------------------------------------
 
-def derated_current(I_nom,derating):
+def derating_factor():
 
-    I = I_nom
+    k1 = 1.0
 
-    for d in derating:
-        I*=d
+    if burial_depth == 1.0:
+        k2 = 0.98
+    else:
+        k2 = 1.0
+
+    if cable_group == 4:
+        k3 = 0.73
+    else:
+        k3 = 1.0
+
+    if ground_temp == 40:
+        k4 = 0.85
+    else:
+        k4 = 1.0
+
+    return k1*k2*k3*k4
+
+
+# -----------------------------------------------------
+# FULL LOAD CURRENT
+# -----------------------------------------------------
+
+def full_load_current():
+
+    if feeder_to == "Motor":
+
+        I = (power_kw*1000)/(math.sqrt(3)*voltage*1000*power_factor*efficiency)
+
+    else:
+
+        I = (power_kw*1000)/(math.sqrt(3)*voltage*1000)
 
     return I
 
 
-def voltage_drop(I,R,X,pf,length):
+# -----------------------------------------------------
+# VOLTAGE DROP
+# -----------------------------------------------------
 
-    angle = math.acos(pf)
+def voltage_drop(I,R,X):
 
-    vd = math.sqrt(3)*I*(R*math.cos(angle)+X*math.sin(angle))*length/1000
+    angle = math.acos(power_factor)
 
-    return vd
+    vd = math.sqrt(3)*I*(R*math.cos(angle)+X*math.sin(angle))*cable_length
+
+    vd_percent = vd/(voltage*1000)
+
+    return vd_percent*100
 
 
-def sc_withstand(Isc,Isc_cable,runs):
+# -----------------------------------------------------
+# MOTOR STARTING CHECK
+# -----------------------------------------------------
 
-    return Isc <= Isc_cable*(runs**0.9)
+def starting_voltage_drop(R,X):
 
-# --------------------------------------------------
-# CABLE ENGINE
-# --------------------------------------------------
+    Ist = 6*full_load_current()
 
-def cable_engine():
+    pf_start = 0.25
 
-    solutions=[]
+    angle = math.acos(pf_start)
 
-    for runs in range(1,5):
+    vd = math.sqrt(3)*Ist*(R*math.cos(angle)+X*math.sin(angle))*cable_length
 
-        for size in catalog["sizes"]:
+    vd_percent = vd/(voltage*1000)
 
-            if core_type=="3 Core" and size>240:
-                continue
+    return vd_percent*100
 
-            I_nom = catalog["current"][size]
 
-            R = catalog["R"][size]
+# -----------------------------------------------------
+# SHORT CIRCUIT CHECK
+# -----------------------------------------------------
 
-            X = catalog["X"][size]
+def short_circuit_size():
 
-            Isc_cable = catalog["sc"][size]
+    K = 143
 
-            I_der = derated_current(I_nom,derating)
+    S = (fault_level*1000*math.sqrt(fault_time))/K
 
-            capacity = I_der*runs
+    return S
 
-            if capacity < load_current:
-                continue
 
-            if not sc_withstand(fault,Isc_cable,runs):
-                continue
-
-            vd_volts = voltage_drop(
-                load_current,
-                R/runs,
-                X/runs,
-                pf,
-                length
-            )
-
-            vd_percent = (vd_volts/(voltage*1000))*100
-
-            if vd_percent > vd_limit:
-                continue
-
-            solutions.append({
-                "Runs":runs,
-                "Size mm2":size,
-                "Capacity A":round(capacity,1),
-                "Voltage Drop %":round(vd_percent,2)
-            })
-
-    return solutions
-
-# --------------------------------------------------
-# RUN CALCULATION
-# --------------------------------------------------
+# -----------------------------------------------------
+# CABLE SELECTION
+# -----------------------------------------------------
 
 if st.button("Calculate Cable Size"):
 
-    solutions = cable_engine()
+    I_load = full_load_current()
+
+    kT = derating_factor()
+
+    S_sc = short_circuit_size()
+
+    solutions=[]
+
+    for size in catalog["sizes"]:
+
+        amp = catalog["ampacity"][size]*kT
+
+        if amp < I_load:
+            continue
+
+        if size < S_sc:
+            continue
+
+        R = catalog["R"][size]
+
+        X = catalog["X"][size]
+
+        vd = voltage_drop(I_load,R,X)
+
+        if vd > 1:
+            continue
+
+        if feeder_to == "Motor":
+
+            vd_start = starting_voltage_drop(R,X)
+
+            if vd_start > 15:
+                continue
+
+        else:
+
+            vd_start = 0
+
+        solutions.append({
+
+            "size":size,
+            "vd":vd,
+            "vd_start":vd_start,
+            "ampacity":amp
+
+        })
+
 
     if solutions:
 
-        df = pd.DataFrame(solutions)
+        best = solutions[0]
 
-        df["Copper"] = df["Runs"] * df["Size mm2"]
+        st.success("Recommended Cable")
 
-        df = df.sort_values(["Copper","Voltage Drop %"])
+        cable_string = f"1R x 3C x {best['size']} sq.mm (CU/XLPE/SWA/PVC)"
 
-        best = df.iloc[0]
+        st.write(cable_string)
 
-        st.header("Recommended Cable")
+        st.write("Derated Ampacity:",round(best["ampacity"],1),"A")
 
-        st.success(
-        f"{best['Runs']} × {best['Size mm2']} mm² cable\n"
-        f"Voltage Drop: {best['Voltage Drop %']} %"
-        )
+        st.write("Running Voltage Drop:",round(best["vd"],3),"%")
 
-        st.header("Cable Comparison")
+        if feeder_to=="Motor":
 
-        st.dataframe(df)
+            st.write("Starting Voltage Drop:",round(best["vd_start"],3),"%")
 
-        report_lines=[
-        f"Project: {project}",
-        f"Engineer: {engineer}",
-        f"Location: {location}",
-        f"Voltage Grade: {voltage_grade}",
-        f"Core Type: {core_type}",
-        f"Installation: {installation}",
-        f"Load Current: {load_current} A",
-        f"Fault Level: {fault} kA",
-        f"Recommended Cable: {best['Runs']} x {best['Size mm2']} mm2",
-        f"Voltage Drop: {best['Voltage Drop %']} %",
-        ]
-
-        tmp=tempfile.NamedTemporaryFile(delete=False,suffix=".pdf")
-
-        c=canvas.Canvas(tmp.name,pagesize=A4)
-
-        y=800
-
-        for line in report_lines:
-            c.drawString(50,y,line)
-            y-=20
-
-        c.save()
-
-        with open(tmp.name,"rb") as f:
-
-            st.download_button(
-            "Download Result Report pdf",
-            f,
-            "CableMate_Report.pdf"
-            )
+        st.write("Short Circuit Minimum Size:",round(S_sc,1),"sq.mm")
 
     else:
 
