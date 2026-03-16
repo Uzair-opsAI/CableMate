@@ -213,47 +213,6 @@ def start_drop(R,X,runs):
     return vd*100
 
 # ------------------------------------------------
-# PDF REPORT
-# ------------------------------------------------
-
-def generate_pdf(result,I,S,kT):
-
-    temp=tempfile.NamedTemporaryFile(delete=False)
-
-    c=canvas.Canvas(temp.name,pagesize=A4)
-
-    y=800
-
-    c.setFont("Helvetica-Bold",16)
-    c.drawString(180,y,"CableMate Engineering Report")
-
-    y-=40
-    c.setFont("Helvetica",11)
-
-    c.drawString(50,y,f"Feeder: {feeder_from} → {feeder_to}")
-
-    y-=20
-    c.drawString(50,y,f"Voltage: {voltage} kV")
-
-    y-=20
-    c.drawString(50,y,f"Load Current: {round(I,1)} A")
-
-    core="3C" if result["size"]<=240 else "1C"
-
-    y-=30
-    c.drawString(50,y,f"Selected Cable: {result['runs']}R x {core} x {result['size']} sq.mm")
-
-    y-=20
-    c.drawString(50,y,f"Ampacity: {round(result['amp'],1)} A")
-
-    y-=20
-    c.drawString(50,y,f"Voltage Drop: {round(result['vd'],2)} %")
-
-    c.save()
-
-    return temp.name
-
-# ------------------------------------------------
 # CALCULATION ENGINE
 # ------------------------------------------------
 
@@ -293,7 +252,6 @@ if st.button("Calculate Cable Size"):
                     continue
 
             else:
-
                 vd_start=0
 
             solutions.append({
@@ -313,27 +271,50 @@ if st.button("Calculate Cable Size"):
 
         st.header("Cable Recommendations")
 
-        results=[budget,performance]
+        for name,opt in {
 
-        df=pd.DataFrame(results)
+        "Budget Optimized":budget,
+        "Performance Optimized":performance
 
-        st.dataframe(df)
+        }.items():
+
+            core="3C" if opt["size"]<=240 else "1C"
+
+            st.success(f"{name}: {opt['runs']}R x {core} x {opt['size']} sq.mm (CU/XLPE/SWA/PVC)")
+
+            st.write("Ampacity:",round(opt["amp"],1),"A")
+
+            st.write("Voltage Drop:",round(opt["vd"],2),"%")
+
+            st.markdown("### Design Reasoning")
+
+            st.write(f"Load Current = {round(I,1)} A")
+
+            st.write(f"Derated Cable Capacity = {round(opt['amp'],1)} A")
+
+            st.write(f"Minimum Short Circuit Size = {round(S,1)} mm²")
+
+            st.write(f"Running Voltage Drop = {round(opt['vd'],2)} %")
+
+            if name=="Budget Optimized":
+
+                st.info(
+                "This cable is selected because it is the smallest conductor size that satisfies ampacity, short circuit withstand and voltage drop limits. This minimizes cable cost while maintaining safe operation."
+                )
+
+            else:
+
+                st.info(
+                "This cable provides lower voltage drop and higher thermal margin. It is recommended when reliability, efficiency and future load expansion are more important than cable cost."
+                )
+
+            st.divider()
 
         st.header("Design Summary")
 
         st.write("Load Current:",round(I,1),"A")
         st.write("Derating Factor:",round(kT,2))
         st.write("Minimum Short Circuit Size:",round(S,1),"mm²")
-
-        pdf_path=generate_pdf(budget,I,S,kT)
-
-        with open(pdf_path,"rb") as f:
-
-            st.download_button(
-                "Download Engineering Report",
-                f,
-                file_name="CableMate_Report.pdf"
-            )
 
     else:
 
