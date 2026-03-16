@@ -1,7 +1,8 @@
 import streamlit as st
 import math
-import tempfile
 import pandas as pd
+import matplotlib.pyplot as plt
+import tempfile
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import streamlit.components.v1 as components
@@ -10,33 +11,30 @@ import streamlit.components.v1 as components
 # CLOSE TAB WARNING
 # ------------------------------------------------
 
-components.html(
-"""
+components.html("""
 <script>
 window.onbeforeunload = function() {
-    return "Are you sure you want to close CableMate?";
+return "Are you sure you want to close CableMate?";
 };
 </script>
-""",
-height=0,
-)
+""",height=0)
 
 # ------------------------------------------------
 # PAGE CONFIG
 # ------------------------------------------------
 
-st.set_page_config(page_title="Uzair CableMate", layout="wide")
+st.set_page_config(page_title="CableMate",layout="wide")
 
 col1,col2 = st.columns([1,6])
 
 with col1:
-    st.image("logo.png", width=110)
+    st.image("logo.png",width=100)
 
 with col2:
-    st.title("Uzair CableMate – MV Cable Sizing Tool")
+    st.title("CableMate – MV Cable Sizing Tool")
 
 # ------------------------------------------------
-# PROJECT DETAILS
+# INPUT SECTION
 # ------------------------------------------------
 
 st.header("Project Details")
@@ -130,7 +128,6 @@ catalog = {
 "sizes":[50,70,95,120,150,185,240,300,400],
 
 "ampacity":{
-
 50:181,
 70:220,
 95:263,
@@ -140,11 +137,9 @@ catalog = {
 240:431,
 300:482,
 400:541
-
 },
 
 "R":{
-
 50:0.387,
 70:0.268,
 95:0.193,
@@ -154,11 +149,9 @@ catalog = {
 240:0.075,
 300:0.060,
 400:0.047
-
 },
 
 "X":{
-
 50:0.111,
 70:0.106,
 95:0.094,
@@ -168,13 +161,12 @@ catalog = {
 240:0.083,
 300:0.082,
 400:0.080
-
 }
 
 }
 
 # ------------------------------------------------
-# ENGINEERING FUNCTIONS
+# FUNCTIONS
 # ------------------------------------------------
 
 def full_load_current():
@@ -206,15 +198,15 @@ def short_circuit():
 
     return (fault*1000*math.sqrt(fault_time))/K
 
-def running_vd(I,R,X,runs):
+def voltage_drop(I,R,X,runs):
 
-    ang=math.acos(pf)
+    ang = math.acos(pf)
 
     vd=(math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)
 
     return vd*100
 
-def start_vd(R,X,runs):
+def start_drop(R,X,runs):
 
     Ist=6*full_load_current()
 
@@ -242,15 +234,13 @@ def generate_pdf(result,I,S,kT):
     c.drawString(180,y,"CableMate Engineering Report")
 
     y-=40
+
     c.setFont("Helvetica",11)
 
     c.drawString(50,y,f"Feeder: {feeder_from} → {feeder_to}")
 
     y-=20
     c.drawString(50,y,f"Voltage: {voltage} kV")
-
-    y-=20
-    c.drawString(50,y,f"Cable Length: {length} m")
 
     y-=20
     c.drawString(50,y,f"Load Current: {round(I,1)} A")
@@ -276,11 +266,13 @@ def generate_pdf(result,I,S,kT):
 
 if st.button("Calculate Cable Size"):
 
-    I=full_load_current()
-    kT=derating()
-    S=short_circuit()
+    I = full_load_current()
+    kT = derating()
+    S = short_circuit()
 
     solutions=[]
+
+    vd_curve=[]
 
     for runs in range(1,4):
 
@@ -297,14 +289,16 @@ if st.button("Calculate Cable Size"):
             R=catalog["R"][size]
             X=catalog["X"][size]
 
-            vd=running_vd(I,R,X,runs)
+            vd=voltage_drop(I,R,X,runs)
+
+            vd_curve.append((size,vd))
 
             if vd>5:
                 continue
 
             if load_type=="Motor":
 
-                vd_start=start_vd(R,X,runs)
+                vd_start=start_drop(R,X,runs)
 
                 if vd_start>15:
                     continue
@@ -314,13 +308,11 @@ if st.button("Calculate Cable Size"):
                 vd_start=0
 
             solutions.append({
-
             "size":size,
             "runs":runs,
             "vd":vd,
             "vd_start":vd_start,
             "amp":amp
-
             })
 
     if solutions:
@@ -333,30 +325,26 @@ if st.button("Calculate Cable Size"):
 
         st.header("Cable Recommendations")
 
-        results=[]
-
-        for name,opt in {
-
-        "Budget Optimized":budget,
-        "Performance Optimized":performance
-
-        }.items():
-
-            core="3C" if opt["size"]<=240 else "1C"
-
-            st.success(f"{name}: {opt['runs']}R x {core} x {opt['size']} sq.mm (CU/XLPE/SWA/PVC)")
-
-            st.write("Ampacity:",round(opt["amp"],1),"A")
-
-            st.write("Voltage Drop:",round(opt["vd"],2),"%")
-
-            results.append(opt)
+        results=[budget,performance]
 
         df=pd.DataFrame(results)
 
-        st.subheader("Cable Comparison")
-
         st.dataframe(df)
+
+        st.header("Voltage Drop Visualization")
+
+        sizes=[x[0] for x in vd_curve]
+        drops=[x[1] for x in vd_curve]
+
+        fig,ax=plt.subplots()
+
+        ax.plot(sizes,drops,marker="o")
+
+        ax.set_xlabel("Cable Size (mm²)")
+        ax.set_ylabel("Voltage Drop (%)")
+        ax.set_title("Voltage Drop vs Cable Size")
+
+        st.pyplot(fig)
 
         st.header("Design Summary")
 
