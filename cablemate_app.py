@@ -1,6 +1,7 @@
 import streamlit as st
 import math
 import tempfile
+import pandas as pd
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import streamlit.components.v1 as components
@@ -35,7 +36,7 @@ with col2:
     st.title("Uzair CableMate – MV Cable Sizing Tool")
 
 # ------------------------------------------------
-# PROJECT INPUTS
+# PROJECT DETAILS
 # ------------------------------------------------
 
 st.header("Project Details")
@@ -66,8 +67,13 @@ with c1:
 
 with c2:
 
+    load_type = st.selectbox(
+        "Load Type",
+        ["Motor","Transformer","Generic Load"]
+    )
+
     power = st.number_input(
-        "Load Power (kW / kVA)",
+        "Power (kW / kVA)",
         value=400
     )
 
@@ -82,7 +88,7 @@ with c2:
     )
 
 # ------------------------------------------------
-# FAULT DATA
+# FAULT CONDITIONS
 # ------------------------------------------------
 
 st.header("Fault Conditions")
@@ -90,18 +96,10 @@ st.header("Fault Conditions")
 f1,f2 = st.columns(2)
 
 with f1:
-
-    fault = st.number_input(
-        "Fault Level (kA)",
-        value=40
-    )
+    fault = st.number_input("Fault Level (kA)",value=40)
 
 with f2:
-
-    fault_time = st.number_input(
-        "Fault Duration (sec)",
-        value=0.4
-    )
+    fault_time = st.number_input("Fault Duration (sec)",value=0.4)
 
 # ------------------------------------------------
 # INSTALLATION CONDITIONS
@@ -176,18 +174,22 @@ catalog = {
 }
 
 # ------------------------------------------------
-# FUNCTIONS
+# ENGINEERING FUNCTIONS
 # ------------------------------------------------
 
 def full_load_current():
 
-    if feeder_to=="Motor":
+    if load_type=="Motor":
 
         return (power*1000)/(math.sqrt(3)*voltage*1000*pf*efficiency)
 
-    else:
+    elif load_type=="Transformer":
 
         return (power*1000)/(math.sqrt(3)*voltage*1000)
+
+    else:
+
+        return (power*1000)/(math.sqrt(3)*voltage*1000*pf)
 
 def derating():
 
@@ -204,7 +206,7 @@ def short_circuit():
 
     return (fault*1000*math.sqrt(fault_time))/K
 
-def voltage_drop(I,R,X,runs):
+def running_vd(I,R,X,runs):
 
     ang=math.acos(pf)
 
@@ -212,7 +214,7 @@ def voltage_drop(I,R,X,runs):
 
     return vd*100
 
-def start_drop(R,X,runs):
+def start_vd(R,X,runs):
 
     Ist=6*full_load_current()
 
@@ -228,7 +230,7 @@ def start_drop(R,X,runs):
 # PDF REPORT
 # ------------------------------------------------
 
-def generate_pdf(opt,I,S,kT):
+def generate_pdf(result,I,S,kT):
 
     temp=tempfile.NamedTemporaryFile(delete=False)
 
@@ -253,36 +255,16 @@ def generate_pdf(opt,I,S,kT):
     y-=20
     c.drawString(50,y,f"Load Current: {round(I,1)} A")
 
-    y-=40
-    c.setFont("Helvetica-Bold",12)
-    c.drawString(50,y,"Selected Cable")
-
-    core="3C" if opt["size"]<=240 else "1C"
-
-    y-=20
-    c.setFont("Helvetica",11)
-
-    c.drawString(50,y,f"{opt['runs']}R x {core} x {opt['size']} sq.mm (CU/XLPE/SWA/PVC)")
+    core="3C" if result["size"]<=240 else "1C"
 
     y-=30
-    c.setFont("Helvetica-Bold",12)
-    c.drawString(50,y,"Engineering Checks")
+    c.drawString(50,y,f"Selected Cable: {result['runs']}R x {core} x {result['size']} sq.mm")
 
     y-=20
-    c.setFont("Helvetica",11)
-
-    c.drawString(50,y,f"Derated Ampacity: {round(opt['amp'],1)} A")
+    c.drawString(50,y,f"Ampacity: {round(result['amp'],1)} A")
 
     y-=20
-    c.drawString(50,y,f"Minimum Short Circuit Size: {round(S,1)} mm²")
-
-    y-=20
-    c.drawString(50,y,f"Running Voltage Drop: {round(opt['vd'],2)} %")
-
-    if feeder_to=="Motor":
-
-        y-=20
-        c.drawString(50,y,f"Starting Voltage Drop: {round(opt['vd_start'],2)} %")
+    c.drawString(50,y,f"Voltage Drop: {round(result['vd'],2)} %")
 
     c.save()
 
@@ -295,9 +277,7 @@ def generate_pdf(opt,I,S,kT):
 if st.button("Calculate Cable Size"):
 
     I=full_load_current()
-
     kT=derating()
-
     S=short_circuit()
 
     solutions=[]
@@ -317,14 +297,14 @@ if st.button("Calculate Cable Size"):
             R=catalog["R"][size]
             X=catalog["X"][size]
 
-            vd=voltage_drop(I,R,X,runs)
+            vd=running_vd(I,R,X,runs)
 
             if vd>5:
                 continue
 
-            if feeder_to=="Motor":
+            if load_type=="Motor":
 
-                vd_start=start_drop(R,X,runs)
+                vd_start=start_vd(R,X,runs)
 
                 if vd_start>15:
                     continue
@@ -353,6 +333,8 @@ if st.button("Calculate Cable Size"):
 
         st.header("Cable Recommendations")
 
+        results=[]
+
         for name,opt in {
 
         "Budget Optimized":budget,
@@ -364,38 +346,22 @@ if st.button("Calculate Cable Size"):
 
             st.success(f"{name}: {opt['runs']}R x {core} x {opt['size']} sq.mm (CU/XLPE/SWA/PVC)")
 
-            st.write("Derated Ampacity:",round(opt["amp"],1),"A")
+            st.write("Ampacity:",round(opt["amp"],1),"A")
 
-            st.write("Running Voltage Drop:",round(opt["vd"],2),"%")
+            st.write("Voltage Drop:",round(opt["vd"],2),"%")
 
-            if feeder_to=="Motor":
+            results.append(opt)
 
-                st.write("Starting Voltage Drop:",round(opt["vd_start"],2),"%")
+        df=pd.DataFrame(results)
 
-            st.markdown("### Design Reasoning")
+        st.subheader("Cable Comparison")
 
-            st.write("Load Current =",round(I,1),"A")
-
-            st.write("Derated Capacity =",round(opt["amp"],1),"A")
-
-            st.write("Minimum SC Size =",round(S,1),"mm²")
-
-            st.write("Voltage Drop =",round(opt["vd"],2),"%")
-
-            st.divider()
+        st.dataframe(df)
 
         st.header("Design Summary")
 
-        st.write("Feeder:",feeder_from,"→",feeder_to)
-
-        st.write("Voltage:",voltage,"kV")
-
-        st.write("Cable Length:",length,"m")
-
         st.write("Load Current:",round(I,1),"A")
-
         st.write("Derating Factor:",round(kT,2))
-
         st.write("Minimum Short Circuit Size:",round(S,1),"mm²")
 
         pdf_path=generate_pdf(budget,I,S,kT)
