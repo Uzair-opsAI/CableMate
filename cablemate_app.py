@@ -1,9 +1,28 @@
 import streamlit as st
 import math
+import tempfile
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+import streamlit.components.v1 as components
 
-# --------------------------------------------------
-# PAGE SETUP
-# --------------------------------------------------
+# ------------------------------------------------
+# CLOSE TAB WARNING
+# ------------------------------------------------
+
+components.html(
+"""
+<script>
+window.onbeforeunload = function() {
+    return "Are you sure you want to close CableMate?";
+};
+</script>
+""",
+height=0,
+)
+
+# ------------------------------------------------
+# PAGE CONFIG
+# ------------------------------------------------
 
 st.set_page_config(page_title="Uzair CableMate", layout="wide")
 
@@ -15,9 +34,9 @@ with col1:
 with col2:
     st.title("Uzair CableMate – MV Cable Sizing Tool")
 
-# --------------------------------------------------
+# ------------------------------------------------
 # PROJECT INPUTS
-# --------------------------------------------------
+# ------------------------------------------------
 
 st.header("Project Details")
 
@@ -62,9 +81,9 @@ with c2:
         value=0.95
     )
 
-# --------------------------------------------------
+# ------------------------------------------------
 # FAULT DATA
-# --------------------------------------------------
+# ------------------------------------------------
 
 st.header("Fault Conditions")
 
@@ -84,9 +103,9 @@ with f2:
         value=0.4
     )
 
-# --------------------------------------------------
+# ------------------------------------------------
 # INSTALLATION CONDITIONS
-# --------------------------------------------------
+# ------------------------------------------------
 
 st.header("Installation Conditions")
 
@@ -104,9 +123,9 @@ with d3:
 with d4:
     group = st.selectbox("Cable Group",[1,2,3,4])
 
-# --------------------------------------------------
-# CATALOG DATA
-# --------------------------------------------------
+# ------------------------------------------------
+# CABLE CATALOG
+# ------------------------------------------------
 
 catalog = {
 
@@ -123,6 +142,7 @@ catalog = {
 240:431,
 300:482,
 400:541
+
 },
 
 "R":{
@@ -136,6 +156,7 @@ catalog = {
 240:0.075,
 300:0.060,
 400:0.047
+
 },
 
 "X":{
@@ -149,17 +170,18 @@ catalog = {
 240:0.083,
 300:0.082,
 400:0.080
-}
 
 }
 
-# --------------------------------------------------
+}
+
+# ------------------------------------------------
 # FUNCTIONS
-# --------------------------------------------------
+# ------------------------------------------------
 
 def full_load_current():
 
-    if feeder_to == "Motor":
+    if feeder_to=="Motor":
 
         return (power*1000)/(math.sqrt(3)*voltage*1000*pf*efficiency)
 
@@ -178,37 +200,105 @@ def derating():
 
 def short_circuit():
 
-    K = 143
+    K=143
+
     return (fault*1000*math.sqrt(fault_time))/K
 
 def voltage_drop(I,R,X,runs):
 
-    ang = math.acos(pf)
+    ang=math.acos(pf)
 
-    vd = (math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)
+    vd=(math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)
 
     return vd*100
 
 def start_drop(R,X,runs):
 
-    Ist = 6*full_load_current()
-    pf_start = 0.25
+    Ist=6*full_load_current()
 
-    ang = math.acos(pf_start)
+    pf_s=0.25
 
-    vd = (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)
+    ang=math.acos(pf_s)
+
+    vd=(math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)
 
     return vd*100
 
-# --------------------------------------------------
+# ------------------------------------------------
+# PDF REPORT
+# ------------------------------------------------
+
+def generate_pdf(opt,I,S,kT):
+
+    temp=tempfile.NamedTemporaryFile(delete=False)
+
+    c=canvas.Canvas(temp.name,pagesize=A4)
+
+    y=800
+
+    c.setFont("Helvetica-Bold",16)
+    c.drawString(180,y,"CableMate Engineering Report")
+
+    y-=40
+    c.setFont("Helvetica",11)
+
+    c.drawString(50,y,f"Feeder: {feeder_from} → {feeder_to}")
+
+    y-=20
+    c.drawString(50,y,f"Voltage: {voltage} kV")
+
+    y-=20
+    c.drawString(50,y,f"Cable Length: {length} m")
+
+    y-=20
+    c.drawString(50,y,f"Load Current: {round(I,1)} A")
+
+    y-=40
+    c.setFont("Helvetica-Bold",12)
+    c.drawString(50,y,"Selected Cable")
+
+    core="3C" if opt["size"]<=240 else "1C"
+
+    y-=20
+    c.setFont("Helvetica",11)
+
+    c.drawString(50,y,f"{opt['runs']}R x {core} x {opt['size']} sq.mm (CU/XLPE/SWA/PVC)")
+
+    y-=30
+    c.setFont("Helvetica-Bold",12)
+    c.drawString(50,y,"Engineering Checks")
+
+    y-=20
+    c.setFont("Helvetica",11)
+
+    c.drawString(50,y,f"Derated Ampacity: {round(opt['amp'],1)} A")
+
+    y-=20
+    c.drawString(50,y,f"Minimum Short Circuit Size: {round(S,1)} mm²")
+
+    y-=20
+    c.drawString(50,y,f"Running Voltage Drop: {round(opt['vd'],2)} %")
+
+    if feeder_to=="Motor":
+
+        y-=20
+        c.drawString(50,y,f"Starting Voltage Drop: {round(opt['vd_start'],2)} %")
+
+    c.save()
+
+    return temp.name
+
+# ------------------------------------------------
 # CALCULATION ENGINE
-# --------------------------------------------------
+# ------------------------------------------------
 
 if st.button("Calculate Cable Size"):
 
-    I = full_load_current()
-    kT = derating()
-    S = short_circuit()
+    I=full_load_current()
+
+    kT=derating()
+
+    S=short_circuit()
 
     solutions=[]
 
@@ -216,50 +306,50 @@ if st.button("Calculate Cable Size"):
 
         for size in catalog["sizes"]:
 
-            if size < S:
+            if size<S:
                 continue
 
-            amp = catalog["ampacity"][size]*kT*runs
+            amp=catalog["ampacity"][size]*kT*runs
 
-            if amp < I:
+            if amp<I:
                 continue
 
-            R = catalog["R"][size]
-            X = catalog["X"][size]
+            R=catalog["R"][size]
+            X=catalog["X"][size]
 
-            vd = voltage_drop(I,R,X,runs)
+            vd=voltage_drop(I,R,X,runs)
 
-            if vd > 5:
+            if vd>5:
                 continue
 
             if feeder_to=="Motor":
 
-                vd_start = start_drop(R,X,runs)
+                vd_start=start_drop(R,X,runs)
 
-                if vd_start > 15:
+                if vd_start>15:
                     continue
 
             else:
 
-                vd_start = 0
+                vd_start=0
 
             solutions.append({
 
-                "size":size,
-                "runs":runs,
-                "vd":vd,
-                "vd_start":vd_start,
-                "amp":amp
+            "size":size,
+            "runs":runs,
+            "vd":vd,
+            "vd_start":vd_start,
+            "amp":amp
 
             })
 
     if solutions:
 
-        solutions = sorted(solutions,key=lambda x:(x["runs"],x["size"]))
+        solutions=sorted(solutions,key=lambda x:(x["runs"],x["size"]))
 
-        budget = solutions[0]
+        budget=solutions[0]
 
-        performance = sorted(solutions,key=lambda x:x["vd"])[0]
+        performance=sorted(solutions,key=lambda x:x["vd"])[0]
 
         st.header("Cable Recommendations")
 
@@ -270,11 +360,9 @@ if st.button("Calculate Cable Size"):
 
         }.items():
 
-            core = "3C" if opt["size"]<=240 else "1C"
+            core="3C" if opt["size"]<=240 else "1C"
 
-            st.success(
-            f"{name}: {opt['runs']}R x {core} x {opt['size']} sq.mm (CU/XLPE/SWA/PVC)"
-            )
+            st.success(f"{name}: {opt['runs']}R x {core} x {opt['size']} sq.mm (CU/XLPE/SWA/PVC)")
 
             st.write("Derated Ampacity:",round(opt["amp"],1),"A")
 
@@ -284,59 +372,23 @@ if st.button("Calculate Cable Size"):
 
                 st.write("Starting Voltage Drop:",round(opt["vd_start"],2),"%")
 
-            # --------------------------------------------------
-            # DESIGN REASONING
-            # --------------------------------------------------
-
             st.markdown("### Design Reasoning")
 
-            st.write(f"Load Current = {round(I,1)} A")
+            st.write("Load Current =",round(I,1),"A")
 
-            st.write(f"Derated Cable Capacity = {round(opt['amp'],1)} A")
+            st.write("Derated Capacity =",round(opt["amp"],1),"A")
 
-            if opt["amp"]>I:
-                st.write("✔ Ampacity check passed")
+            st.write("Minimum SC Size =",round(S,1),"mm²")
 
-            st.write(f"Minimum Short Circuit Size = {round(S,1)} mm²")
-
-            if opt["size"]>=S:
-                st.write("✔ Short circuit withstand satisfied")
-
-            st.write(f"Running Voltage Drop = {round(opt['vd'],2)} %")
-
-            if opt["vd"]<5:
-                st.write("✔ Voltage drop within acceptable limit")
-
-            if feeder_to=="Motor":
-
-                st.write(f"Motor Starting Voltage Drop = {round(opt['vd_start'],2)} %")
-
-                if opt["vd_start"]<15:
-                    st.write("✔ Starting voltage drop acceptable")
-
-            if name=="Budget Optimized":
-
-                st.info(
-                "This cable is selected because it is the smallest conductor size satisfying all design criteria, minimizing cost."
-                )
-
-            else:
-
-                st.info(
-                "This cable provides lower voltage drop and higher thermal margin, improving reliability."
-                )
+            st.write("Voltage Drop =",round(opt["vd"],2),"%")
 
             st.divider()
-
-        # --------------------------------------------------
-        # DESIGN SUMMARY PANEL
-        # --------------------------------------------------
 
         st.header("Design Summary")
 
         st.write("Feeder:",feeder_from,"→",feeder_to)
 
-        st.write("System Voltage:",voltage,"kV")
+        st.write("Voltage:",voltage,"kV")
 
         st.write("Cable Length:",length,"m")
 
@@ -345,6 +397,16 @@ if st.button("Calculate Cable Size"):
         st.write("Derating Factor:",round(kT,2))
 
         st.write("Minimum Short Circuit Size:",round(S,1),"mm²")
+
+        pdf_path=generate_pdf(budget,I,S,kT)
+
+        with open(pdf_path,"rb") as f:
+
+            st.download_button(
+                "Download Engineering Report",
+                f,
+                file_name="CableMate_Report.pdf"
+            )
 
     else:
 
