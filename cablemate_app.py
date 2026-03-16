@@ -4,43 +4,40 @@ import pandas as pd
 import tempfile
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-import streamlit.components.v1 as components
-
-# ------------------------------------------------
-# CLOSE TAB WARNING
-# ------------------------------------------------
-
-components.html("""
-<script>
-window.onbeforeunload = function() {
-return "Are you sure you want to close CableMate?";
-};
-</script>
-""",height=0)
 
 # ------------------------------------------------
 # PAGE CONFIG
 # ------------------------------------------------
 
-st.set_page_config(page_title="CableMate",layout="wide")
+st.set_page_config(
+    page_title="CableMate",
+    layout="wide"
+)
+
+# ------------------------------------------------
+# HEADER
+# ------------------------------------------------
 
 col1,col2 = st.columns([1,6])
 
 with col1:
-    st.image("logo.png",width=100)
+    st.image("logo.png",width=110)
 
 with col2:
     st.title("CableMate – MV Cable Sizing Tool")
+    st.caption("Engineering cable sizing assistant for MV systems")
+
+st.divider()
 
 # ------------------------------------------------
-# INPUT SECTION
+# INPUT PANELS
 # ------------------------------------------------
 
-st.header("Project Details")
+st.subheader("Project Inputs")
 
-c1,c2 = st.columns(2)
+left,right = st.columns(2)
 
-with c1:
+with left:
 
     feeder_from = st.selectbox(
         "From Equipment",
@@ -62,7 +59,7 @@ with c1:
         value=450
     )
 
-with c2:
+with right:
 
     load_type = st.selectbox(
         "Load Type",
@@ -70,7 +67,7 @@ with c2:
     )
 
     power = st.number_input(
-        "Power (kW / kVA)",
+        "Load Power (kW / kVA)",
         value=400
     )
 
@@ -84,11 +81,13 @@ with c2:
         value=0.95
     )
 
+st.divider()
+
 # ------------------------------------------------
 # FAULT CONDITIONS
 # ------------------------------------------------
 
-st.header("Fault Conditions")
+st.subheader("Fault Conditions")
 
 f1,f2 = st.columns(2)
 
@@ -98,11 +97,13 @@ with f1:
 with f2:
     fault_time = st.number_input("Fault Duration (sec)",value=0.4)
 
+st.divider()
+
 # ------------------------------------------------
 # INSTALLATION CONDITIONS
 # ------------------------------------------------
 
-st.header("Installation Conditions")
+st.subheader("Installation Conditions")
 
 d1,d2,d3,d4 = st.columns(4)
 
@@ -117,6 +118,8 @@ with d3:
 
 with d4:
     group = st.selectbox("Cable Group",[1,2,3,4])
+
+st.divider()
 
 # ------------------------------------------------
 # CABLE CATALOG
@@ -165,7 +168,7 @@ catalog = {
 }
 
 # ------------------------------------------------
-# FUNCTIONS
+# CALCULATION FUNCTIONS
 # ------------------------------------------------
 
 def full_load_current():
@@ -195,28 +198,80 @@ def short_circuit():
 
 def voltage_drop(I,R,X,runs):
 
-    ang = math.acos(pf)
+    angle = math.acos(pf)
 
-    vd=(math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)
-
-    return vd*100
-
-def start_drop(R,X,runs):
-
-    Ist=6*full_load_current()
-    pf_s=0.25
-
-    ang=math.acos(pf_s)
-
-    vd=(math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)
+    vd = (math.sqrt(3)*I*(R*math.cos(angle)+X*math.sin(angle))*length)/(1000*runs*voltage*1000)
 
     return vd*100
+
+# ------------------------------------------------
+# PDF REPORT GENERATOR
+# ------------------------------------------------
+
+def generate_report(inputs,budget,performance,I,S,kT):
+
+    temp=tempfile.NamedTemporaryFile(delete=False)
+
+    c=canvas.Canvas(temp.name,pagesize=A4)
+
+    y=800
+
+    c.setFont("Helvetica-Bold",16)
+    c.drawString(180,y,"CableMate Engineering Summary")
+
+    y-=40
+    c.setFont("Helvetica",11)
+
+    c.drawString(50,y,"PROJECT INPUTS")
+
+    y-=20
+    c.drawString(50,y,f"Feeder: {inputs['from']} → {inputs['to']}")
+
+    y-=20
+    c.drawString(50,y,f"Voltage: {inputs['voltage']} kV")
+
+    y-=20
+    c.drawString(50,y,f"Load Power: {inputs['power']}")
+
+    y-=20
+    c.drawString(50,y,f"Cable Length: {inputs['length']} m")
+
+    y-=30
+    c.drawString(50,y,"CABLE SELECTION")
+
+    y-=20
+    c.drawString(50,y,f"Budget Cable: {budget['runs']}R x 3C x {budget['size']} sq.mm")
+
+    y-=20
+    c.drawString(50,y,f"Performance Cable: {performance['runs']}R x 3C x {performance['size']} sq.mm")
+
+    y-=30
+    c.drawString(50,y,"ENGINEERING REASONING")
+
+    y-=20
+    c.drawString(50,y,f"Load Current = {round(I,1)} A")
+
+    y-=20
+    c.drawString(50,y,f"Derating Factor = {round(kT,2)}")
+
+    y-=20
+    c.drawString(50,y,f"Minimum Short Circuit Size = {round(S,1)} mm2")
+
+    y-=20
+    c.drawString(50,y,"Budget cable minimizes cost while meeting all design constraints.")
+
+    y-=20
+    c.drawString(50,y,"Performance cable reduces voltage drop and provides higher margin.")
+
+    c.save()
+
+    return temp.name
 
 # ------------------------------------------------
 # CALCULATION ENGINE
 # ------------------------------------------------
 
-if st.button("Calculate Cable Size"):
+if st.button("Run CableMate Analysis"):
 
     I = full_load_current()
     kT = derating()
@@ -236,30 +291,16 @@ if st.button("Calculate Cable Size"):
             if amp<I:
                 continue
 
-            R=catalog["R"][size]
-            X=catalog["X"][size]
-
-            vd=voltage_drop(I,R,X,runs)
+            vd=voltage_drop(I,catalog["R"][size],catalog["X"][size],runs)
 
             if vd>5:
                 continue
 
-            if load_type=="Motor":
-
-                vd_start=start_drop(R,X,runs)
-
-                if vd_start>15:
-                    continue
-
-            else:
-                vd_start=0
-
             solutions.append({
-            "size":size,
-            "runs":runs,
-            "vd":vd,
-            "vd_start":vd_start,
-            "amp":amp
+                "size":size,
+                "runs":runs,
+                "amp":amp,
+                "vd":vd
             })
 
     if solutions:
@@ -269,52 +310,45 @@ if st.button("Calculate Cable Size"):
         budget=solutions[0]
         performance=sorted(solutions,key=lambda x:x["vd"])[0]
 
-        st.header("Cable Recommendations")
+        st.subheader("Recommended Cables")
 
-        for name,opt in {
+        st.success(
+            f"Budget Optimized: {budget['runs']}R x 3C x {budget['size']} sq.mm"
+        )
 
-        "Budget Optimized":budget,
-        "Performance Optimized":performance
+        st.info(
+            f"Performance Optimized: {performance['runs']}R x 3C x {performance['size']} sq.mm"
+        )
 
-        }.items():
-
-            core="3C" if opt["size"]<=240 else "1C"
-
-            st.success(f"{name}: {opt['runs']}R x {core} x {opt['size']} sq.mm (CU/XLPE/SWA/PVC)")
-
-            st.write("Ampacity:",round(opt["amp"],1),"A")
-
-            st.write("Voltage Drop:",round(opt["vd"],2),"%")
-
-            st.markdown("### Design Reasoning")
-
-            st.write(f"Load Current = {round(I,1)} A")
-
-            st.write(f"Derated Cable Capacity = {round(opt['amp'],1)} A")
-
-            st.write(f"Minimum Short Circuit Size = {round(S,1)} mm²")
-
-            st.write(f"Running Voltage Drop = {round(opt['vd'],2)} %")
-
-            if name=="Budget Optimized":
-
-                st.info(
-                "This cable is selected because it is the smallest conductor size that satisfies ampacity, short circuit withstand and voltage drop limits. This minimizes cable cost while maintaining safe operation."
-                )
-
-            else:
-
-                st.info(
-                "This cable provides lower voltage drop and higher thermal margin. It is recommended when reliability, efficiency and future load expansion are more important than cable cost."
-                )
-
-            st.divider()
-
-        st.header("Design Summary")
+        st.subheader("Engineering Reasoning")
 
         st.write("Load Current:",round(I,1),"A")
+
         st.write("Derating Factor:",round(kT,2))
+
         st.write("Minimum Short Circuit Size:",round(S,1),"mm²")
+
+        st.write("Budget cable minimizes cable size and project cost while meeting all design constraints.")
+
+        st.write("Performance cable provides reduced voltage drop and higher reliability margin.")
+
+        inputs={
+            "from":feeder_from,
+            "to":feeder_to,
+            "voltage":voltage,
+            "power":power,
+            "length":length
+        }
+
+        pdf_path=generate_report(inputs,budget,performance,I,S,kT)
+
+        with open(pdf_path,"rb") as f:
+
+            st.download_button(
+                "Download Engineering Summary",
+                f,
+                file_name="CableMate_Report.pdf"
+            )
 
     else:
 
