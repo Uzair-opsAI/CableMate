@@ -12,63 +12,46 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="CableMate", layout="wide")
 
 # ------------------------------------------------
-# PROFESSIONAL UI FIX
+# UI STYLE FIX
 # ------------------------------------------------
 
 st.markdown("""
 <style>
+.stApp {background-color: #f8fafc;}
 
-/* MAIN BACKGROUND */
-.stApp {
-    background-color: #f8fafc;
-}
-
-/* SIDEBAR */
 section[data-testid="stSidebar"] {
     background-color: #0f172a;
 }
 
-/* SIDEBAR TEXT */
 section[data-testid="stSidebar"] * {
     color: #e5e7eb !important;
 }
 
-/* HEADINGS */
-h1, h2, h3 {
-    color: #111827;
-}
+h1,h2,h3 {color:#111827;}
 
-/* TEXT */
-p, label, span {
-    color: #374151 !important;
-}
+p,label,span {color:#374151 !important;}
 
-/* SUCCESS */
 div[data-baseweb="notification"][kind="success"] {
-    background-color: #ecfdf5;
-    border-left: 6px solid #10b981;
+    background-color:#ecfdf5;
+    border-left:6px solid #10b981;
 }
 
-/* ERROR */
 div[data-baseweb="notification"][kind="error"] {
-    background-color: #fef2f2;
-    border-left: 6px solid #ef4444;
+    background-color:#fef2f2;
+    border-left:6px solid #ef4444;
 }
 
-/* BUTTON */
 button[kind="primary"] {
-    background-color: #2563eb;
-    border-radius: 8px;
+    background-color:#2563eb;
+    border-radius:8px;
 }
 
-/* METRIC CARDS */
 [data-testid="stMetric"] {
-    background: white;
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
+    background:white;
+    padding:10px;
+    border-radius:10px;
+    box-shadow:0px 2px 6px rgba(0,0,0,0.05);
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -100,19 +83,19 @@ with h2:
 st.divider()
 
 # ------------------------------------------------
-# SIDEBAR INPUTS (DOUBLE COLUMN)
+# SIDEBAR INPUTS
 # ------------------------------------------------
 
 st.sidebar.header("Project Inputs")
 
-c1,c2 = st.sidebar.columns(2)
+col1,col2 = st.sidebar.columns(2)
 
-with c1:
+with col1:
     feeder_from = st.selectbox("From",["Switchgear","Transformer","Generator"])
     voltage = st.selectbox("Voltage (kV)",[3.3,6.6,11,33])
     length = st.number_input("Length (m)",value=300)
 
-with c2:
+with col2:
     feeder_to = st.selectbox("To",["Motor","Transformer","Panel"])
     laying = st.selectbox("Laying",["Direct Buried","Air","Duct"])
     vd_limit = st.number_input("Allowed VD (%)",value=5.0)
@@ -144,7 +127,7 @@ fault = st.sidebar.number_input("Fault Level (kA)",value=25)
 fault_time = st.sidebar.number_input("Fault Time (s)",value=0.4)
 
 # ------------------------------------------------
-# DERATING (MANUAL + DEFAULT)
+# DERATING (WITH MANUAL OPTION)
 # ------------------------------------------------
 
 st.sidebar.subheader("Derating")
@@ -200,42 +183,71 @@ def start_drop(I,R,X):
     return (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*voltage*1000)*100
 
 # ------------------------------------------------
-# PDF REPORT
+# PDF REPORT (UPDATED)
 # ------------------------------------------------
 
-def report(best,I,S,vd,vd_start):
+def report(best,I,S,vd,vd_start,kT):
 
     f=tempfile.NamedTemporaryFile(delete=False)
     c=canvas.Canvas(f.name,pagesize=A4)
 
     y=800
-    c.drawString(200,y,"CableMate Report")
+    c.setFont("Helvetica-Bold",16)
+    c.drawString(180,y,"CableMate Engineering Report")
 
     y-=40
-    c.drawString(50,y,f"Best Cable: 3C x {best} sq.mm")
+    c.setFont("Helvetica",11)
 
+    c.drawString(50,y,"INPUT PARAMETERS")
     y-=20
-    c.drawString(50,y,f"Load Current: {round(I,1)} A")
+    c.drawString(50,y,f"Voltage = {voltage} kV")
+    y-=15
+    c.drawString(50,y,f"Length = {length} m")
+    y-=15
+    c.drawString(50,y,f"Load Type = {load_type}")
+    y-=15
+    c.drawString(50,y,f"Power = {power}")
+    y-=25
 
+    c.drawString(50,y,"LOAD CURRENT")
     y-=20
-    c.drawString(50,y,f"Voltage Drop: {round(vd,2)} %")
+    c.drawString(50,y,"I = P / (√3 × V × pf × η)")
+    y-=15
+    c.drawString(50,y,f"I = {round(I,2)} A")
+    y-=25
 
+    c.drawString(50,y,"DERATING")
     y-=20
-    c.drawString(50,y,f"Starting Drop: {round(vd_start,2)} %")
+    c.drawString(50,y,f"kT = {round(kT,2)}")
+    y-=25
 
+    c.drawString(50,y,"SHORT CIRCUIT")
     y-=20
-    c.drawString(50,y,f"Short Circuit Size: {round(S,1)} mm2")
+    c.drawString(50,y,"S = (Ik × √t) / K")
+    y-=15
+    c.drawString(50,y,f"S = {round(S,2)} mm2")
+    y-=25
 
-    y-=30
-    c.drawString(50,y,"Checks Passed:")
+    amp = catalog["ampacity"][best]*kT
+
+    c.drawString(50,y,"AMPACITY CHECK")
     y-=20
-    c.drawString(60,y,"✔ Ampacity OK")
+    c.drawString(50,y,f"{round(amp,1)} ≥ {round(I,1)} A → PASS")
+    y-=25
+
+    c.drawString(50,y,"VOLTAGE DROP")
     y-=20
-    c.drawString(60,y,"✔ Voltage Drop OK")
+    c.drawString(50,y,f"{round(vd,2)} % ≤ {vd_limit} % → PASS")
+    y-=25
+
+    c.drawString(50,y,"STARTING CONDITION")
     y-=20
-    c.drawString(60,y,"✔ Short Circuit OK")
+    c.drawString(50,y,f"{round(vd_start,2)} % ≤ 15 % → PASS")
+    y-=25
+
+    c.drawString(50,y,"FINAL SELECTION")
     y-=20
-    c.drawString(60,y,"✔ Starting OK")
+    c.drawString(50,y,f"3C x {best} sq.mm")
 
     c.save()
     return f.name
@@ -246,8 +258,8 @@ def report(best,I,S,vd,vd_start):
 
 if run:
 
-    I = load_current()
-    S = short_circuit()
+    I=load_current()
+    S=short_circuit()
 
     best=None
 
@@ -280,10 +292,10 @@ if run:
         c2.metric("Voltage Drop (%)", round(vd,2))
         c3.metric("Starting Drop (%)", round(vd_start,2))
 
-        pdf=report(best,I,S,vd,vd_start)
+        pdf=report(best,I,S,vd,vd_start,kT)
 
         with open(pdf,"rb") as f:
-            st.download_button("Download Report",f,"CableMate.pdf")
+            st.download_button("Download Report",f,"CableMate_Report.pdf")
 
     else:
         st.error("No suitable cable found")
