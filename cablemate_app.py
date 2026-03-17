@@ -6,16 +6,56 @@ from reportlab.pdfgen import canvas
 import streamlit.components.v1 as components
 
 # ------------------------------------------------
-# PAGE CONFIG + STYLE
+# PAGE CONFIG + ADVANCED UI
 # ------------------------------------------------
 
 st.set_page_config(page_title="CableMate", layout="wide")
 
 st.markdown("""
 <style>
-.stApp {background-color: #f4f6f9;}
-section[data-testid="stSidebar"] {background-color: #111827;}
-section[data-testid="stSidebar"] * {color: white !important;}
+.stApp {
+    background-color: #eef2f7;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0f172a, #1e293b);
+}
+
+/* Sidebar text */
+section[data-testid="stSidebar"] * {
+    color: white !important;
+}
+
+/* Cards */
+.block-container {
+    padding-top: 1rem;
+}
+
+/* Headers */
+h1, h2, h3 {
+    font-weight: 600;
+}
+
+/* Result box */
+.result-box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Buttons */
+button[kind="primary"] {
+    background-color: #2563eb;
+    border-radius: 10px;
+}
+
+/* Divider spacing */
+hr {
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -37,30 +77,39 @@ if(changed){e.preventDefault();e.returnValue='';}
 # HEADER
 # ------------------------------------------------
 
-c1,c2 = st.columns([1,6])
-with c1:
+h1,h2 = st.columns([1,6])
+
+with h1:
     st.image("logo.png", width=80)
-with c2:
+
+with h2:
     st.title("CableMate – MV Cable Sizing Tool")
+    st.caption("Professional Cable Selection Assistant")
 
 st.divider()
 
 # ------------------------------------------------
-# SIDEBAR INPUTS
+# SIDEBAR INPUTS (DOUBLE COLUMN)
 # ------------------------------------------------
 
-st.sidebar.header("Inputs")
+st.sidebar.header("Project Inputs")
 
-# BASIC INPUTS
-feeder_from = st.sidebar.selectbox("From",["Switchgear","Transformer","Generator"])
-feeder_to = st.sidebar.selectbox("To",["Motor","Transformer","Panel"])
-voltage = st.sidebar.selectbox("Voltage (kV)",[3.3,6.6,11,33])
-length = st.sidebar.number_input("Length (m)",value=300)
-laying = st.sidebar.selectbox("Laying Method",["Direct Buried","Air","Duct"])
+col1, col2 = st.sidebar.columns(2)
 
-vd_limit = st.sidebar.number_input("Allowed Voltage Drop (%)",value=5.0)
+with col1:
+    feeder_from = st.selectbox("From",["Switchgear","Transformer","Generator"])
+    voltage = st.selectbox("Voltage (kV)",[3.3,6.6,11,33])
+    length = st.number_input("Length (m)",value=300)
 
+with col2:
+    feeder_to = st.selectbox("To",["Motor","Transformer","Panel"])
+    laying = st.selectbox("Laying Method",["Direct Buried","Air","Duct"])
+    vd_limit = st.number_input("Allowed VD (%)",value=5.0)
+
+# ------------------------------------------------
 # LOAD
+# ------------------------------------------------
+
 load_type = st.sidebar.selectbox(
     "Load Type",
     ["Motor","Transformer","Generic Load","Power Load"]
@@ -76,30 +125,34 @@ else:
 pf = st.sidebar.number_input("Power Factor",value=0.9)
 eff = st.sidebar.number_input("Efficiency",value=0.95)
 
+# ------------------------------------------------
 # FAULT
+# ------------------------------------------------
+
 fault = st.sidebar.number_input("Fault Level (kA)",value=25)
 fault_time = st.sidebar.number_input("Fault Time (s)",value=0.4)
 
 # ------------------------------------------------
-# DERATING WITH "OTHERS"
+# DERATING (IMPROVED LOGIC)
 # ------------------------------------------------
 
 st.sidebar.subheader("Derating Factors")
 
-def custom_input(label, options, default):
-    choice = st.sidebar.selectbox(label, options + ["Other"])
+def get_input(label, default_options, default_value):
+    choice = st.sidebar.selectbox(label, default_options + ["Other"])
     if choice == "Other":
-        return st.sidebar.number_input(f"Enter {label}", value=default)
-    return choice
+        return st.sidebar.number_input(f"{label} (Manual)", value=default_value)
+    else:
+        return choice
 
-soil = custom_input("Soil Resistivity",[1.0,1.5,2],1.5)
-depth = custom_input("Depth Factor",[0.8,1.0],1.0)
-group = custom_input("Grouping Factor",[1,0.85,0.79,0.73],1)
-temp = custom_input("Temperature Factor",[1,0.85],1)
+soil = get_input("Soil Factor",[1.0,1.5,2],1.5)
+depth = get_input("Depth Factor",[0.8,1.0],1.0)
+group = get_input("Grouping Factor",[1,0.85,0.79,0.73],1)
+temp = get_input("Temperature Factor",[1,0.85],1)
 
 kT = soil * depth * group * temp
 
-run = st.sidebar.button("Run CableMate")
+run = st.sidebar.button("Run CableMate Analysis")
 
 # ------------------------------------------------
 # CATALOG
@@ -154,13 +207,13 @@ def report(best,I,S,vd,vd_start):
     c.drawString(50,y,f"Load Current: {round(I,1)} A")
 
     y-=20
-    c.drawString(50,y,f"Voltage Drop: {round(vd,2)} %")
+    c.drawString(50,y=f"Voltage Drop: {round(vd,2)} %")
 
     y-=20
-    c.drawString(50,y,f"Starting Drop: {round(vd_start,2)} %")
+    c.drawString(50,y=f"Starting Drop: {round(vd_start,2)} %")
 
     y-=20
-    c.drawString(50,y,f"Short Circuit Size: {round(S,1)}")
+    c.drawString(50,y=f"Short Circuit Size: {round(S,1)}")
 
     y-=30
     c.drawString(50,y,"Checks Passed:")
@@ -209,11 +262,17 @@ if run:
 
     if best:
 
+        st.markdown('<div class="result-box">', unsafe_allow_html=True)
+
         st.success(f"Best Fit Cable Suggestion: 3C x {best} sq.mm")
 
-        st.write("Load Current:",round(I,1),"A")
-        st.write("Voltage Drop:",round(vd,2),"%")
-        st.write("Starting Drop:",round(vd_start,2),"%")
+        c1,c2,c3 = st.columns(3)
+
+        c1.metric("Load Current (A)", round(I,1))
+        c2.metric("Voltage Drop (%)", round(vd,2))
+        c3.metric("Starting Drop (%)", round(vd_start,2))
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
         pdf=report(best,I,S,vd,vd_start)
 
