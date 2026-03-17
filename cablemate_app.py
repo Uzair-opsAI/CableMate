@@ -6,56 +6,69 @@ from reportlab.pdfgen import canvas
 import streamlit.components.v1 as components
 
 # ------------------------------------------------
-# PAGE CONFIG + ADVANCED UI
+# PAGE CONFIG
 # ------------------------------------------------
 
 st.set_page_config(page_title="CableMate", layout="wide")
 
+# ------------------------------------------------
+# PROFESSIONAL UI FIX
+# ------------------------------------------------
+
 st.markdown("""
 <style>
+
+/* MAIN BACKGROUND */
 .stApp {
-    background-color: #eef2f7;
+    background-color: #f8fafc;
 }
 
-/* Sidebar */
+/* SIDEBAR */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0f172a, #1e293b);
+    background-color: #0f172a;
 }
 
-/* Sidebar text */
+/* SIDEBAR TEXT */
 section[data-testid="stSidebar"] * {
-    color: white !important;
+    color: #e5e7eb !important;
 }
 
-/* Cards */
-.block-container {
-    padding-top: 1rem;
-}
-
-/* Headers */
+/* HEADINGS */
 h1, h2, h3 {
-    font-weight: 600;
+    color: #111827;
 }
 
-/* Result box */
-.result-box {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+/* TEXT */
+p, label, span {
+    color: #374151 !important;
 }
 
-/* Buttons */
+/* SUCCESS */
+div[data-baseweb="notification"][kind="success"] {
+    background-color: #ecfdf5;
+    border-left: 6px solid #10b981;
+}
+
+/* ERROR */
+div[data-baseweb="notification"][kind="error"] {
+    background-color: #fef2f2;
+    border-left: 6px solid #ef4444;
+}
+
+/* BUTTON */
 button[kind="primary"] {
     background-color: #2563eb;
-    border-radius: 10px;
+    border-radius: 8px;
 }
 
-/* Divider spacing */
-hr {
-    margin-top: 25px;
-    margin-bottom: 25px;
+/* METRIC CARDS */
+[data-testid="stMetric"] {
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0px 2px 6px rgba(0,0,0,0.05);
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -78,13 +91,11 @@ if(changed){e.preventDefault();e.returnValue='';}
 # ------------------------------------------------
 
 h1,h2 = st.columns([1,6])
-
 with h1:
     st.image("logo.png", width=80)
-
 with h2:
     st.title("CableMate – MV Cable Sizing Tool")
-    st.caption("Professional Cable Selection Assistant")
+    st.caption("Professional Engineering Cable Selection Tool")
 
 st.divider()
 
@@ -94,16 +105,16 @@ st.divider()
 
 st.sidebar.header("Project Inputs")
 
-col1, col2 = st.sidebar.columns(2)
+c1,c2 = st.sidebar.columns(2)
 
-with col1:
+with c1:
     feeder_from = st.selectbox("From",["Switchgear","Transformer","Generator"])
     voltage = st.selectbox("Voltage (kV)",[3.3,6.6,11,33])
     length = st.number_input("Length (m)",value=300)
 
-with col2:
+with c2:
     feeder_to = st.selectbox("To",["Motor","Transformer","Panel"])
-    laying = st.selectbox("Laying Method",["Direct Buried","Air","Duct"])
+    laying = st.selectbox("Laying",["Direct Buried","Air","Duct"])
     vd_limit = st.number_input("Allowed VD (%)",value=5.0)
 
 # ------------------------------------------------
@@ -133,22 +144,21 @@ fault = st.sidebar.number_input("Fault Level (kA)",value=25)
 fault_time = st.sidebar.number_input("Fault Time (s)",value=0.4)
 
 # ------------------------------------------------
-# DERATING (IMPROVED LOGIC)
+# DERATING (MANUAL + DEFAULT)
 # ------------------------------------------------
 
-st.sidebar.subheader("Derating Factors")
+st.sidebar.subheader("Derating")
 
-def get_input(label, default_options, default_value):
-    choice = st.sidebar.selectbox(label, default_options + ["Other"])
+def input_with_other(label, options, default):
+    choice = st.sidebar.selectbox(label, options + ["Other"])
     if choice == "Other":
-        return st.sidebar.number_input(f"{label} (Manual)", value=default_value)
-    else:
-        return choice
+        return st.sidebar.number_input(f"{label} (Manual)", value=default)
+    return float(choice)
 
-soil = get_input("Soil Factor",[1.0,1.5,2],1.5)
-depth = get_input("Depth Factor",[0.8,1.0],1.0)
-group = get_input("Grouping Factor",[1,0.85,0.79,0.73],1)
-temp = get_input("Temperature Factor",[1,0.85],1)
+soil = input_with_other("Soil Factor",[1.0,1.5,2],1.5)
+depth = input_with_other("Depth Factor",[0.8,1.0],1.0)
+group = input_with_other("Grouping Factor",[1,0.85,0.79,0.73],1)
+temp = input_with_other("Temp Factor",[1,0.85],1)
 
 kT = soil * depth * group * temp
 
@@ -190,10 +200,11 @@ def start_drop(I,R,X):
     return (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*voltage*1000)*100
 
 # ------------------------------------------------
-# PDF
+# PDF REPORT
 # ------------------------------------------------
 
 def report(best,I,S,vd,vd_start):
+
     f=tempfile.NamedTemporaryFile(delete=False)
     c=canvas.Canvas(f.name,pagesize=A4)
 
@@ -207,13 +218,13 @@ def report(best,I,S,vd,vd_start):
     c.drawString(50,y,f"Load Current: {round(I,1)} A")
 
     y-=20
-    c.drawString(50,y=f"Voltage Drop: {round(vd,2)} %")
+    c.drawString(50,y,f"Voltage Drop: {round(vd,2)} %")
 
     y-=20
-    c.drawString(50,y=f"Starting Drop: {round(vd_start,2)} %")
+    c.drawString(50,y,f"Starting Drop: {round(vd_start,2)} %")
 
     y-=20
-    c.drawString(50,y=f"Short Circuit Size: {round(S,1)}")
+    c.drawString(50,y,f"Short Circuit Size: {round(S,1)} mm2")
 
     y-=30
     c.drawString(50,y,"Checks Passed:")
@@ -262,17 +273,12 @@ if run:
 
     if best:
 
-        st.markdown('<div class="result-box">', unsafe_allow_html=True)
-
         st.success(f"Best Fit Cable Suggestion: 3C x {best} sq.mm")
 
         c1,c2,c3 = st.columns(3)
-
         c1.metric("Load Current (A)", round(I,1))
         c2.metric("Voltage Drop (%)", round(vd,2))
         c3.metric("Starting Drop (%)", round(vd_start,2))
-
-        st.markdown('</div>', unsafe_allow_html=True)
 
         pdf=report(best,I,S,vd,vd_start)
 
