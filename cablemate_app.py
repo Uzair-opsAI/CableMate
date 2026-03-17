@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="CableMate", layout="wide")
 
 # ------------------------------------------------
-# UI STYLE
+# UI
 # ------------------------------------------------
 
 st.markdown("""
@@ -16,23 +16,8 @@ st.markdown("""
 .stApp {background-color:#f8fafc;}
 section[data-testid="stSidebar"] {background-color:#0f172a;}
 section[data-testid="stSidebar"] * {color:#e5e7eb !important;}
-h1,h2,h3 {color:#111827;}
 </style>
 """, unsafe_allow_html=True)
-
-# ------------------------------------------------
-# CLOSE WARNING
-# ------------------------------------------------
-
-components.html("""
-<script>
-let changed=false;
-document.addEventListener("input",()=>{changed=true;});
-window.onbeforeunload=function(e){
-if(changed){e.preventDefault();e.returnValue='';}
-};
-</script>
-""", height=0)
 
 # ------------------------------------------------
 # HEADER
@@ -47,7 +32,7 @@ with c2:
 st.divider()
 
 # ------------------------------------------------
-# SIDEBAR INPUTS
+# INPUTS
 # ------------------------------------------------
 
 st.sidebar.header("Inputs")
@@ -73,6 +58,25 @@ fault_time = st.sidebar.number_input("Fault Time (s)",value=0.4)
 
 vd_run_limit = st.sidebar.number_input("Allowed VD Running (%)",value=5.0)
 vd_start_limit = st.sidebar.number_input("Allowed VD Starting (%)",value=15.0)
+
+# ------------------------------------------------
+# DERATING (RESTORED)
+# ------------------------------------------------
+
+st.sidebar.subheader("Derating Factors")
+
+def input_with_other(label, options, default):
+    choice = st.sidebar.selectbox(label, options + ["Other"])
+    if choice == "Other":
+        return st.sidebar.number_input(f"{label} (Manual)", value=default)
+    return float(choice)
+
+soil = input_with_other("Soil Factor",[1.0,1.5,2],1.5)
+depth = input_with_other("Depth Factor",[0.8,1.0],1.0)
+group = input_with_other("Grouping Factor",[1,0.85,0.79,0.73],1)
+temp = input_with_other("Temp Factor",[1,0.85],1)
+
+kT = soil * depth * group * temp
 
 run = st.sidebar.button("Run CableMate")
 
@@ -115,7 +119,7 @@ def vd_start(I,R,X,runs):
 # PDF
 # ------------------------------------------------
 
-def report(best,I,S,vd_run,vd_st):
+def report(best,I,S,v,vs,kT):
 
     f=tempfile.NamedTemporaryFile(delete=False)
     c=canvas.Canvas(f.name,pagesize=A4)
@@ -124,33 +128,24 @@ def report(best,I,S,vd_run,vd_st):
     c.drawString(180,y,"CableMate Engineering Report")
 
     y-=40
-    c.drawString(50,y,f"Selected Cable = {best['runs']}R x 3C x {best['size']} sq.mm")
+    c.drawString(50,y,f"Cable: {best['runs']}R x 3C x {best['size']} sq.mm")
 
-    y-=30
-    c.drawString(50,y,"SHORT CIRCUIT CHECK")
-    y-=20
-    c.drawString(50,y,f"Required S = {round(S,1)} mm²")
+    y-=25
+    c.drawString(50,y,"DERATING")
     y-=15
-    c.drawString(50,y,f"Selected Size = {best['size']} mm²")
+    c.drawString(50,y,f"kT = {round(kT,2)}")
+
+    y-=25
+    c.drawString(50,y,"SHORT CIRCUIT")
     y-=15
-    c.drawString(50,y,f"{round(S,1)} < {best['size']} → Next standard size selected ✔")
+    c.drawString(50,y,f"{round(S,1)} < {best['size']} → next size selected ✔")
 
-    y-=30
-    c.drawString(50,y,"RUNNING VOLTAGE DROP")
-    y-=20
-    c.drawString(50,y,f"VD = {round(vd_run,2)} % ≤ {vd_run_limit} % ✔")
-
-    y-=30
-    c.drawString(50,y,"STARTING VOLTAGE DROP")
-    y-=20
-    c.drawString(50,y,f"VD(start) = {round(vd_st,2)} % ≤ {vd_start_limit} % ✔")
-
-    y-=30
-    c.drawString(50,y,"ENGINEERING JUSTIFICATION")
-    y-=20
-    c.drawString(50,y,"Cable satisfies ampacity, voltage drop,")
+    y-=25
+    c.drawString(50,y,"VOLTAGE DROP")
     y-=15
-    c.drawString(50,y,"short circuit and starting conditions.")
+    c.drawString(50,y,f"Running = {round(v,2)} % ≤ {vd_run_limit} %")
+    y-=15
+    c.drawString(50,y,f"Starting = {round(vs,2)} % ≤ {vd_start_limit} %")
 
     c.save()
     return f.name
@@ -172,7 +167,8 @@ if run:
             if size<S:
                 continue
 
-            if catalog["amp"][size]*runs<I:
+            amp=catalog["amp"][size]*kT*runs
+            if amp<I:
                 continue
 
             v=vd(I,catalog["R"][size],catalog["X"][size],runs)
@@ -198,7 +194,7 @@ if run:
         c2.metric("VD Running %",round(v,2))
         c3.metric("VD Starting %",round(vs,2))
 
-        pdf=report(best,I,S,v,vs)
+        pdf=report(best,I,S,v,vs,kT)
 
         with open(pdf,"rb") as f:
             st.download_button("Download Report",f,"CableMate_Report.pdf")
