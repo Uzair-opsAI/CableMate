@@ -6,7 +6,7 @@ from reportlab.pdfgen import canvas
 import streamlit.components.v1 as components
 
 # ------------------------------------------------
-# PAGE CONFIG + UI STYLE
+# PAGE CONFIG + STYLE
 # ------------------------------------------------
 
 st.set_page_config(page_title="CableMate", layout="wide")
@@ -16,7 +16,6 @@ st.markdown("""
 .stApp {background-color: #f4f6f9;}
 section[data-testid="stSidebar"] {background-color: #111827;}
 section[data-testid="stSidebar"] * {color: white !important;}
-h1,h2,h3 {color:#1f2937;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -47,36 +46,29 @@ with c2:
 st.divider()
 
 # ------------------------------------------------
-# SIDEBAR INPUTS (DOUBLE COLUMN)
+# SIDEBAR INPUTS
 # ------------------------------------------------
 
 st.sidebar.header("Inputs")
 
-col1,col2 = st.sidebar.columns(2)
+# BASIC INPUTS
+feeder_from = st.sidebar.selectbox("From",["Switchgear","Transformer","Generator"])
+feeder_to = st.sidebar.selectbox("To",["Motor","Transformer","Panel"])
+voltage = st.sidebar.selectbox("Voltage (kV)",[3.3,6.6,11,33])
+length = st.sidebar.number_input("Length (m)",value=300)
+laying = st.sidebar.selectbox("Laying Method",["Direct Buried","Air","Duct"])
 
-with col1:
-    feeder_from = st.selectbox("From",["Switchgear","Transformer","Generator"])
-    voltage = st.selectbox("Voltage (kV)",[3.3,6.6,11,33])
-    length = st.number_input("Length (m)",value=300)
+vd_limit = st.sidebar.number_input("Allowed Voltage Drop (%)",value=5.0)
 
-with col2:
-    feeder_to = st.selectbox("To",["Motor","Transformer","Panel"])
-    laying = st.selectbox("Laying Method",["Direct Buried","Air","Duct"])
-    vd_limit = st.number_input("Allowed Voltage Drop (%)",value=5.0)
-
-# ------------------------------------------------
-# LOAD SECTION
-# ------------------------------------------------
-
+# LOAD
 load_type = st.sidebar.selectbox(
     "Load Type",
     ["Motor","Transformer","Generic Load","Power Load"]
 )
 
-# Auto unit switching
-if load_type == "Transformer":
+if load_type=="Transformer":
     power = st.sidebar.number_input("Load (kVA)",value=500)
-elif load_type == "Motor":
+elif load_type=="Motor":
     power = st.sidebar.number_input("Load (kW)",value=400)
 else:
     power = st.sidebar.number_input("Load",value=300)
@@ -84,33 +76,28 @@ else:
 pf = st.sidebar.number_input("Power Factor",value=0.9)
 eff = st.sidebar.number_input("Efficiency",value=0.95)
 
-# ------------------------------------------------
 # FAULT
-# ------------------------------------------------
-
 fault = st.sidebar.number_input("Fault Level (kA)",value=25)
 fault_time = st.sidebar.number_input("Fault Time (s)",value=0.4)
 
 # ------------------------------------------------
-# DERATING (AUTO + MANUAL)
+# DERATING WITH "OTHERS"
 # ------------------------------------------------
 
-manual = st.sidebar.checkbox("Manual Derating")
+st.sidebar.subheader("Derating Factors")
 
-if manual:
-    kT = st.sidebar.number_input("Enter Total Derating Factor",value=0.85)
-else:
-    soil = st.sidebar.selectbox("Soil",[1.0,1.5,2])
-    depth = st.sidebar.selectbox("Depth",[0.8,1.0])
-    group = st.sidebar.selectbox("Grouping",[1,2,3,4])
-    temp = st.sidebar.selectbox("Temp",[30,40])
+def custom_input(label, options, default):
+    choice = st.sidebar.selectbox(label, options + ["Other"])
+    if choice == "Other":
+        return st.sidebar.number_input(f"Enter {label}", value=default)
+    return choice
 
-    k1 = 1 if soil==1.5 else 0.9
-    k2 = 0.98 if depth==1 else 1
-    k3 = {1:1,2:0.85,3:0.79,4:0.73}[group]
-    k4 = 0.85 if temp==40 else 1
+soil = custom_input("Soil Resistivity",[1.0,1.5,2],1.5)
+depth = custom_input("Depth Factor",[0.8,1.0],1.0)
+group = custom_input("Grouping Factor",[1,0.85,0.79,0.73],1)
+temp = custom_input("Temperature Factor",[1,0.85],1)
 
-    kT = k1*k2*k3*k4
+kT = soil * depth * group * temp
 
 run = st.sidebar.button("Run CableMate")
 
@@ -142,21 +129,18 @@ def short_circuit():
 
 def voltage_drop(I,R,X):
     ang=math.acos(pf)
-    vd=(math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*voltage*1000)
-    return vd*100
+    return (math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*voltage*1000)*100
 
 def start_drop(I,R,X):
     Ist=6*I
     ang=math.acos(0.25)
-    vd=(math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*voltage*1000)
-    return vd*100
+    return (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*voltage*1000)*100
 
 # ------------------------------------------------
 # PDF
 # ------------------------------------------------
 
 def report(best,I,S,vd,vd_start):
-
     f=tempfile.NamedTemporaryFile(delete=False)
     c=canvas.Canvas(f.name,pagesize=A4)
 
@@ -164,7 +148,7 @@ def report(best,I,S,vd,vd_start):
     c.drawString(200,y,"CableMate Report")
 
     y-=40
-    c.drawString(50,y,f"Best Cable: {best} sq.mm")
+    c.drawString(50,y,f"Best Cable: 3C x {best} sq.mm")
 
     y-=20
     c.drawString(50,y,f"Load Current: {round(I,1)} A")
@@ -173,12 +157,12 @@ def report(best,I,S,vd,vd_start):
     c.drawString(50,y,f"Voltage Drop: {round(vd,2)} %")
 
     y-=20
-    c.drawString(50,y=f"Starting Drop: {round(vd_start,2)} %")
+    c.drawString(50,y,f"Starting Drop: {round(vd_start,2)} %")
 
     y-=20
     c.drawString(50,y,f"Short Circuit Size: {round(S,1)}")
 
-    y-=40
+    y-=30
     c.drawString(50,y,"Checks Passed:")
     y-=20
     c.drawString(60,y,"✔ Ampacity OK")
@@ -187,7 +171,7 @@ def report(best,I,S,vd,vd_start):
     y-=20
     c.drawString(60,y,"✔ Short Circuit OK")
     y-=20
-    c.drawString(60,y,"✔ Starting Condition OK")
+    c.drawString(60,y,"✔ Starting OK")
 
     c.save()
     return f.name
