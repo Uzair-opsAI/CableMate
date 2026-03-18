@@ -191,9 +191,9 @@ def report(best,I,S,v,vs):
     y-=25
     c.drawString(50,y,"VOLTAGE DROP")
     y-=15
-    c.drawString(50,y=f"Running: {round(v,2)} % ≤ {vd_run_limit}")
+    c.drawString(50, y, f"Running: {round(v,2)} % ≤ {vd_run_limit}")
     y-=15
-    c.drawString(50,y=f"Starting: {round(vs,2)} % ≤ {vd_start_limit}")
+    c.drawString(50, y, f"Starting: {round(vs,2)} % ≤ {vd_start_limit}")
 
     y-=25
     c.drawString(50,y,"DERATING")
