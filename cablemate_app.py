@@ -262,34 +262,34 @@ def report(best,I,S,v,vs):
     c.drawString(60,y,"✔ Short Circuit withstand satisfied")
     y-=15
     c.drawString(60,y,"✔ Starting condition acceptable")
-# ------------------------------------------------
-# FINAL DECISION STATEMENT
-# ------------------------------------------------
-y -= 30
-c.setFont("Helvetica-Bold", 12)
-
-c.drawString(50, y, "FINAL SELECTION STATEMENT")
-
-y -= 20
-c.setFont("Helvetica", 11)
-
-c.drawString(50, y, "Based on the above design checks and calculations,")
-y -= 15
-c.drawString(50, y, "the selected cable satisfies all engineering criteria")
-
-y -= 15
-c.drawString(50, y, "including ampacity, voltage drop (running & starting),")
-y -= 15
-c.drawString(50, y, "and short circuit withstand capacity.")
-
-y -= 20
-c.setFont("Helvetica-Bold", 11)
-
-c.drawString(
-    50,
-    y,
-    f"THEREFORE, THE SELECTED CABLE SIZE IS: {best['runs']}R x 3C x {best['size']} sq.mm"
-)
+    # ------------------------------------------------
+    # FINAL DECISION STATEMENT
+    # ------------------------------------------------
+    y -= 30
+    c.setFont("Helvetica-Bold", 12)
+    
+    c.drawString(50, y, "FINAL SELECTION STATEMENT")
+    
+    y -= 20
+    c.setFont("Helvetica", 11)
+    
+    c.drawString(50, y, "Based on the above design checks and calculations,")
+    y -= 15
+    c.drawString(50, y, "the selected cable satisfies all engineering criteria")
+    
+    y -= 15
+    c.drawString(50, y, "including ampacity, voltage drop (running & starting),")
+    y -= 15
+    c.drawString(50, y, "and short circuit withstand capacity.")
+    
+    y -= 20
+    c.setFont("Helvetica-Bold", 11)
+    
+    c.drawString(
+        50,
+        y,
+        f"THEREFORE, THE SELECTED CABLE SIZE IS: {best['runs']}R x 3C x {best['size']} sq.mm"
+    )
     c.save()
     return f.name
 # ------------------------------------------------
