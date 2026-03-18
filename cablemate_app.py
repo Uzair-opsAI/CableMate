@@ -198,7 +198,7 @@ def report(best,I,S,v,vs):
     y-=25
     c.drawString(50,y,"DERATING")
     y-=15
-    c.drawString(50,y=f"kT = {round(kT,2)}")
+    c.drawString(50,y,f"kT = {round(kT,2)}")
 
     y-=25
     c.drawString(50,y,"JUSTIFICATION")
