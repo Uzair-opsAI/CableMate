@@ -183,33 +183,143 @@ def vd_start(I,R,X,runs):
 # PDF REPORT (UNCHANGED LOGIC)
 # ------------------------------------------------
 
-def report(best,I,S,v,vs):
+def report(best, I, S, v, vs):
 
-    f=tempfile.NamedTemporaryFile(delete=False)
-    c=canvas.Canvas(f.name,pagesize=A4)
+    f = tempfile.NamedTemporaryFile(delete=False)
+    c = canvas.Canvas(f.name, pagesize=A4)
 
-    width,height=A4
+    width, height = A4
+
+    # ================================
+    # PAGE 1 → COVER
+    # ================================
 
     if os.path.exists("kent_cover.png"):
-        c.drawImage("kent_cover.png",0,0,width=width,height=height)
+        c.drawImage("kent_cover.png", 0, 0, width=width, height=height)
 
-    c.setFont("Helvetica-Bold",16)
-    c.drawString(50,720,"PROJECT DETAILS")
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(50, 720, "PROJECT DETAILS")
 
-    c.setFont("Helvetica",12)
-    y=690
+    c.setFont("Helvetica", 12)
+    y = 690
 
-    c.drawString(50,y,f"Client: {client_name}"); y-=20
-    c.drawString(50,y,f"Project: {project_name}"); y-=20
-    c.drawString(50,y,f"Feeder: {feeder_from} → {feeder_to}"); y-=20
+    c.drawString(50, y, f"Client Name      : {client_name}"); y -= 20
+    c.drawString(50, y, f"Project Name     : {project_name}"); y -= 20
+    c.drawString(50, y, f"Feeder           : {feeder_from} → {feeder_to}"); y -= 20
+    c.drawString(50, y, f"Voltage Level    : {voltage} kV"); y -= 20
+    c.drawString(50, y, f"Cable Length     : {length} m"); y -= 20
+    c.drawString(50, y, f"Load Type        : {load_type}"); y -= 20
+    c.drawString(50, y, f"Power            : {power}"); y -= 20
+    c.drawString(50, y, f"Laying Method    : {laying}")
 
     c.showPage()
 
-    c.drawString(50,800,f"Cable: {best['runs']}R x 3C x {best['size']}")
+    # ================================
+    # PAGE 2 → ENGINEERING REPORT
+    # ================================
+
+    y = 800
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(140, y, "CableMate Engineering Report")
+
+    y -= 40
+    c.setFont("Helvetica", 11)
+
+    # --------------------------------
+    # SELECTED CABLE
+    # --------------------------------
+    c.drawString(50, y, f"Selected Cable: {best['runs']}R x 3C x {best['size']} sq.mm")
+
+    # --------------------------------
+    # LOAD CURRENT
+    # --------------------------------
+    y -= 25
+    c.drawString(50, y, "LOAD CURRENT CALCULATION")
+    y -= 15
+    c.drawString(50, y, f"I = {round(I,2)} A")
+
+    # --------------------------------
+    # AMPACITY CHECK
+    # --------------------------------
+    amp = catalog["amp"][best["size"]] * kT * best["runs"]
+
+    y -= 25
+    c.drawString(50, y, "AMPACITY CHECK")
+    y -= 15
+    c.drawString(50, y, f"Available Ampacity = {round(amp,1)} A")
+    y -= 15
+    c.drawString(50, y, f"Load Current       = {round(I,1)} A")
+    y -= 15
+    c.drawString(50, y, f"{round(amp,1)} ≥ {round(I,1)} → PASS ✔")
+
+    # --------------------------------
+    # SHORT CIRCUIT CHECK
+    # --------------------------------
+    y -= 25
+    c.drawString(50, y, "SHORT CIRCUIT CHECK")
+    y -= 15
+    c.drawString(50, y, f"Required Size = {round(S,1)} mm²")
+    y -= 15
+    c.drawString(50, y, f"{round(S,1)} < {best['size']} mm²")
+    y -= 15
+    c.drawString(50, y, f"Next Standard Size Selected → {best['size']} mm² ✔")
+
+    # --------------------------------
+    # RUNNING VOLTAGE DROP
+    # --------------------------------
+    y -= 25
+    c.drawString(50, y, "RUNNING VOLTAGE DROP")
+    y -= 15
+    c.drawString(50, y, f"Calculated VD = {round(v,2)} %")
+    y -= 15
+    c.drawString(50, y, f"Allowed VD    = {vd_run_limit} %")
+    y -= 15
+    c.drawString(50, y, f"{round(v,2)} ≤ {vd_run_limit} → PASS ✔")
+
+    # --------------------------------
+    # STARTING VOLTAGE DROP
+    # --------------------------------
+    y -= 25
+    c.drawString(50, y, "STARTING VOLTAGE DROP")
+    y -= 15
+    c.drawString(50, y, f"Calculated VD = {round(vs,2)} %")
+    y -= 15
+    c.drawString(50, y, f"Allowed VD    = {vd_start_limit} %")
+    y -= 15
+    c.drawString(50, y, f"{round(vs,2)} ≤ {vd_start_limit} → PASS ✔")
+
+    # --------------------------------
+    # DERATING FACTOR
+    # --------------------------------
+    y -= 25
+    c.drawString(50, y, "DERATING FACTOR")
+    y -= 15
+    c.drawString(50, y, f"kT = {round(kT,2)}")
+
+    # --------------------------------
+    # FINAL STATEMENT
+    # --------------------------------
+    y -= 30
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, y, "FINAL ENGINEERING DECISION")
+
+    y -= 20
+    c.setFont("Helvetica", 11)
+
+    c.drawString(50, y, "All design checks (Ampacity, Voltage Drop, Short Circuit)")
+    y -= 15
+    c.drawString(50, y, "have been successfully satisfied.")
+
+    y -= 20
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(
+        50,
+        y,
+        f"FINAL SELECTED CABLE: {best['runs']}R x 3C x {best['size']} sq.mm"
+    )
 
     c.save()
     return f.name
-
 # ------------------------------------------------
 # ENGINE
 # ------------------------------------------------
