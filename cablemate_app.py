@@ -11,7 +11,16 @@ import os
 # ------------------------------------------------
 
 st.set_page_config(page_title="CableMate", layout="wide")
+# ------------------------------------------------
+# HEADER
+# ------------------------------------------------
 
+c1,c2 = st.columns([1,6])
+with c1:
+    st.image("logo.png",width=80)
+with c2:
+    st.title("CableMate – MV Cable Sizing Tool")
+    st.caption("Professional Cable Design Assistant")
 # ------------------------------------------------
 # UI STYLE (CLEAN PROFESSIONAL)
 # ------------------------------------------------
@@ -183,17 +192,6 @@ st.divider()
 # ------------------------------------------------
 
 run_btn = st.button("🚀 Run CableMate Analysis")
-
-# ------------------------------------------------
-# HEADER
-# ------------------------------------------------
-
-c1,c2 = st.columns([1,6])
-with c1:
-    st.image("logo.png",width=80)
-with c2:
-    st.title("CableMate – MV Cable Sizing Tool")
-    st.caption("Professional Cable Design Assistant")
 
 st.markdown(f"""
 ### 📁 Project
