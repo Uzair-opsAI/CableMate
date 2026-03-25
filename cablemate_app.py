@@ -4,6 +4,7 @@ import tempfile
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import streamlit.components.v1 as components
+import os
 
 st.set_page_config(page_title="CableMate", layout="wide")
 
@@ -36,25 +37,9 @@ if(changed){e.preventDefault();e.returnValue='';}
 """, height=0)
 
 # ------------------------------------------------
-# HEADER
-# ------------------------------------------------
-
-c1,c2 = st.columns([1,6])
-with c1:
-    st.image("logo.png", width=80)
-with c2:
-    st.title("CableMate – MV Cable Sizing Tool")
-    st.caption("Professional Cable Design Assistant")
-    st.markdown(f"""
-### 📁 Project Details
-- **Client:** {client_name}
-- **Project:** {project_name}
-""")
-st.divider()
-
-# ------------------------------------------------
 # SIDEBAR INPUTS
 # ------------------------------------------------
+
 st.sidebar.subheader("Project Information")
 
 client_name = st.sidebar.text_input(
@@ -77,6 +62,25 @@ voltage = st.sidebar.selectbox("Voltage (kV)",[3.3,6.6,11,33])
 length = st.sidebar.number_input("Cable Length (m)",value=300)
 
 laying = st.sidebar.selectbox("Cable Laying",["Direct Buried","Air","Duct"])
+
+# ------------------------------------------------
+# HEADER (AFTER VARIABLES FIX)
+# ------------------------------------------------
+
+c1,c2 = st.columns([1,6])
+with c1:
+    st.image("logo.png", width=80)
+with c2:
+    st.title("CableMate – MV Cable Sizing Tool")
+    st.caption("Professional Cable Design Assistant")
+
+    st.markdown(f"""
+### 📁 Project Details
+- **Client:** {client_name}
+- **Project:** {project_name}
+""")
+
+st.divider()
 
 # ------------------------------------------------
 # LOAD
@@ -187,16 +191,11 @@ def report(best, I, S, v, vs):
 
     width, height = A4
 
-    # =================================================
-    # PAGE 1 → COVER PAGE
-    # =================================================
-
-    try:
+    # PAGE 1
+    if os.path.exists("kent_cover.png"):
         c.drawImage("kent_cover.png", 0, 0, width=width, height=height)
-    except:
-        pass  # if image not found, avoid crash
 
- # Overlay Project Details
+    # FIXED INDENTATION
     c.setFont("Helvetica-Bold", 18)
     c.setFillColorRGB(0, 0, 0)
 
@@ -208,34 +207,23 @@ def report(best, I, S, v, vs):
 
     c.drawString(50, y_cover, f"Client Name      : {client_name}")
     y_cover -= 20
-
     c.drawString(50, y_cover, f"Project Name     : {project_name}")
     y_cover -= 20
-
     c.drawString(50, y_cover, f"Feeder           : {feeder_from} → {feeder_to}")
     y_cover -= 20
-
     c.drawString(50, y_cover, f"Voltage Level    : {voltage} kV")
     y_cover -= 20
-
     c.drawString(50, y_cover, f"Cable Length     : {length} m")
     y_cover -= 20
-
     c.drawString(50, y_cover, f"Load Type        : {load_type}")
     y_cover -= 20
-    
     c.drawString(50, y_cover, f"Power            : {power}")
     y_cover -= 20
-
     c.drawString(50, y_cover, f"Laying Method    : {laying}")
 
-    # Move to Page 2
     c.showPage()
 
-    # =================================================
-    # PAGE 2 → ENGINEERING REPORT
-    # =================================================
-
+    # PAGE 2
     y = 800
     c.setFont("Helvetica-Bold", 16)
     c.drawString(150, y, "CableMate Engineering Report")
@@ -243,90 +231,28 @@ def report(best, I, S, v, vs):
     y -= 40
     c.setFont("Helvetica", 11)
 
-    # ------------------------------------------------
-    # SELECTED CABLE
-    # ------------------------------------------------
     c.drawString(50, y, f"Selected Cable: {best['runs']}R x 3C x {best['size']} sq.mm")
 
-    # ------------------------------------------------
-    # LOAD CURRENT
-    # ------------------------------------------------
     y -= 30
-    c.drawString(50, y, "LOAD CURRENT")
-    y -= 15
     c.drawString(50, y, f"I = {round(I,2)} A")
 
-    # ------------------------------------------------
-    # AMPACITY
-    # ------------------------------------------------
     amp = catalog["amp"][best["size"]] * kT * best["runs"]
 
-    y -= 25
-    c.drawString(50, y, "AMPACITY CHECK")
-    y -= 15
-    c.drawString(50, y, f"{round(amp,1)} ≥ {round(I,1)} A → PASS ✔")
-
-    # ------------------------------------------------
-    # SHORT CIRCUIT
-    # ------------------------------------------------
-    y -= 25
-    c.drawString(50, y, "SHORT CIRCUIT CHECK")
-    y -= 15
-    c.drawString(50, y, f"Required S = {round(S,1)} mm²")
-    y -= 15
-    c.drawString(50, y, f"{round(S,1)} < {best['size']} → Next standard size selected ✔")
-
-    # ------------------------------------------------
-    # RUNNING VD
-    # ------------------------------------------------
-    y -= 25
-    c.drawString(50, y, "RUNNING VOLTAGE DROP")
-    y -= 15
-    c.drawString(50, y, f"{round(v,2)} % ≤ {vd_run_limit} % → PASS ✔")
-
-    # ------------------------------------------------
-    # STARTING VD
-    # ------------------------------------------------
-    y -= 25
-    c.drawString(50, y, "STARTING VOLTAGE DROP")
-    y -= 15
-    c.drawString(50, y, f"{round(vs,2)} % ≤ {vd_start_limit} % → PASS ✔")
-
-    # ------------------------------------------------
-    # DERATING
-    # ------------------------------------------------
-    y -= 25
-    c.drawString(50, y, "DERATING")
-    y -= 15
-    c.drawString(50, y, f"kT = {round(kT,2)}")
-
-    # ------------------------------------------------
-    # FINAL STATEMENT
-    # ------------------------------------------------
-    y -= 30
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(50, y, "FINAL SELECTION STATEMENT")
+    y -= 20
+    c.drawString(50, y, f"{round(amp,1)} ≥ {round(I,1)} → PASS")
 
     y -= 20
-    c.setFont("Helvetica", 11)
-
-    c.drawString(50, y, "Based on all design checks and calculations,")
-    y -= 15
-    c.drawString(50, y, "the selected cable satisfies ampacity, voltage drop,")
-    y -= 15
-    c.drawString(50, y, "short circuit and starting conditions.")
+    c.drawString(50, y, f"{round(S,1)} < {best['size']} → PASS")
 
     y -= 20
-    c.setFont("Helvetica-Bold", 11)
+    c.drawString(50, y, f"VD Run: {round(v,2)} ≤ {vd_run_limit}")
 
-    c.drawString(
-        50,
-        y,
-        f"FINAL CABLE: {best['runs']}R x 3C x {best['size']} sq.mm"
-    )
+    y -= 20
+    c.drawString(50, y, f"VD Start: {round(vs,2)} ≤ {vd_start_limit}")
 
     c.save()
     return f.name
+
 # ------------------------------------------------
 # ENGINE
 # ------------------------------------------------
@@ -337,6 +263,8 @@ if run_btn:
     S = short_circuit()
 
     best=None
+    v=0
+    vs=0
 
     for runs in range(1,4):
         for size in catalog["sizes"]:
