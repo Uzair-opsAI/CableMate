@@ -192,7 +192,7 @@ def report(best, I, S, v, vs):
     c.drawString(50, 650, f"Voltage Level: {voltage} kV")
     c.drawString(50, 630, f"Cable Length: {length} m")
     c.drawString(50, 610, f"Load Type: {load_type}")
-    c.drawString(50, 590, f"Power: {power}")
+    c.drawString(50, 590, f"Power: {power} W")
 
     c.drawString(50, 560, f"Cable Laying Method: {laying}")
 
