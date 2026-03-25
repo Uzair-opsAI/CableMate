@@ -164,132 +164,134 @@ def vd_start(I,R,X,runs):
 # PDF REPORT
 # ------------------------------------------------
 
-def report(best,I,S,v,vs):
+def report(best, I, S, v, vs):
 
-    f=tempfile.NamedTemporaryFile(delete=False)
-    c=canvas.Canvas(f.name,pagesize=A4)
+    f = tempfile.NamedTemporaryFile(delete=False)
+    c = canvas.Canvas(f.name, pagesize=A4)
 
-    y=800
-    c.setFont("Helvetica-Bold",16)
-    c.drawString(180,y,"CableMate Engineering Report")
+    width, height = A4
 
-    y-=30
-    c.setFont("Helvetica",11)
+    # =================================================
+    # PAGE 1 → COVER PAGE
+    # =================================================
+
+    try:
+        c.drawImage("kent_cover.png", 0, 0, width=width, height=height)
+    except:
+        pass  # if image not found, avoid crash
+
+    # Overlay Project Details
+    c.setFont("Helvetica-Bold", 16)
+    c.setFillColorRGB(0, 0, 0)
+
+    c.drawString(50, 700, "PROJECT DETAILS")
+
+    c.setFont("Helvetica", 12)
+
+    c.drawString(50, 670, f"Feeder: {feeder_from} → {feeder_to}")
+    c.drawString(50, 650, f"Voltage Level: {voltage} kV")
+    c.drawString(50, 630, f"Cable Length: {length} m")
+    c.drawString(50, 610, f"Load Type: {load_type}")
+    c.drawString(50, 590, f"Power: {power}")
+
+    c.drawString(50, 560, f"Cable Laying Method: {laying}")
+
+    # Move to Page 2
+    c.showPage()
+
+    # =================================================
+    # PAGE 2 → ENGINEERING REPORT
+    # =================================================
+
+    y = 800
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(150, y, "CableMate Engineering Report")
+
+    y -= 40
+    c.setFont("Helvetica", 11)
 
     # ------------------------------------------------
-    # CABLE DETAILS
+    # SELECTED CABLE
     # ------------------------------------------------
-    c.drawString(50,y,f"Selected Cable: {best['runs']}R x 3C x {best['size']} sq.mm")
+    c.drawString(50, y, f"Selected Cable: {best['runs']}R x 3C x {best['size']} sq.mm")
 
     # ------------------------------------------------
     # LOAD CURRENT
     # ------------------------------------------------
-    y-=30
-    c.drawString(50,y,"LOAD CURRENT CALCULATION")
-    y-=15
-    c.drawString(50,y,f"I = {round(I,2)} A")
+    y -= 30
+    c.drawString(50, y, "LOAD CURRENT")
+    y -= 15
+    c.drawString(50, y, f"I = {round(I,2)} A")
 
     # ------------------------------------------------
-    # AMPACITY CHECK
+    # AMPACITY
     # ------------------------------------------------
     amp = catalog["amp"][best["size"]] * kT * best["runs"]
 
-    y-=25
-    c.drawString(50,y,"AMPACITY CHECK")
-    y-=15
-    c.drawString(50,y,f"Available Ampacity = {round(amp,1)} A")
-    y-=15
-    c.drawString(50,y,f"Load Current = {round(I,1)} A")
-    y-=15
-    c.drawString(50,y,f"{round(amp,1)} ≥ {round(I,1)} → PASS ✔")
+    y -= 25
+    c.drawString(50, y, "AMPACITY CHECK")
+    y -= 15
+    c.drawString(50, y, f"{round(amp,1)} ≥ {round(I,1)} A → PASS ✔")
 
     # ------------------------------------------------
-    # SHORT CIRCUIT CHECK
+    # SHORT CIRCUIT
     # ------------------------------------------------
-    y-=25
-    c.drawString(50,y,"SHORT CIRCUIT CHECK")
-    y-=15
-    c.drawString(50,y,f"Required Size (S) = {round(S,1)} mm²")
-    y-=15
-    c.drawString(50,y,f"Selected Size = {best['size']} mm²")
-    y-=15
-    c.drawString(50,y,f"{round(S,1)} < {best['size']} → Next standard size selected ✔ PASS")
+    y -= 25
+    c.drawString(50, y, "SHORT CIRCUIT CHECK")
+    y -= 15
+    c.drawString(50, y, f"Required S = {round(S,1)} mm²")
+    y -= 15
+    c.drawString(50, y, f"{round(S,1)} < {best['size']} → Next standard size selected ✔")
 
     # ------------------------------------------------
-    # RUNNING VOLTAGE DROP
+    # RUNNING VD
     # ------------------------------------------------
-    y-=25
-    c.drawString(50,y,"RUNNING VOLTAGE DROP")
-    y-=15
-    c.drawString(50,y,f"Calculated VD = {round(v,2)} %")
-    y-=15
-    c.drawString(50,y,f"Allowed VD = {vd_run_limit} %")
-    y-=15
-    c.drawString(50,y,f"{round(v,2)} ≤ {vd_run_limit} → PASS ✔")
+    y -= 25
+    c.drawString(50, y, "RUNNING VOLTAGE DROP")
+    y -= 15
+    c.drawString(50, y, f"{round(v,2)} % ≤ {vd_run_limit} % → PASS ✔")
 
     # ------------------------------------------------
-    # STARTING VOLTAGE DROP
+    # STARTING VD
     # ------------------------------------------------
-    y-=25
-    c.drawString(50,y,"STARTING VOLTAGE DROP")
-    y-=15
-    c.drawString(50,y,f"Calculated VD(start) = {round(vs,2)} %")
-    y-=15
-    c.drawString(50,y,f"Allowed VD(start) = {vd_start_limit} %")
-    y-=15
-    c.drawString(50,y,f"{round(vs,2)} ≤ {vd_start_limit} → PASS ✔")
+    y -= 25
+    c.drawString(50, y, "STARTING VOLTAGE DROP")
+    y -= 15
+    c.drawString(50, y, f"{round(vs,2)} % ≤ {vd_start_limit} % → PASS ✔")
 
     # ------------------------------------------------
     # DERATING
     # ------------------------------------------------
-    y-=25
-    c.drawString(50,y,"DERATING FACTOR")
-    y-=15
-    c.drawString(50,y,f"kT = {round(kT,2)} (Applied to ampacity)")
+    y -= 25
+    c.drawString(50, y, "DERATING")
+    y -= 15
+    c.drawString(50, y, f"kT = {round(kT,2)}")
 
     # ------------------------------------------------
-    # FINAL JUSTIFICATION
-    # ------------------------------------------------
-    y-=25
-    c.drawString(50,y,"FINAL ENGINEERING JUSTIFICATION")
-    y-=15
-    c.drawString(50,y,"All design criteria satisfied:")
-    y-=15
-    c.drawString(60,y,"✔ Ampacity ≥ Load Current")
-    y-=15
-    c.drawString(60,y,"✔ Voltage Drop within limits")
-    y-=15
-    c.drawString(60,y,"✔ Short Circuit withstand satisfied")
-    y-=15
-    c.drawString(60,y,"✔ Starting condition acceptable")
-    # ------------------------------------------------
-    # FINAL DECISION STATEMENT
+    # FINAL STATEMENT
     # ------------------------------------------------
     y -= 30
     c.setFont("Helvetica-Bold", 12)
-    
     c.drawString(50, y, "FINAL SELECTION STATEMENT")
-    
+
     y -= 20
     c.setFont("Helvetica", 11)
-    
-    c.drawString(50, y, "Based on the above design checks and calculations,")
+
+    c.drawString(50, y, "Based on all design checks and calculations,")
     y -= 15
-    c.drawString(50, y, "the selected cable satisfies all engineering criteria")
-    
+    c.drawString(50, y, "the selected cable satisfies ampacity, voltage drop,")
     y -= 15
-    c.drawString(50, y, "including ampacity, voltage drop (running & starting),")
-    y -= 15
-    c.drawString(50, y, "and short circuit withstand capacity.")
-    
+    c.drawString(50, y, "short circuit and starting conditions.")
+
     y -= 20
     c.setFont("Helvetica-Bold", 11)
-    
+
     c.drawString(
         50,
         y,
-        f"THEREFORE, THE SELECTED CABLE SIZE IS: {best['runs']}R x 3C x {best['size']} sq.mm"
+        f"FINAL CABLE: {best['runs']}R x 3C x {best['size']} sq.mm"
     )
+
     c.save()
     return f.name
 # ------------------------------------------------
