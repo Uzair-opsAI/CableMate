@@ -44,12 +44,12 @@ st.sidebar.subheader("Project Information")
 
 client_name = st.sidebar.text_input(
     "Client Name",
-    value="ABC Pvt Ltd"
+    value=""
 )
 
 project_name = st.sidebar.text_input(
     "Project Name",
-    value="Electrical Distribution System"
+    value=""
 )
 
 st.sidebar.divider()
