@@ -49,81 +49,140 @@ if(changed){e.preventDefault();e.returnValue='';}
 # SIDEBAR INPUTS
 # ------------------------------------------------
 
-st.sidebar.header("Project Setup")
-
-client_name = st.sidebar.text_input("Client Name","ABC Pvt Ltd")
-project_name = st.sidebar.text_input("Project Name","Electrical System")
-
-st.sidebar.divider()
-
-# Layout split for better UX
-left,right = st.sidebar.columns(2)
-
-with left:
-    feeder_from = st.selectbox("From",["Switchgear","Transformer","Generator"])
-    voltage = st.selectbox("Voltage (kV)",[3.3,6.6,11,33])
-    laying = st.selectbox("Laying",["Direct Buried","Air","Duct"])
-
-with right:
-    feeder_to = st.selectbox("To",["Motor","Transformer","Panel"])
-    length = st.number_input("Length (m)",value=300)
-
 # ------------------------------------------------
-# LOAD
+# USER INPUT UI (PROFESSIONAL + DOUBLE COLUMN)
 # ------------------------------------------------
 
-st.sidebar.subheader("Load")
+st.subheader("📁 Project Information")
 
-load_type = st.sidebar.selectbox("Type",["Motor","Transformer","Power"])
+col1, col2 = st.columns(2)
 
-if load_type=="Transformer":
-    power = st.sidebar.number_input("Load (kVA)",500)
-else:
-    power = st.sidebar.number_input("Load (kW)",400)
+with col1:
+    client_name = st.text_input("Client Name", "ABC Pvt Ltd")
+    feeder_from = st.selectbox("From Equipment", ["Switchgear","Transformer","Generator"])
+    voltage = st.selectbox("System Voltage (kV)", [3.3,6.6,11,33])
 
-pf = st.sidebar.number_input("PF",0.9)
-eff = st.sidebar.number_input("Efficiency",0.95)
+with col2:
+    project_name = st.text_input("Project Name", "Electrical Distribution System")
+    feeder_to = st.selectbox("To Equipment", ["Motor","Transformer","Panel"])
+    length = st.number_input("Cable Length (m)", value=300)
 
-# ------------------------------------------------
-# FAULT
-# ------------------------------------------------
-
-st.sidebar.subheader("Fault")
-
-fault = st.sidebar.number_input("Fault Level (kA)",25)
-fault_time = st.sidebar.number_input("Fault Time (s)",0.4)
+st.divider()
 
 # ------------------------------------------------
-# VD LIMITS
+# INSTALLATION
 # ------------------------------------------------
 
-st.sidebar.subheader("Voltage Drop")
+st.subheader("🛠 Installation Details")
 
-vd_run_limit = st.sidebar.number_input("Running VD (%)",5.0)
-vd_start_limit = st.sidebar.number_input("Starting VD (%)",15.0)
+col1, col2 = st.columns(2)
+
+with col1:
+    laying = st.selectbox("Cable Laying Method", ["Direct Buried","Air","Duct"])
+
+with col2:
+    pass  # future expansion
+
+st.divider()
 
 # ------------------------------------------------
-# DERATING
+# LOAD DETAILS
 # ------------------------------------------------
 
-st.sidebar.subheader("Derating")
+st.subheader("⚡ Load Details")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    load_type = st.selectbox("Load Type", ["Motor","Transformer","Power"])
+
+    if load_type == "Transformer":
+        power = st.number_input("Load (kVA)", value=500)
+    else:
+        power = st.number_input("Load (kW)", value=400)
+
+with col2:
+    pf = st.number_input("Power Factor", value=0.9)
+    eff = st.number_input("Efficiency", value=0.95)
+
+st.divider()
+
+# ------------------------------------------------
+# FAULT CONDITIONS
+# ------------------------------------------------
+
+st.subheader("⚠ Fault Conditions")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    fault = st.number_input("Fault Level (kA)", value=25)
+
+with col2:
+    fault_time = st.number_input("Fault Duration (s)", value=0.4)
+
+st.divider()
+
+# ------------------------------------------------
+# VOLTAGE DROP LIMITS
+# ------------------------------------------------
+
+st.subheader("📉 Voltage Drop Limits")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    vd_run_limit = st.number_input("Running Voltage Drop (%)", value=5.0)
+
+with col2:
+    vd_start_limit = st.number_input("Starting Voltage Drop (%)", value=15.0)
+
+st.divider()
+
+# ------------------------------------------------
+# DERATING FACTORS
+# ------------------------------------------------
+
+st.subheader("🌡 Derating Factors")
 
 def input_with_other(label, options, default):
-    val = st.sidebar.selectbox(label, options + ["Other"])
-    if val=="Other":
-        return st.sidebar.number_input(f"{label} Manual",value=default)
-    return float(val)
+    col_a, col_b = st.columns([2,1])
 
-soil = input_with_other("Soil",[1.0,1.5,2],1.5)
-depth = input_with_other("Depth",[0.8,1.0],1.0)
-group = input_with_other("Grouping",[1,0.85,0.79,0.73],1)
-temp = input_with_other("Temp",[1,0.85],1)
+    with col_a:
+        choice = st.selectbox(label, options + ["Other"])
 
-laying_factor = 1.0 if laying=="Air" else 0.9 if laying=="Duct" else 0.85
+    if choice == "Other":
+        with col_b:
+            return st.number_input("Manual", value=default)
+    return float(choice)
 
-kT = soil*depth*group*temp*laying_factor
+col1, col2 = st.columns(2)
 
-run_btn = st.sidebar.button("Run CableMate")
+with col1:
+    soil = input_with_other("Soil Factor",[1.0,1.5,2],1.5)
+    group = input_with_other("Grouping Factor",[1,0.85,0.79,0.73],1)
+
+with col2:
+    depth = input_with_other("Depth Factor",[0.8,1.0],1.0)
+    temp = input_with_other("Temperature Factor",[1,0.85],1)
+
+# Laying factor logic (unchanged)
+if laying == "Air":
+    laying_factor = 1.0
+elif laying == "Duct":
+    laying_factor = 0.9
+else:
+    laying_factor = 0.85
+
+kT = soil * depth * group * temp * laying_factor
+
+st.divider()
+
+# ------------------------------------------------
+# RUN BUTTON
+# ------------------------------------------------
+
+run_btn = st.button("🚀 Run CableMate Analysis")
 
 # ------------------------------------------------
 # HEADER
