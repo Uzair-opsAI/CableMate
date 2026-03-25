@@ -197,37 +197,37 @@ def report(best, I, S, v, vs):
         pass  # if image not found, avoid crash
 
  # Overlay Project Details
-c.setFont("Helvetica-Bold", 18)
-c.setFillColorRGB(0, 0, 0)
+    c.setFont("Helvetica-Bold", 18)
+    c.setFillColorRGB(0, 0, 0)
 
-c.drawString(50, 720, "PROJECT DETAILS")
+    c.drawString(50, 720, "PROJECT DETAILS")
 
-c.setFont("Helvetica", 12)
+    c.setFont("Helvetica", 12)
 
-y_cover = 690
+    y_cover = 690
 
-c.drawString(50, y_cover, f"Client Name      : {client_name}")
-y_cover -= 20
+    c.drawString(50, y_cover, f"Client Name      : {client_name}")
+    y_cover -= 20
 
-c.drawString(50, y_cover, f"Project Name     : {project_name}")
-y_cover -= 20
+    c.drawString(50, y_cover, f"Project Name     : {project_name}")
+    y_cover -= 20
 
-c.drawString(50, y_cover, f"Feeder           : {feeder_from} → {feeder_to}")
-y_cover -= 20
+    c.drawString(50, y_cover, f"Feeder           : {feeder_from} → {feeder_to}")
+    y_cover -= 20
 
-c.drawString(50, y_cover, f"Voltage Level    : {voltage} kV")
-y_cover -= 20
+    c.drawString(50, y_cover, f"Voltage Level    : {voltage} kV")
+    y_cover -= 20
 
-c.drawString(50, y_cover, f"Cable Length     : {length} m")
-y_cover -= 20
+    c.drawString(50, y_cover, f"Cable Length     : {length} m")
+    y_cover -= 20
 
-c.drawString(50, y_cover, f"Load Type        : {load_type}")
-y_cover -= 20
+    c.drawString(50, y_cover, f"Load Type        : {load_type}")
+    y_cover -= 20
+    
+    c.drawString(50, y_cover, f"Power            : {power}")
+    y_cover -= 20
 
-c.drawString(50, y_cover, f"Power            : {power}")
-y_cover -= 20
-
-c.drawString(50, y_cover, f"Laying Method    : {laying}")
+    c.drawString(50, y_cover, f"Laying Method    : {laying}")
 
     # Move to Page 2
     c.showPage()
