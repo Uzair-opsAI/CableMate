@@ -187,12 +187,6 @@ kT = soil * depth * group * temp * laying_factor
 
 st.divider()
 
-# ------------------------------------------------
-# RUN BUTTON
-# ------------------------------------------------
-
-run_btn = st.button("🚀 Run CableMate Analysis")
-
 st.markdown(f"""
 ### 📁 Project
 **Client:** {client_name}  
@@ -200,6 +194,12 @@ st.markdown(f"""
 """)
 
 st.divider()
+
+# ------------------------------------------------
+# RUN BUTTON
+# ------------------------------------------------
+
+run_btn = st.button("🚀 Run CableMate Analysis")
 
 # ------------------------------------------------
 # CATALOG
