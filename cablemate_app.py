@@ -30,7 +30,7 @@ st.markdown("""
 .stApp {background-color:#f4f6f9;}
 section[data-testid="stSidebar"] {background-color:#0f172a;}
 section[data-testid="stSidebar"] * {color:#e5e7eb !important;}
-.block-container {padding-top:1rem;}
+.block-container {padding-top:4rem;}
 .metric-box {
     background-color:white;
     padding:15px;
