@@ -45,13 +45,29 @@ with c1:
 with c2:
     st.title("CableMate – MV Cable Sizing Tool")
     st.caption("Professional Cable Design Assistant")
-
+    st.markdown(f"""
+### 📁 Project Details
+- **Client:** {client_name}
+- **Project:** {project_name}
+""")
 st.divider()
 
 # ------------------------------------------------
 # SIDEBAR INPUTS
 # ------------------------------------------------
+st.sidebar.subheader("Project Information")
 
+client_name = st.sidebar.text_input(
+    "Client Name",
+    value="ABC Pvt Ltd"
+)
+
+project_name = st.sidebar.text_input(
+    "Project Name",
+    value="Electrical Distribution System"
+)
+
+st.sidebar.divider()
 st.sidebar.header("Project Inputs")
 
 feeder_from = st.sidebar.selectbox("From",["Switchgear","Transformer","Generator"])
@@ -180,21 +196,38 @@ def report(best, I, S, v, vs):
     except:
         pass  # if image not found, avoid crash
 
-    # Overlay Project Details
-    c.setFont("Helvetica-Bold", 16)
-    c.setFillColorRGB(0, 0, 0)
+ # Overlay Project Details
+c.setFont("Helvetica-Bold", 18)
+c.setFillColorRGB(0, 0, 0)
 
-    c.drawString(50, 700, "PROJECT DETAILS")
+c.drawString(50, 720, "PROJECT DETAILS")
 
-    c.setFont("Helvetica", 12)
+c.setFont("Helvetica", 12)
 
-    c.drawString(50, 670, f"Feeder: {feeder_from} → {feeder_to}")
-    c.drawString(50, 650, f"Voltage Level: {voltage} kV")
-    c.drawString(50, 630, f"Cable Length: {length} m")
-    c.drawString(50, 610, f"Load Type: {load_type}")
-    c.drawString(50, 590, f"Power: {power} W")
+y_cover = 690
 
-    c.drawString(50, 560, f"Cable Laying Method: {laying}")
+c.drawString(50, y_cover, f"Client Name      : {client_name}")
+y_cover -= 20
+
+c.drawString(50, y_cover, f"Project Name     : {project_name}")
+y_cover -= 20
+
+c.drawString(50, y_cover, f"Feeder           : {feeder_from} → {feeder_to}")
+y_cover -= 20
+
+c.drawString(50, y_cover, f"Voltage Level    : {voltage} kV")
+y_cover -= 20
+
+c.drawString(50, y_cover, f"Cable Length     : {length} m")
+y_cover -= 20
+
+c.drawString(50, y_cover, f"Load Type        : {load_type}")
+y_cover -= 20
+
+c.drawString(50, y_cover, f"Power            : {power}")
+y_cover -= 20
+
+c.drawString(50, y_cover, f"Laying Method    : {laying}")
 
     # Move to Page 2
     c.showPage()
