@@ -204,6 +204,13 @@ else:
     laying_factor = 0.85
 
 kT = soil * depth * group * temp * laying_factor
+# ------------------------------------------------
+# OVERALL DERATING DISPLAY
+# ------------------------------------------------
+
+st.markdown("### 📊 Overall Derating Factor")
+
+st.success(f"Total Derating Factor (kT) = {round(kT, 3)}")
 
 st.divider()
 
