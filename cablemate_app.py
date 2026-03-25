@@ -68,12 +68,32 @@ col1, col2 = st.columns(2)
 
 with col1:
     client_name = st.text_input("Client Name", "ABC Pvt Ltd")
-    feeder_from = st.selectbox("From Equipment", ["Switchgear","Transformer","Generator"])
+    
+    feeder_from = st.selectbox(
+        "From Equipment",
+        ["Switchgear","Transformer","Generator"]
+    )
+    
+    from_tag = st.text_input(
+        "From Equipment Tag",
+        placeholder="e.g. TR-01 / SWGR-A1"
+    )
+
     voltage = st.selectbox("System Voltage (kV)", [3.3,6.6,11,33])
 
 with col2:
     project_name = st.text_input("Project Name", "Electrical Distribution System")
-    feeder_to = st.selectbox("To Equipment", ["Motor","Transformer","Panel"])
+    
+    feeder_to = st.selectbox(
+        "To Equipment",
+        ["Motor","Transformer","Panel"]
+    )
+    
+    to_tag = st.text_input(
+        "To Equipment Tag",
+        placeholder="e.g. MTR-01 / PNL-B2"
+    )
+
     length = st.number_input("Cable Length (m)", value=300)
 
 st.divider()
