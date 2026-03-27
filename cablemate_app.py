@@ -137,7 +137,7 @@ st.divider()
 st.subheader("🧵 Conductor Details")
 
 material = st.selectbox("Conductor Material", ["Copper", "Aluminium"])
-st.selectbox("Cable Type", ["1-Core", "3-Core"])
+Cable_type = st.selectbox("Cable Type", ["1-Core", "3-Core"])
 st.divider()
 
 # ------------------------------------------------
