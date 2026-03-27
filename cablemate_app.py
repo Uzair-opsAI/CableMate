@@ -195,11 +195,11 @@ col1, col2 = st.columns(2)
 
 with col1:
     soil = input_with_other("Soil Resistance Factor",[1.0,1.5,2],1.5)
-    group = input_with_other("Grouping Factor",[1,0.85,0.79,0.73],1)
+    group = input_with_other("Grouping Factor",[1,0.85,0.79,0.73],1.0)
 
 with col2:
     depth = input_with_other("Depth Factor",[0.8,1.0],1.0)
-    temp = input_with_other("Temperature Factor",[1,0.85],1)
+    temp = input_with_other("Temperature Factor",[1,0.85],1.0)
 
 # Laying factor logic (unchanged)
 if laying == "Air":
