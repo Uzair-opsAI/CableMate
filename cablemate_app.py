@@ -163,8 +163,11 @@ col1, col2 = st.columns(2)
 with col1:
     vd_run_limit = st.number_input("Running Voltage Drop (%)", value=5.0)
 
-with col2:
-    vd_start_limit = st.number_input("Starting Voltage Drop (%)", value=15.0)
+if load_type == "Motor":
+    with col2:
+        vd_start_limit = st.number_input("Starting Voltage Drop (%)", value=15.0)
+else:
+    vd_start_limit = 100  # dummy high value so it never fails
 
 st.divider()
 
