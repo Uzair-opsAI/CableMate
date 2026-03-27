@@ -138,6 +138,8 @@ st.subheader("🧵 Conductor Details")
 
 material = st.selectbox("Conductor Material", ["Copper", "Aluminium"])
 cable_type = st.selectbox("Cable Type", ["1-Core", "3-Core"])
+if voltage >= 66 and cable_type == "3-Core":
+    st.warning("At 66 kV and above, single-core cables are typically used.")
 st.divider()
 
 # ------------------------------------------------
