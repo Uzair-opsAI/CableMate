@@ -178,11 +178,15 @@ def input_with_other(label, options, default):
     col_a, col_b = st.columns([2,1])
 
     with col_a:
-        choice = st.selectbox(label, options + ["Other"])
+        choice = st.selectbox(label, options + ["Other"], key=f"{label}_select")
 
     if choice == "Other":
         with col_b:
-            return st.number_input("Manual", value=default)
+            return st.number_input(
+                "Manual",
+                value=default,
+                key=f"{label}_manual"
+            )
     return float(choice)
 
 col1, col2 = st.columns(2)
