@@ -133,7 +133,10 @@ with col1:
 with col2:
     pf = st.number_input("Power Factor", value=0.9)
     eff = st.number_input("Efficiency", value=0.95)
+st.divider()
+st.subheader("🧵 Conductor Details")
 
+material = st.selectbox("Conductor Material", ["Copper", "Aluminium"])
 st.divider()
 
 # ------------------------------------------------
@@ -241,12 +244,24 @@ run_btn = st.button("🚀 Run CableMate Analysis")
 # CATALOG
 # ------------------------------------------------
 
-catalog={
+catalog_cu={
 "sizes":[50,70,95,120,150,185,240,300],
 "amp":{50:181,70:220,95:263,120:298,150:332,185:374,240:431,300:482},
 "R":{50:0.387,70:0.268,95:0.193,120:0.153,150:0.124,185:0.099,240:0.075,300:0.060},
 "X":{50:0.111,70:0.106,95:0.094,120:0.091,150:0.089,185:0.086,240:0.083,300:0.082}
 }
+
+catalog_al={
+"sizes":[50,70,95,120,150,185,240,300],
+"amp":{50:150,70:180,95:215,120:245,150:275,185:310,240:360,300:405},
+"R":{50:0.641,70:0.443,95:0.320,120:0.253,150:0.206,185:0.164,240:0.125,300:0.100},
+"X":{50:0.111,70:0.106,95:0.094,120:0.091,150:0.089,185:0.086,240:0.083,300:0.082}
+}
+
+if material == "Copper":
+    catalog = catalog_cu
+else:
+    catalog = catalog_al
 
 # ------------------------------------------------
 # FUNCTIONS (UNCHANGED LOGIC)
@@ -261,8 +276,12 @@ def load_current():
         return power*1000/(math.sqrt(3)*voltage*1000*pf)
 
 def short_circuit():
-    return (fault*1000*math.sqrt(fault_time))/143
-
+    if material == "Copper":
+        k = 143
+    else:
+        k = 94
+    return (fault*1000*math.sqrt(fault_time))/k
+    
 def vd(I,R,X,runs):
     ang=math.acos(pf)
     return (math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
