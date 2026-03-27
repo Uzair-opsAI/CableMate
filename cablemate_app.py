@@ -79,7 +79,7 @@ with col1:
         placeholder="e.g. TR-01 / SWGR-A1"
     )
 
-    voltage = st.selectbox("System Voltage (kV)", [3.3,6.6,11,33])
+    voltage = st.selectbox("System Voltage (kV)", [3.3,6.6,11,25,33,66,132])
 
 with col2:
     project_name = st.text_input("Project Name", "Electrical Distribution System")
