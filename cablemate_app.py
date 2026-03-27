@@ -137,6 +137,7 @@ st.divider()
 st.subheader("🧵 Conductor Details")
 
 material = st.selectbox("Conductor Material", ["Copper", "Aluminium"])
+st.selectbox("Cable Type", ["1-Core", "3-Core"])
 st.divider()
 
 # ------------------------------------------------
@@ -466,12 +467,16 @@ if run_btn:
 
     if best:
 
-        st.success(f"Best Fit Cable → {best['runs']}R x 3C x {best['size']} sq.mm")
-
+        if cable_type == "3-Core":
+            cable_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
+        else:
+            cable_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
+        st.success(f"Best Fit Cable → {cable_str}")
         m1,m2,m3=st.columns(3)
         m1.metric("Load Current",round(I,1))
         m2.metric("Running VD %",round(v,2))
-        m3.metric("Starting VD %",round(vs,2))
+        if load_type == "Motor":
+            m3.metric("Starting VD %", round(vs,2))
 
         pdf=report(best,I,S,v,vs)
 
