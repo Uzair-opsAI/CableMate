@@ -184,7 +184,9 @@ def input_with_other(label, options, default):
         with col_b:
             return st.number_input(
                 "Manual",
-                value=default,
+                value=float(default),
+                step=0.01,
+                format="%.3f",
                 key=f"{label}_manual"
             )
     return float(choice)
