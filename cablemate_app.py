@@ -188,7 +188,7 @@ def input_with_other(label, options, default):
 col1, col2 = st.columns(2)
 
 with col1:
-    soil = input_with_other("Soil Factor",[1.0,1.5,2],1.5)
+    soil = input_with_other("Soil Resistance Factor",[1.0,1.5,2],1.5)
     group = input_with_other("Grouping Factor",[1,0.85,0.79,0.73],1)
 
 with col2:
