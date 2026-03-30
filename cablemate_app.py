@@ -556,6 +556,12 @@ if "calculated" in st.session_state and best and apply_manual:
     amp_ok = amp >= I
     vd_ok = v_manual <= vd_run_limit
     vs_ok = vs_manual <= vd_start_limit
+    st.session_state["v_manual"] = v_manual
+st.session_state["vs_manual"] = vs_manual
+st.session_state["amp_ok"] = amp_ok
+st.session_state["vd_ok"] = vd_ok
+st.session_state["vs_ok"] = vs_ok
+st.session_state["sc_ok"] = sc_ok
 
     st.markdown("### 📊 Manual Cable Result")
 
