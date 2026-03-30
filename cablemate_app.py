@@ -440,7 +440,26 @@ def report(best, I, S, v, vs):
 # ------------------------------------------------
 
 if run_btn:
+st.divider()
+st.subheader("🔧 Manual Cable Evaluation")
 
+col1, col2 = st.columns(2)
+
+with col1:
+    manual_size = st.selectbox(
+        "Select Cable Size (sq.mm)",
+        catalog["sizes"],
+        key="manual_size"
+    )
+
+with col2:
+    manual_runs = st.selectbox(
+        "Number of Runs",
+        [1,2,3],
+        key="manual_runs"
+    )
+    
+if 'I' in locals() and 'S' in locals():
     I = load_current()
     S = short_circuit()
 
