@@ -547,5 +547,5 @@ if check_btn:
         with open(pdf,"rb") as f:
             st.download_button("Download Report",f,"CableMate_Report.pdf")
 
-        else:
-            st.error("No suitable cable found")
+    else:
+        st.error("No suitable cable found")
