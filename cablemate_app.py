@@ -451,7 +451,7 @@ if run_btn:
     for runs in range(1,4):
         for size in catalog["sizes"]:
 
-            if size<S: continue
+            if size * runs < S: continue
 
             amp=catalog["amp"][size]*kT*runs
             if amp<I: continue
