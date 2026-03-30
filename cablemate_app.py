@@ -242,7 +242,86 @@ st.divider()
 # ------------------------------------------------
 
 run_btn = st.button("🚀 Run CableMate Analysis")
+# ============================================
+# SHOW BEST CABLE (PERSISTENT)
+# ============================================
 
+if "calculated" in st.session_state:
+
+    best = st.session_state["best"]
+    I = st.session_state["I"]
+    S = st.session_state["S"]
+    v = st.session_state["v"]
+    vs = st.session_state["vs"]
+
+    if best:
+
+        if cable_type == "3-Core":
+            cable_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
+        else:
+            cable_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
+
+        st.success(f"Best Fit Cable → {cable_str}")
+# ============================================
+# MANUAL INPUT (ALWAYS VISIBLE)
+# ============================================
+
+st.divider()
+st.subheader("🔧 Manual Cable Evaluation")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    manual_size = st.selectbox(
+        "Select Cable Size (sq.mm)",
+        catalog["sizes"],
+        key="manual_size"
+    )
+
+with col2:
+    manual_runs = st.selectbox(
+        "Number of Runs",
+        [1,2,3],
+        key="manual_runs"
+    )
+# ============================================
+# MANUAL CALCULATION (NO BUTTON NEEDED)
+# ============================================
+
+if "calculated" in st.session_state:
+
+    amp = catalog["amp"][manual_size] * kT * manual_runs
+
+    v_manual = vd(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
+    vs_manual = vd_start(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
+
+    sc_ok = manual_size >= S
+    amp_ok = amp >= I
+    vd_ok = v_manual <= vd_run_limit
+    vs_ok = vs_manual <= vd_start_limit
+
+    st.markdown("### 📊 Manual Cable Result")
+
+    st.write(f"**Ampacity Check** → {'✅ PASS' if amp_ok else '❌ FAIL'}")
+    st.write(f"**Running Voltage Drop** → {'✅ PASS' if vd_ok else '❌ FAIL'}")
+
+    if load_type == "Motor":
+        st.write(f"**Starting Voltage Drop** → {'✅ PASS' if vs_ok else '❌ FAIL'}")
+
+    st.write(f"**Short Circuit Check** → {'✅ PASS' if sc_ok else '❌ FAIL'}")
+
+# ============================================
+# COMPARISON (BEST vs MANUAL)
+# ============================================
+
+if "calculated" in st.session_state and best:
+
+    st.markdown("### 🔍 Comparison")
+
+    st.write(f"Best Cable → {best['runs']}R x {best['size']} sq.mm")
+    st.write(f"Manual Cable → {manual_runs}R x {manual_size} sq.mm")
+
+    st.write(f"Voltage Drop Difference → {round(v_manual - v,2)} %")
 # ------------------------------------------------
 # CATALOG
 # ------------------------------------------------
