@@ -441,8 +441,13 @@ def report(best, I, S, v, vs):
 
 if run_btn:
 
+    st.session_state["calculated"] = True
+
     I = load_current()
     S = short_circuit()
+
+    st.session_state["I"] = I
+    st.session_state["S"] = S
 
     best = None
     v = 0
@@ -471,6 +476,10 @@ if run_btn:
 
         if best:
             break
+
+    st.session_state["best"] = best
+    st.session_state["v"] = v
+    st.session_state["vs"] = vs
 
     # ----------------------------------------
     # BEST CABLE RESULT
