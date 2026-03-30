@@ -515,9 +515,7 @@ if run_btn:
                 key="manual_runs"
             )
 
-        check_btn = st.button("Check Manual Cable")
-
-        if check_btn:
+        if manual_size and manual_runs:
 
             # CALCULATIONS
             amp = catalog["amp"][manual_size] * kT * manual_runs
