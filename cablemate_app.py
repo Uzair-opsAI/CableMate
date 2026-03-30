@@ -540,14 +540,13 @@ with col2:
         [1,2,3],
         key="manual_runs_unique"
     )
-
+apply_manual = st.button("Apply Manual Selection")
 
 # ============================================
 # MANUAL CALCULATION (AUTO, NO BUTTON)
 # ============================================
 
-if "calculated" in st.session_state:
-
+if "calculated" in st.session_state and apply_manual:
     amp = catalog["amp"][manual_size] * kT * manual_runs
 
     v_manual = vd(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
