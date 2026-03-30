@@ -474,6 +474,72 @@ if run_btn:
         else:
             cable_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
         st.success(f"Best Fit Cable → {cable_str}")
+        # ============================================
+# MANUAL CABLE EVALUATION FEATURE
+# ============================================
+
+st.divider()
+st.subheader("🔧 Manual Cable Evaluation")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    manual_size = st.selectbox(
+        "Select Cable Size (sq.mm)",
+        catalog["sizes"],
+        key="manual_size"
+    )
+
+with col2:
+    manual_runs = st.selectbox(
+        "Number of Runs",
+        [1, 2, 3],
+        key="manual_runs"
+    )
+
+check_btn = st.button("Check Manual Cable")
+
+if check_btn:
+
+    # -----------------------------
+    # CALCULATIONS
+    # -----------------------------
+    amp = catalog["amp"][manual_size] * kT * manual_runs
+
+    v_manual = vd(
+        I,
+        catalog["R"][manual_size],
+        catalog["X"][manual_size],
+        manual_runs
+    )
+
+    vs_manual = vd_start(
+        I,
+        catalog["R"][manual_size],
+        catalog["X"][manual_size],
+        manual_runs
+    )
+
+    # -----------------------------
+    # CHECK CONDITIONS
+    # -----------------------------
+    sc_ok = (manual_size * manual_runs) >= S
+    amp_ok = amp >= I
+    vd_ok = v_manual <= vd_run_limit
+    vs_ok = vs_manual <= vd_start_limit
+
+    # -----------------------------
+    # DISPLAY RESULTS
+    # -----------------------------
+    st.markdown("### 📊 Manual Cable Result")
+
+    st.write(f"**Ampacity Check** → {'✅ PASS' if amp_ok else '❌ FAIL'}")
+    st.write(f"**Running Voltage Drop** → {'✅ PASS' if vd_ok else '❌ FAIL'}")
+
+    if load_type == "Motor":
+        st.write(f"**Starting Voltage Drop** → {'✅ PASS' if vs_ok else '❌ FAIL'}")
+
+    st.write(f"**Short Circuit Check** → {'✅ PASS' if sc_ok else '❌ FAIL'}")
         m1,m2,m3=st.columns(3)
         m1.metric("Load Current",round(I,1))
         m2.metric("Running VD %",round(v,2))
