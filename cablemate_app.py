@@ -474,40 +474,52 @@ if run_btn:
         else:
             cable_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
         st.success(f"Best Fit Cable → {cable_str}")
-        # ============================================
-# MANUAL CABLE EVALUATION FEATURE
-# ============================================
+ if best:
 
-st.divider()
-st.subheader("🔧 Manual Cable Evaluation")
+    if cable_type == "3-Core":
+        cable_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
+    else:
+        cable_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
 
-col1, col2 = st.columns(2)
+    st.success(f"Best Fit Cable → {cable_str}")
 
-with col1:
-    manual_size = st.selectbox(
-        "Select Cable Size (sq.mm)",
-        catalog["sizes"],
-        key="manual_size"
-    )
+    # ============================================
+    # ✅ PASTE MANUAL BLOCK HERE
+    # ============================================
 
-with col2:
-    manual_runs = st.selectbox(
-        "Number of Runs",
-        [1, 2, 3],
-        key="manual_runs"
-    )
+    st.divider()
+    st.subheader("🔧 Manual Cable Evaluation")
 
-check_btn = st.button("Check Manual Cable")
+    col1, col2 = st.columns(2)
 
-if check_btn:
+    with col1:
+        manual_size = st.selectbox(
+            "Select Cable Size (sq.mm)",
+            catalog["sizes"],
+            key="manual_size"
+        )
 
-    # -----------------------------
-    # CHECK CONDITIONS
-    # -----------------------------
-    sc_ok = (manual_size * manual_runs) >= S
-    amp_ok = amp >= I
-    vd_ok = v_manual <= vd_run_limit
-    vs_ok = vs_manual <= vd_start_limit
+    with col2:
+        manual_runs = st.selectbox(
+            "Number of Runs",
+            [1, 2, 3],
+            key="manual_runs"
+        )
+
+    check_btn = st.button("Check Manual Cable")
+
+    if check_btn:
+
+        amp = catalog["amp"][manual_size] * kT * manual_runs
+
+        v_manual = vd(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
+
+        vs_manual = vd_start(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
+
+        sc_ok = (manual_size * manual_runs) >= S
+        amp_ok = amp >= I
+        vd_ok = v_manual <= vd_run_limit
+        vs_ok = vs_manual <= vd_start_limit
 
     # -----------------------------
     # DISPLAY RESULTS
