@@ -441,39 +441,36 @@ def report(best, I, S, v, vs):
 
 if run_btn:
 
-    I=load_current()
-    S=short_circuit()
+    I = load_current()
+    S = short_circuit()
 
-    best=None
-    v=0
-    vs=0
+    best = None
+    v = 0
+    vs = 0
 
     for runs in range(1,4):
         for size in catalog["sizes"]:
 
             if size * runs < S: continue
 
-            amp=catalog["amp"][size]*kT*runs
-            if amp<I: continue
+            amp = catalog["amp"][size]*kT*runs
+            if amp < I: continue
 
-            v=vd(I,catalog["R"][size],catalog["X"][size],runs)
-            if v>vd_run_limit: continue
+            v = vd(I,catalog["R"][size],catalog["X"][size],runs)
+            if v > vd_run_limit: continue
 
-            vs=vd_start(I,catalog["R"][size],catalog["X"][size],runs)
-            if vs>vd_start_limit: continue
+            vs = vd_start(I,catalog["R"][size],catalog["X"][size],runs)
+            if vs > vd_start_limit: continue
 
-            best={"size":size,"runs":runs}
+            best = {"size":size,"runs":runs}
             break
 
-        if best: break
+        if best:
+            break
 
-    if best:
-
-        if cable_type == "3-Core":
-            cable_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
-        else:
-            cable_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
-        st.success(f"Best Fit Cable → {cable_str}")
+    # ----------------------------------------
+    # IF BEST CABLE FOUND
+    # ----------------------------------------
     if best:
 
         if cable_type == "3-Core":
@@ -483,82 +480,82 @@ if run_btn:
 
         st.success(f"Best Fit Cable → {cable_str}")
 
-    # ============================================
-    # ✅ PASTE MANUAL BLOCK HERE
-    # ============================================
-
-    st.divider()
-    st.subheader("🔧 Manual Cable Evaluation")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        manual_size = st.selectbox(
-            "Select Cable Size (sq.mm)",
-            catalog["sizes"],
-            key="manual_size"
-        )
-
-    with col2:
-        manual_runs = st.selectbox(
-            "Number of Runs",
-            [1, 2, 3],
-            key="manual_runs"
-        )
-
-   check_btn = st.button("Check Manual Cable")
-
-if check_btn:
-
-    # -----------------------------
-    # CALCULATIONS
-    # -----------------------------
-    amp = catalog["amp"][manual_size] * kT * manual_runs
-
-    v_manual = vd(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
-
-    vs_manual = vd_start(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
-
-    sc_ok = (manual_size * manual_runs) >= S
-    amp_ok = amp >= I
-    vd_ok = v_manual <= vd_run_limit
-    vs_ok = vs_manual <= vd_start_limit
-
-    # -----------------------------
-    # DISPLAY (INSIDE SAME BLOCK)
-    # -----------------------------
-    st.markdown("### 📊 Manual Cable Result")
-
-    st.write(f"**Ampacity Check** → {'✅ PASS' if amp_ok else '❌ FAIL'}")
-    st.write(f"**Running Voltage Drop** → {'✅ PASS' if vd_ok else '❌ FAIL'}")
-
-    if load_type == "Motor":
-        st.write(f"**Starting Voltage Drop** → {'✅ PASS' if vs_ok else '❌ FAIL'}")
-
-    st.write(f"**Short Circuit Check** → {'✅ PASS' if sc_ok else '❌ FAIL'}")
-
-    # WARNINGS
-    if not amp_ok:
-        st.warning("⚠ Ampacity is insufficient → Cable may overheat")
-
-    if not vd_ok:
-        st.warning("⚠ Voltage drop exceeds limit → Poor performance")
-
-    if not sc_ok:
-        st.warning("⚠ Short circuit rating inadequate → Risk of damage")
-
-    if load_type == "Motor" and not vs_ok:
-        st.warning("⚠ Starting voltage drop too high → Motor may fail to start")
-        m1,m2,m3=st.columns(3)
-        m1.metric("Load Current",round(I,1))
-        m2.metric("Running VD %",round(v,2))
+        # METRICS (BEST CABLE)
+        m1,m2,m3 = st.columns(3)
+        m1.metric("Load Current", round(I,1))
+        m2.metric("Running VD %", round(v,2))
         if load_type == "Motor":
             m3.metric("Starting VD %", round(vs,2))
 
-        pdf=report(best,I,S,v,vs)
-
+        # PDF
+        pdf = report(best,I,S,v,vs)
         with open(pdf,"rb") as f:
             st.download_button("Download Report",f,"CableMate_Report.pdf")
 
+        # ============================================
+        # MANUAL CABLE EVALUATION
+        # ============================================
+
+        st.divider()
+        st.subheader("🔧 Manual Cable Evaluation")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            manual_size = st.selectbox(
+                "Select Cable Size (sq.mm)",
+                catalog["sizes"],
+                key="manual_size"
+            )
+
+        with col2:
+            manual_runs = st.selectbox(
+                "Number of Runs",
+                [1,2,3],
+                key="manual_runs"
+            )
+
+        check_btn = st.button("Check Manual Cable")
+
+        if check_btn:
+
+            # CALCULATIONS
+            amp = catalog["amp"][manual_size] * kT * manual_runs
+
+            v_manual = vd(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
+            vs_manual = vd_start(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
+
+            sc_ok = manual_size >= S   # corrected logic
+            amp_ok = amp >= I
+            vd_ok = v_manual <= vd_run_limit
+            vs_ok = vs_manual <= vd_start_limit
+
+            # DISPLAY
+            st.markdown("### 📊 Manual Cable Result")
+
+            st.write(f"**Ampacity Check** → {'✅ PASS' if amp_ok else '❌ FAIL'}")
+            st.write(f"**Running Voltage Drop** → {'✅ PASS' if vd_ok else '❌ FAIL'}")
+
+            if load_type == "Motor":
+                st.write(f"**Starting Voltage Drop** → {'✅ PASS' if vs_ok else '❌ FAIL'}")
+
+            st.write(f"**Short Circuit Check** → {'✅ PASS' if sc_ok else '❌ FAIL'}")
+
+            # WARNINGS
+            if not amp_ok:
+                st.warning("⚠ Ampacity is insufficient → Cable may overheat")
+
+            if not vd_ok:
+                st.warning("⚠ Voltage drop exceeds limit → Poor performance")
+
+            if not sc_ok:
+                st.warning("⚠ Short circuit rating inadequate → Risk of damage")
+
+            if load_type == "Motor" and not vs_ok:
+                st.warning("⚠ Starting voltage drop too high → Motor may fail to start")
+
+    # ----------------------------------------
+    # IF NO CABLE FOUND
+    # ----------------------------------------
     else:
         st.error("No suitable cable found")
