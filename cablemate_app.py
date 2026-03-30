@@ -474,14 +474,14 @@ if run_btn:
         else:
             cable_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
         st.success(f"Best Fit Cable → {cable_str}")
- if best:
+    if best:
 
-    if cable_type == "3-Core":
-        cable_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
-    else:
-        cable_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
+        if cable_type == "3-Core":
+            cable_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
+        else:
+            cable_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
 
-    st.success(f"Best Fit Cable → {cable_str}")
+        st.success(f"Best Fit Cable → {cable_str}")
 
     # ============================================
     # ✅ PASTE MANUAL BLOCK HERE
