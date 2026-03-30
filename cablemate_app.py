@@ -546,7 +546,8 @@ apply_manual = st.button("Apply Manual Selection")
 # MANUAL CALCULATION (AUTO, NO BUTTON)
 # ============================================
 
-if "calculated" in st.session_state and best and apply_manual:
+if "calculated" in st.session_state and best and "manual_done" in st.session_state:
+
     amp = catalog["amp"][manual_size] * kT * manual_runs
 
     v_manual = vd(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
@@ -556,6 +557,8 @@ if "calculated" in st.session_state and best and apply_manual:
     amp_ok = amp >= I
     vd_ok = v_manual <= vd_run_limit
     vs_ok = vs_manual <= vd_start_limit
+
+    # STORE VALUES
     st.session_state["v_manual"] = v_manual
     st.session_state["vs_manual"] = vs_manual
     st.session_state["amp_ok"] = amp_ok
@@ -585,7 +588,6 @@ if "calculated" in st.session_state and best and apply_manual:
 
     if load_type == "Motor" and not vs_ok:
         st.warning("⚠ Starting voltage drop too high → Motor may fail to start")
-
 
 # ============================================
 # COMPARISON + JUSTIFICATION
