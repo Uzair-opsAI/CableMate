@@ -600,7 +600,7 @@ if "calculated" in st.session_state and best:
     st.write(f"Best Cable → {best['runs']}R x {best['size']} sq.mm")
     st.write(f"Manual Cable → {manual_runs}R x {manual_size} sq.mm")
 
-    st.write(f"Voltage Drop Difference → {round(v_manual - v,2)} %")
+    st.write(f"Voltage Drop Difference → {round(st.session_state['v_manual'] - v,2)} %")
 
     st.markdown("### 🧠 Engineering Reasoning")
 
