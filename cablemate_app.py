@@ -531,23 +531,23 @@ if check_btn:
     # -----------------------------
     # DISPLAY RESULTS
     # -----------------------------
-    st.markdown("### 📊 Manual Cable Result")
+        st.markdown("### 📊 Manual Cable Result")
 
-    st.write(f"**Ampacity Check** → {'✅ PASS' if amp_ok else '❌ FAIL'}")
-    st.write(f"**Running Voltage Drop** → {'✅ PASS' if vd_ok else '❌ FAIL'}")
+        st.write(f"**Ampacity Check** → {'✅ PASS' if amp_ok else '❌ FAIL'}")
+        st.write(f"**Running Voltage Drop** → {'✅ PASS' if vd_ok else '❌ FAIL'}")
 
-    if load_type == "Motor":
+        if load_type == "Motor":
         st.write(f"**Starting Voltage Drop** → {'✅ PASS' if vs_ok else '❌ FAIL'}")
 
-    st.write(f"**Short Circuit Check** → {'✅ PASS' if sc_ok else '❌ FAIL'}")
-    if not amp_ok:
-    st.warning("⚠ Ampacity is insufficient → Cable may overheat")
+        st.write(f"**Short Circuit Check** → {'✅ PASS' if sc_ok else '❌ FAIL'}")
+        if not amp_ok:
+        st.warning("⚠ Ampacity is insufficient → Cable may overheat")
 
-    if not vd_ok:
-    st.warning("⚠ Voltage drop exceeds limit → Poor performance")
+        if not vd_ok:
+        st.warning("⚠ Voltage drop exceeds limit → Poor performance")
 
-    if not sc_ok:
-    st.warning("⚠ Short circuit rating inadequate → Risk of damage")
+        if not sc_ok:
+        st.warning("⚠ Short circuit rating inadequate → Risk of damage")
         m1,m2,m3=st.columns(3)
         m1.metric("Load Current",round(I,1))
         m2.metric("Running VD %",round(v,2))
