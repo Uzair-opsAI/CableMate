@@ -502,25 +502,6 @@ check_btn = st.button("Check Manual Cable")
 if check_btn:
 
     # -----------------------------
-    # CALCULATIONS
-    # -----------------------------
-    amp = catalog["amp"][manual_size] * kT * manual_runs
-
-    v_manual = vd(
-        I,
-        catalog["R"][manual_size],
-        catalog["X"][manual_size],
-        manual_runs
-    )
-
-    vs_manual = vd_start(
-        I,
-        catalog["R"][manual_size],
-        catalog["X"][manual_size],
-        manual_runs
-    )
-
-    # -----------------------------
     # CHECK CONDITIONS
     # -----------------------------
     sc_ok = (manual_size * manual_runs) >= S
@@ -531,23 +512,30 @@ if check_btn:
     # -----------------------------
     # DISPLAY RESULTS
     # -----------------------------
-        st.markdown("### 📊 Manual Cable Result")
+    st.markdown("### 📊 Manual Cable Result")
 
-        st.write(f"**Ampacity Check** → {'✅ PASS' if amp_ok else '❌ FAIL'}")
-        st.write(f"**Running Voltage Drop** → {'✅ PASS' if vd_ok else '❌ FAIL'}")
+    st.write(f"**Ampacity Check** → {'✅ PASS' if amp_ok else '❌ FAIL'}")
+    st.write(f"**Running Voltage Drop** → {'✅ PASS' if vd_ok else '❌ FAIL'}")
 
-        if load_type == "Motor":
-            st.write(f"**Starting Voltage Drop** → {'✅ PASS' if vs_ok else '❌ FAIL'}")
+    if load_type == "Motor":
+        st.write(f"**Starting Voltage Drop** → {'✅ PASS' if vs_ok else '❌ FAIL'}")
 
-            st.write(f"**Short Circuit Check** → {'✅ PASS' if sc_ok else '❌ FAIL'}")
-        if not amp_ok:
-            st.warning("⚠ Ampacity is insufficient → Cable may overheat")
+    st.write(f"**Short Circuit Check** → {'✅ PASS' if sc_ok else '❌ FAIL'}")
 
-        if not vd_ok:
-            st.warning("⚠ Voltage drop exceeds limit → Poor performance")
+    # -----------------------------
+    # WARNINGS
+    # -----------------------------
+    if not amp_ok:
+        st.warning("⚠ Ampacity is insufficient → Cable may overheat")
 
-        if not sc_ok:
-            st.warning("⚠ Short circuit rating inadequate → Risk of damage")
+    if not vd_ok:
+        st.warning("⚠ Voltage drop exceeds limit → Poor performance")
+
+    if not sc_ok:
+        st.warning("⚠ Short circuit rating inadequate → Risk of damage")
+
+    if load_type == "Motor" and not vs_ok:
+        st.warning("⚠ Starting voltage drop too high → Motor may fail to start")
         m1,m2,m3=st.columns(3)
         m1.metric("Load Current",round(I,1))
         m2.metric("Running VD %",round(v,2))
