@@ -506,23 +506,26 @@ if run_btn:
             key="manual_runs"
         )
 
-    check_btn = st.button("Check Manual Cable")
+   check_btn = st.button("Check Manual Cable")
 
-    if check_btn:
-
-        amp = catalog["amp"][manual_size] * kT * manual_runs
-
-        v_manual = vd(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
-
-        vs_manual = vd_start(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
-
-        sc_ok = (manual_size * manual_runs) >= S
-        amp_ok = amp >= I
-        vd_ok = v_manual <= vd_run_limit
-        vs_ok = vs_manual <= vd_start_limit
+if check_btn:
 
     # -----------------------------
-    # DISPLAY RESULTS
+    # CALCULATIONS
+    # -----------------------------
+    amp = catalog["amp"][manual_size] * kT * manual_runs
+
+    v_manual = vd(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
+
+    vs_manual = vd_start(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
+
+    sc_ok = (manual_size * manual_runs) >= S
+    amp_ok = amp >= I
+    vd_ok = v_manual <= vd_run_limit
+    vs_ok = vs_manual <= vd_start_limit
+
+    # -----------------------------
+    # DISPLAY (INSIDE SAME BLOCK)
     # -----------------------------
     st.markdown("### 📊 Manual Cable Result")
 
@@ -534,9 +537,7 @@ if run_btn:
 
     st.write(f"**Short Circuit Check** → {'✅ PASS' if sc_ok else '❌ FAIL'}")
 
-    # -----------------------------
     # WARNINGS
-    # -----------------------------
     if not amp_ok:
         st.warning("⚠ Ampacity is insufficient → Cable may overheat")
 
