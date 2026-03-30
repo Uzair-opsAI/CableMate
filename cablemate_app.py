@@ -434,16 +434,16 @@ def report(best, I, S, v, vs):
     c.save()
     return f.name
 # ------------------------------------------------
-# ENGINE
+# ENGINE (FINAL FIXED)
 # ------------------------------------------------
 
+# RUN BUTTON LOGIC (STORE DATA)
 if run_btn:
-
-    st.session_state["calculated"] = True
 
     I = load_current()
     S = short_circuit()
 
+    st.session_state["calculated"] = True
     st.session_state["I"] = I
     st.session_state["S"] = S
 
@@ -457,19 +457,19 @@ if run_btn:
             if size * runs < S:
                 continue
 
-            amp = catalog["amp"][size] * kT * runs
+            amp = catalog["amp"][size]*kT*runs
             if amp < I:
                 continue
 
-            v = vd(I, catalog["R"][size], catalog["X"][size], runs)
+            v = vd(I,catalog["R"][size],catalog["X"][size],runs)
             if v > vd_run_limit:
                 continue
 
-            vs = vd_start(I, catalog["R"][size], catalog["X"][size], runs)
+            vs = vd_start(I,catalog["R"][size],catalog["X"][size],runs)
             if vs > vd_start_limit:
                 continue
 
-            best = {"size": size, "runs": runs}
+            best = {"size":size,"runs":runs}
             break
 
         if best:
@@ -479,9 +479,19 @@ if run_btn:
     st.session_state["v"] = v
     st.session_state["vs"] = vs
 
-    # ----------------------------------------
-    # BEST CABLE RESULT
-    # ----------------------------------------
+
+# ----------------------------------------
+# SHOW BEST CABLE (PERSISTENT)
+# ----------------------------------------
+
+if "calculated" in st.session_state:
+
+    best = st.session_state["best"]
+    I = st.session_state["I"]
+    S = st.session_state["S"]
+    v = st.session_state["v"]
+    vs = st.session_state["vs"]
+
     if best:
 
         if cable_type == "3-Core":
@@ -499,17 +509,17 @@ if run_btn:
         if load_type == "Motor":
             m3.metric("Starting VD %", round(vs,2))
 
-        # PDF DOWNLOAD
-        pdf = report(best, I, S, v, vs)
-        with open(pdf, "rb") as f:
-            st.download_button("Download Report", f, "CableMate_Report.pdf")
+        # PDF
+        pdf = report(best,I,S,v,vs)
+        with open(pdf,"rb") as f:
+            st.download_button("Download Report",f,"CableMate_Report.pdf")
 
     else:
         st.error("No suitable cable found")
 
 
 # ============================================
-# MANUAL CABLE SECTION (ALWAYS VISIBLE)
+# MANUAL SECTION (ONLY ONE PLACE)
 # ============================================
 
 st.divider()
@@ -521,37 +531,27 @@ with col1:
     manual_size = st.selectbox(
         "Select Cable Size (sq.mm)",
         catalog["sizes"],
-        key="manual_size"
+        key="manual_size_unique"
     )
 
 with col2:
     manual_runs = st.selectbox(
         "Number of Runs",
-        [1, 2, 3],
-        key="manual_runs"
+        [1,2,3],
+        key="manual_runs_unique"
     )
 
+
 # ============================================
-# MANUAL CALCULATION (ONLY AFTER RUN)
+# MANUAL CALCULATION (AUTO, NO BUTTON)
 # ============================================
 
-if run_btn:
+if "calculated" in st.session_state:
 
     amp = catalog["amp"][manual_size] * kT * manual_runs
 
-    v_manual = vd(
-        I,
-        catalog["R"][manual_size],
-        catalog["X"][manual_size],
-        manual_runs
-    )
-
-    vs_manual = vd_start(
-        I,
-        catalog["R"][manual_size],
-        catalog["X"][manual_size],
-        manual_runs
-    )
+    v_manual = vd(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
+    vs_manual = vd_start(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
 
     sc_ok = manual_size >= S
     amp_ok = amp >= I
@@ -580,6 +580,34 @@ if run_btn:
 
     if load_type == "Motor" and not vs_ok:
         st.warning("⚠ Starting voltage drop too high → Motor may fail to start")
+
+
+# ============================================
+# COMPARISON + JUSTIFICATION
+# ============================================
+
+if "calculated" in st.session_state and best:
+
+    st.markdown("### 🔍 Best vs Manual Comparison")
+
+    st.write(f"Best Cable → {best['runs']}R x {best['size']} sq.mm")
+    st.write(f"Manual Cable → {manual_runs}R x {manual_size} sq.mm")
+
+    st.write(f"Voltage Drop Difference → {round(v_manual - v,2)} %")
+
+    st.markdown("### 🧠 Engineering Reasoning")
+
+    if not amp_ok:
+        st.write("Manual cable fails due to insufficient ampacity.")
+
+    if not vd_ok:
+        st.write("Manual cable causes excessive voltage drop.")
+
+    if not sc_ok:
+        st.write("Manual cable does not meet short circuit requirements.")
+
+    if amp_ok and vd_ok and sc_ok:
+        st.write("Manual cable is acceptable but not optimal compared to selected cable.")
 
     # ----------------------------------------
     # IF NO CABLE FOUND
