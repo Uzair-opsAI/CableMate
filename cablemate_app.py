@@ -412,7 +412,12 @@ def report(best, I, S, v, vs):
     y -= 25
     c.drawString(50, y, "DERATING FACTOR")
     y -= 15
-    c.drawString(50, y, f"kT = {round(kT,2)}")
+    if best["runs"] == 1:
+        kT_rep = soil * depth * temp
+    else:
+        kT_rep = soil * depth * group * temp
+
+    c.drawString(50, y, f"kT = {round(kT_rep,2)}")
 
     # --------------------------------
     # FINAL STATEMENT
@@ -479,13 +484,15 @@ if run_btn:
             best = {"size": size, "runs": runs}
             break
 
-            if best:
-                break
+        if best:
+            break
 
     st.session_state["best"] = best
     st.session_state["v"] = v
     st.session_state["vs"] = vs
-
+    st.session_state["calculated"] = True
+    st.session_state["I"] = I
+    st.session_state["S"] = S
 
 # ----------------------------------------
 # SHOW BEST CABLE (PERSISTENT)
@@ -673,5 +680,3 @@ if "calculated" in st.session_state and best and "manual_done" in st.session_sta
     # ----------------------------------------
     # IF NO CABLE FOUND
     # ----------------------------------------
-    else:
-        st.error("No suitable cable found")
