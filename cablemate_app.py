@@ -447,43 +447,39 @@ if run_btn:
     I = load_current()
     S = short_circuit()
 
-    st.session_state["calculated"] = True
-    st.session_state["I"] = I
-    st.session_state["S"] = S
-
     best = None
     v = 0
     vs = 0
 
-   for runs in range(1,4):
-    for size in catalog["sizes"]:
+    for runs in range(1,4):
+        for size in catalog["sizes"]:
 
-        # ✅ DERATING BASED ON RUNS
-        if runs == 1:
-            kT_local = soil * depth * temp
-        else:
-            kT_local = soil * depth * group * temp
+            # DERATING
+            if runs == 1:
+                kT_local = soil * depth * temp
+            else:
+                kT_local = soil * depth * group * temp
 
-        if size * runs < S:
-            continue
+            if size * runs < S:
+                continue
 
-        amp = catalog["amp"][size] * kT_local * runs
+            amp = catalog["amp"][size] * kT_local * runs
             if amp < I:
                 continue
 
-            v = vd(I,catalog["R"][size],catalog["X"][size],runs)
+            v = vd(I, catalog["R"][size], catalog["X"][size], runs)
             if v > vd_run_limit:
                 continue
 
-            vs = vd_start(I,catalog["R"][size],catalog["X"][size],runs)
+            vs = vd_start(I, catalog["R"][size], catalog["X"][size], runs)
             if vs > vd_start_limit:
                 continue
 
-            best = {"size":size,"runs":runs}
+            best = {"size": size, "runs": runs}
             break
 
-        if best:
-            break
+            if best:
+                break
 
     st.session_state["best"] = best
     st.session_state["v"] = v
