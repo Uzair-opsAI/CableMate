@@ -590,16 +590,17 @@ if "calculated" in st.session_state and best and "manual_done" in st.session_sta
         st.warning("⚠ Starting voltage drop too high → Motor may fail to start")
 
 # ============================================
-# COMPARISON + JUSTIFICATION
+# COMPARISON + JUSTIFICATION (FINAL FIXED)
 # ============================================
 
-if "calculated" in st.session_state and best:
+if "calculated" in st.session_state and best and "manual_done" in st.session_state:
 
     st.markdown("### 🔍 Best vs Manual Comparison")
 
     st.write(f"Best Cable → {best['runs']}R x {best['size']} sq.mm")
     st.write(f"Manual Cable → {manual_runs}R x {manual_size} sq.mm")
 
+    # SAFE FETCH VALUES
     v_manual_val = st.session_state.get("v_manual", None)
 
     if v_manual_val is not None:
@@ -607,19 +608,32 @@ if "calculated" in st.session_state and best:
     else:
         st.info("Apply manual selection to see comparison")
 
+    # ============================================
+    # ENGINEERING JUSTIFICATION
+    # ============================================
+
     st.markdown("### 🧠 Engineering Reasoning")
 
-    if not amp_ok:
+    # SAFE FETCH ALL FLAGS
+    amp_ok_val = st.session_state.get("amp_ok", None)
+    vd_ok_val = st.session_state.get("vd_ok", None)
+    vs_ok_val = st.session_state.get("vs_ok", None)
+    sc_ok_val = st.session_state.get("sc_ok", None)
+
+    if amp_ok_val is False:
         st.write("Manual cable fails due to insufficient ampacity.")
 
-    if not vd_ok:
+    if vd_ok_val is False:
         st.write("Manual cable causes excessive voltage drop.")
 
-    if not sc_ok:
+    if sc_ok_val is False:
         st.write("Manual cable does not meet short circuit requirements.")
 
-    if amp_ok and vd_ok and sc_ok:
-        st.write("Manual cable is acceptable but not optimal compared to selected cable.")
+    if load_type == "Motor" and vs_ok_val is False:
+        st.write("Manual cable has high starting voltage drop.")
+
+    if amp_ok_val and vd_ok_val and sc_ok_val:
+        st.write("Manual cable is technically acceptable but not optimal compared to selected cable.")
 
     # ----------------------------------------
     # IF NO CABLE FOUND
