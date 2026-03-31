@@ -466,7 +466,7 @@ if run_btn:
             else:
                 kT_local = soil * depth * group * temp
 
-            if size * runs < S:
+            if size < S:
                 continue
 
             amp = catalog["amp"][size] * kT_local * runs
