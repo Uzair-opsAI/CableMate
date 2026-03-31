@@ -17,7 +17,8 @@ st.set_page_config(page_title="CableMate", layout="wide")
 
 c1,c2 = st.columns([1,6])
 with c1:
-    st.image("logo.png",width=80)
+    if os.path.exists("logo.png"):
+        st.image("logo.png", width=80)
 with c2:
     st.title("CableMate – MV Cable Sizing Tool")
     st.caption("Professional Cable Design Assistant")
@@ -666,6 +667,7 @@ if apply_manual:
     # STORE CURRENT SELECTION
     st.session_state["selected_size"] = manual_size
     st.session_state["selected_runs"] = manual_runs
+    st.session_state["selected_type"] = cable_type
 # ============================================
 # MANUAL CALCULATION (STABLE VERSION - FIXED)
 # ============================================
