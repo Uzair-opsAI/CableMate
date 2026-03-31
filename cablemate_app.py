@@ -809,8 +809,13 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
 # COMPARISON + JUSTIFICATION (FINAL CLEAN)
 # ============================================
 
-if "calculated" in st.session_state and best and "manual_done" in st.session_state:
+if "calculated" in st.session_state and "manual_done" in st.session_state:
 
+    best = st.session_state.get("best")
+    if not best:
+        st.error("No suitable cable found")
+        st.stop()
+        
     st.markdown("### 🔍 Best vs Manual Comparison")
 
     # USE STORED VALUES (NOT LIVE DROPDOWN)
