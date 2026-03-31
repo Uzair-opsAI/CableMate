@@ -542,11 +542,14 @@ with col2:
     )
 apply_manual = st.button("Apply Manual Selection")
 
+if apply_manual:
+    st.session_state["manual_done"] = True
+    st.session_state["recompute"] = True 
 # ============================================
 # MANUAL CALCULATION (AUTO, NO BUTTON)
 # ============================================
 
-if "calculated" in st.session_state and best and "manual_done" in st.session_state:
+if "calculated" in st.session_state and best and st.session_state.get("recompute", False):
 
     amp = catalog["amp"][manual_size] * kT * manual_runs
 
@@ -565,7 +568,7 @@ if "calculated" in st.session_state and best and "manual_done" in st.session_sta
     st.session_state["vd_ok"] = vd_ok
     st.session_state["vs_ok"] = vs_ok
     st.session_state["sc_ok"] = sc_ok
-
+    st.session_state["recompute"] = False
     st.markdown("### 📊 Manual Cable Result")
 
     st.write(f"**Ampacity Check** → {'✅ PASS' if amp_ok else '❌ FAIL'}")
@@ -588,7 +591,7 @@ if "calculated" in st.session_state and best and "manual_done" in st.session_sta
 
     if load_type == "Motor" and not vs_ok:
         st.warning("⚠ Starting voltage drop too high → Motor may fail to start")
-
+        
 # ============================================
 # COMPARISON + JUSTIFICATION (FINAL FIXED)
 # ============================================
