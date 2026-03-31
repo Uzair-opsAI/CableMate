@@ -795,7 +795,12 @@ if "calculated" in st.session_state and best and "manual_done" in st.session_sta
     manual_size_used = st.session_state.get("selected_size")
     manual_runs_used = st.session_state.get("selected_runs")
 
-    st.write(f"Best Cable → {best['runs']}R x {best['size']} sq.mm")
+    if cable_type == "3-Core":
+        best_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
+    else:
+        best_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
+
+    st.write(f"Best Cable → {best_str}")
     st.write(f"Manual Cable → {manual_runs_used}R x {manual_size_used} sq.mm")
 
     # SAFE FETCH
