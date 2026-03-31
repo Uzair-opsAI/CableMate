@@ -753,6 +753,11 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         else:
             manual_str = f"{manual_runs_used}R x 1C x {manual_size_used} sq.mm"
 
+        if manual_type_used == "3-Core":
+            manual_str = f"{manual_runs_used}R x 3C x {manual_size_used} sq.mm"
+        else:
+            manual_str = f"{manual_runs_used}R x 1C x {manual_size_used} sq.mm"
+
         st.write(f"Manual Cable → {manual_str}")
 
         st.write(f"Ampacity → {'✅ PASS' if amp_ok_val else '❌ FAIL'}")
