@@ -600,14 +600,14 @@ if "calculated" in st.session_state:
 # -------------------------------
 # (V) FINAL SELECTION
 # -------------------------------
-st.markdown("### (V) Final Cable Selection")
+        st.markdown("### (V) Final Cable Selection")
 
-if cable_type == "3-Core":
-    final_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
-else:
-    final_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
+        if cable_type == "3-Core":
+            final_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
+        else:
+             final_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
 
-st.success(f"Selected Cable → {final_str}")
+        st.success(f"Selected Cable → {final_str}")
 
 # -------------------------------
 # ENGINEERING STATEMENT
