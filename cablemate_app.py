@@ -809,7 +809,7 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
 # COMPARISON + JUSTIFICATION (FINAL CLEAN)
 # ============================================
 
-if "calculated" in st.session_state and "manual_done" in st.session_state:
+    if "calculated" in st.session_state and "manual_done" in st.session_state:
 
     best = st.session_state.get("best")
     if not best:
