@@ -544,6 +544,7 @@ apply_manual = st.button("Apply Manual Selection")
 
 if apply_manual:
     st.session_state["manual_done"] = True
+    st.session_state["calculate_manual"] = True
     # STORE CURRENT SELECTION
     st.session_state["selected_size"] = manual_size
     st.session_state["selected_runs"] = manual_runs
@@ -551,7 +552,7 @@ if apply_manual:
 # MANUAL CALCULATION (STABLE VERSION)
 # ============================================
 
-if "calculated" in st.session_state and "manual_done" in st.session_state:
+if "calculated" in st.session_state and st.session_state.get("calculate_manual", False):
 
     # USE STORED VALUES (NOT LIVE DROPDOWN)
     manual_size_used = st.session_state.get("selected_size")
@@ -581,20 +582,19 @@ if "calculated" in st.session_state and "manual_done" in st.session_state:
         vd_ok_val = st.session_state.get("vd_ok")
         vs_ok_val = st.session_state.get("vs_ok")
         sc_ok_val = st.session_state.get("sc_ok")
-
+        st.caption("Showing last applied manual selection")
         # DISPLAY RESULT
         st.markdown("### 📊 Manual Cable Result")
 
         st.write(f"Manual Cable → {manual_runs_used}R x {manual_size_used} sq.mm")
 
-        st.write(f"Ampacity → {'PASS' if amp_ok_val else 'FAIL'}")
-        st.write(f"Voltage Drop → {'PASS' if vd_ok_val else 'FAIL'}")
+        st.write(f"Ampacity → {'✅ PASS' if amp_ok_val else '❌ FAIL'}")
+        st.write(f"Voltage Drop → {'✅ PASS' if vd_ok_val else '❌ FAIL'}")
 
         if load_type == "Motor":
-            st.write(f"Starting VD → {'PASS' if vs_ok_val else 'FAIL'}")
+            st.write(f"Starting VD → {'✅ PASS' if vs_ok_val else '❌ FAIL'}")
 
-        st.write(f"Short Circuit → {'PASS' if sc_ok_val else 'FAIL'}")
-
+        st.write(f"Short Circuit → {'✅ PASS' if sc_ok_val else '❌ FAIL'}")
         # WARNINGS
         if amp_ok_val is False:
             st.warning("⚠ Ampacity is insufficient → Cable may overheat")
@@ -607,7 +607,8 @@ if "calculated" in st.session_state and "manual_done" in st.session_state:
 
         if load_type == "Motor" and vs_ok_val is False:
             st.warning("⚠ Starting voltage drop too high → Motor may fail to start")
-
+            
+        st.session_state["calculate_manual"] = False
 
 # ============================================
 # COMPARISON + JUSTIFICATION (FINAL CLEAN)
