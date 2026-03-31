@@ -218,10 +218,7 @@ elif laying == "Duct":
 else:
     laying_factor = 0.85
 
-if runs == 1:
-    kT = soil * depth * temp
-else:
-    kT = soil * depth * grouping * temp
+
 # ------------------------------------------------
 # OVERALL DERATING DISPLAY
 # ------------------------------------------------
@@ -357,8 +354,12 @@ def report(best, I, S, v, vs):
     # --------------------------------
     # AMPACITY CHECK
     # --------------------------------
-    amp = catalog["amp"][best["size"]] * kT * best["runs"]
+    if best["runs"] == 1:
+        kT_rep = soil * depth * temp
+    else:
+        kT_rep = soil * depth * group * temp
 
+    amp = catalog["amp"][best["size"]] * kT_rep * best["runs"]
     y -= 25
     c.drawString(50, y, "AMPACITY CHECK")
     y -= 15
@@ -454,13 +455,19 @@ if run_btn:
     v = 0
     vs = 0
 
-    for runs in range(1,4):
-        for size in catalog["sizes"]:
+   for runs in range(1,4):
+    for size in catalog["sizes"]:
 
-            if size * runs < S:
-                continue
+        # ✅ DERATING BASED ON RUNS
+        if runs == 1:
+            kT_local = soil * depth * temp
+        else:
+            kT_local = soil * depth * group * temp
 
-            amp = catalog["amp"][size]*kT*runs
+        if size * runs < S:
+            continue
+
+        amp = catalog["amp"][size] * kT_local * runs
             if amp < I:
                 continue
 
@@ -563,8 +570,12 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
 
     if manual_size_used is not None and manual_runs_used is not None:
 
-        amp = catalog["amp"][manual_size_used] * kT * manual_runs_used
+        if manual_runs_used == 1:
+            kT_manual = soil * depth * temp
+        else:
+            kT_manual = soil * depth * group * temp
 
+        amp = catalog["amp"][manual_size_used] * kT_manual * manual_runs_used
         v_manual = vd(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used)
         vs_manual = vd_start(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used)
 
