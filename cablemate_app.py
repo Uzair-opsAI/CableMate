@@ -225,8 +225,9 @@ else:
 
 st.markdown("### 📊 Overall Derating Factor")
 
-st.success(f"Total Derating Factor (kT) = {round(kT, 3)}")
-
+kT_base = soil * depth * temp
+st.success(f"Base Derating Factor (kT) = {round(kT_base, 3)}")
+st.caption("Note: Grouping factor applied automatically for multiple runs")
 st.divider()
 
 st.markdown(f"""
