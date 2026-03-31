@@ -218,7 +218,10 @@ elif laying == "Duct":
 else:
     laying_factor = 0.85
 
-kT = soil * depth * group * temp 
+if runs == 1:
+    kT = soil * depth * temp
+else:
+    kT = soil * depth * grouping * temp
 # ------------------------------------------------
 # OVERALL DERATING DISPLAY
 # ------------------------------------------------
