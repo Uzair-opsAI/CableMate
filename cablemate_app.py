@@ -667,7 +667,7 @@ if apply_manual:
     st.session_state["selected_size"] = manual_size
     st.session_state["selected_runs"] = manual_runs
 # ============================================
-# MANUAL CALCULATION (STABLE VERSION)
+# MANUAL CALCULATION (STABLE VERSION - FIXED)
 # ============================================
 
 if "calculated" in st.session_state and st.session_state.get("calculate_manual", False):
@@ -675,40 +675,83 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
     # USE STORED VALUES (NOT LIVE DROPDOWN)
     manual_size_used = st.session_state.get("selected_size")
     manual_runs_used = st.session_state.get("selected_runs")
+    manual_type_used = st.session_state.get("selected_type")  # ✅ NEW
 
-    if manual_size_used is not None and manual_runs_used is not None:
+    if manual_size_used is not None and manual_runs_used is not None and manual_type_used is not None:
 
+        # ------------------------------------
+        # DERATING
+        # ------------------------------------
         if manual_runs_used == 1:
             kT_manual = soil * depth * temp
         else:
             kT_manual = soil * depth * group * temp
 
+        # ------------------------------------
+        # CALCULATIONS
+        # ------------------------------------
         amp = catalog["amp"][manual_size_used] * kT_manual * manual_runs_used
-        v_manual = vd(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used)
-        vs_manual = vd_start(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used)
 
-        sc_ok = manual_size_used >= S
+        v_manual = vd(
+            I,
+            catalog["R"][manual_size_used],
+            catalog["X"][manual_size_used],
+            manual_runs_used
+        )
+
+        vs_manual = vd_start(
+            I,
+            catalog["R"][manual_size_used],
+            catalog["X"][manual_size_used],
+            manual_runs_used
+        )
+
+        # ------------------------------------
+        # SHORT CIRCUIT FIX (IMPORTANT)
+        # ------------------------------------
+        if manual_type_used == "3-Core":
+            sc_ok = manual_size_used >= (S / 2)
+        else:
+            sc_ok = manual_size_used >= S
+
+        # ------------------------------------
+        # CHECKS
+        # ------------------------------------
         amp_ok = amp >= I
         vd_ok = v_manual <= vd_run_limit
         vs_ok = vs_manual <= vd_start_limit
 
+        # ------------------------------------
         # STORE VALUES
+        # ------------------------------------
         st.session_state["v_manual"] = v_manual
+        st.session_state["vs_manual"] = vs_manual
         st.session_state["amp_ok"] = amp_ok
         st.session_state["vd_ok"] = vd_ok
         st.session_state["vs_ok"] = vs_ok
         st.session_state["sc_ok"] = sc_ok
 
-        # SAFE FETCH FOR DISPLAY
+        # ------------------------------------
+        # SAFE FETCH
+        # ------------------------------------
         amp_ok_val = st.session_state.get("amp_ok")
         vd_ok_val = st.session_state.get("vd_ok")
         vs_ok_val = st.session_state.get("vs_ok")
         sc_ok_val = st.session_state.get("sc_ok")
-        st.caption("Showing last applied manual selection")
+
+        # ------------------------------------
         # DISPLAY RESULT
+        # ------------------------------------
+        st.caption("Showing last applied manual selection")
+
         st.markdown("### 📊 Manual Cable Result")
 
-        st.write(f"Manual Cable → {manual_runs_used}R x {manual_size_used} sq.mm")
+        if manual_type_used == "3-Core":
+            manual_str = f"{manual_runs_used}R x 3C x {manual_size_used} sq.mm"
+        else:
+            manual_str = f"{manual_runs_used}R x 1C x {manual_size_used} sq.mm"
+
+        st.write(f"Manual Cable → {manual_str}")
 
         st.write(f"Ampacity → {'✅ PASS' if amp_ok_val else '❌ FAIL'}")
         st.write(f"Voltage Drop → {'✅ PASS' if vd_ok_val else '❌ FAIL'}")
@@ -717,7 +760,10 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
             st.write(f"Starting VD → {'✅ PASS' if vs_ok_val else '❌ FAIL'}")
 
         st.write(f"Short Circuit → {'✅ PASS' if sc_ok_val else '❌ FAIL'}")
+
+        # ------------------------------------
         # WARNINGS
+        # ------------------------------------
         if amp_ok_val is False:
             st.warning("⚠ Ampacity is insufficient → Cable may overheat")
 
@@ -729,7 +775,10 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
 
         if load_type == "Motor" and vs_ok_val is False:
             st.warning("⚠ Starting voltage drop too high → Motor may fail to start")
-            
+
+        # ------------------------------------
+        # RESET FLAG
+        # ------------------------------------
         st.session_state["calculate_manual"] = False
 
 # ============================================
