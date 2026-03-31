@@ -878,7 +878,10 @@ manual_runs_used = st.session_state.get("selected_runs")
 manual_type_used = st.session_state.get("selected_type")
 
 best_type = st.session_state.get("selected_type")  # ✅ FIXED
-
+amp_ok_val = st.session_state.get("amp_ok")
+vd_ok_val = st.session_state.get("vd_ok")
+sc_ok_val = st.session_state.get("sc_ok")
+vs_ok_val = st.session_state.get("vs_ok")
 if (
     manual_size_used == best["size"]
     and manual_runs_used == best["runs"]
