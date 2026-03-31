@@ -486,8 +486,42 @@ if run_btn:
             if vs > vd_start_limit:
                 continue
 
-            best = {"size": size, "runs": runs}
-            break
+            valid_options = []
+
+            for runs in range(1,4):
+                for size in catalog["sizes"]:
+
+            # DERATING
+            if runs == 1:
+                kT_local = soil * depth * temp
+            else:
+                kT_local = soil * depth * group * temp
+
+            # SHORT CIRCUIT (FIXED)
+            if size * runs < S:
+                continue
+
+            # AMPACITY
+            amp = catalog["amp"][size] * kT_local * runs
+            if amp < I:
+                continue
+
+        # VD
+            v = vd(I, catalog["R"][size], catalog["X"][size], runs)
+            if v > vd_run_limit:
+                continue
+
+            vs = vd_start(I, catalog["R"][size], catalog["X"][size], runs)
+            if vs > vd_start_limit:
+                continue
+
+        # STORE ALL VALID
+            valid_options.append({
+                "size": size,
+                "runs": runs,
+                "amp": amp,
+                "vd": v
+            })
 
         if best:
             break
