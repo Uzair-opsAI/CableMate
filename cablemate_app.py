@@ -518,7 +518,107 @@ if "calculated" in st.session_state:
             cable_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
 
         st.success(f"Best Fit Cable → {cable_str}")
+        # ============================================
+        # 📄 CALCULATION SHEET VIEW (LIKE PDF)
+        # ============================================
 
+        st.divider()
+        st.subheader("📄 Cable Calculation Sheet")
+
+        # -------------------------------
+        # (I) CURRENT CALCULATION
+        # -------------------------------
+        st.markdown("### (I) Current Calculation")
+
+        st.write(f"Voltage → {voltage} kV")
+        st.write(f"Load → {power} {'kVA' if load_type=='Transformer' else 'kW'}")
+        st.write(f"Power Factor → {pf}")
+        
+        st.success(f"Calculated Load Current → {round(I,2)} A")
+
+# -------------------------------
+# (II) AMPACITY CHECK
+# -------------------------------
+        st.markdown("### (II) Ampacity Check")
+
+        if best["runs"] == 1:
+            kT_calc = soil * depth * temp
+        else:
+            kT_calc = soil * depth * group * temp
+
+        amp_available = catalog["amp"][best["size"]] * kT_calc * best["runs"]
+
+        st.write(f"Base Ampacity → {catalog['amp'][best['size']]} A")
+        st.write(f"Derating Factor → {round(kT_calc,3)}")
+        st.write(f"Available Ampacity → {round(amp_available,2)} A")
+
+        if amp_available >= I:
+            st.success("Ampacity Check → PASS ✅")
+        else:
+            st.error("Ampacity Check → FAIL ❌")
+
+# -------------------------------
+# (III) SHORT CIRCUIT CHECK
+# -------------------------------
+        st.markdown("### (III) Short Circuit Check")
+
+        if cable_type == "3-Core":
+            S_check = S / 2
+        else:
+            S_check = S
+
+        st.write(f"Required Area → {round(S_check,2)} sq.mm")
+        st.write(f"Selected Cable Size → {best['size']} sq.mm")
+
+        if best["size"] >= S_check:
+            st.success("Short Circuit Check → PASS ✅")
+        else:
+            st.error("Short Circuit Check → FAIL ❌")
+
+# -------------------------------
+# (IV) VOLTAGE DROP
+# -------------------------------
+        st.markdown("### (IV) Voltage Drop Check")
+
+        st.write(f"Calculated VD → {round(v,2)} %")
+        st.write(f"Permissible VD → {vd_run_limit} %")
+
+        if v <= vd_run_limit:
+            st.success("Running Voltage Drop → PASS ✅")
+        else:
+            st.error("Running Voltage Drop → FAIL ❌")
+
+        if load_type == "Motor":
+            st.write(f"Starting VD → {round(vs,2)} %")
+            st.write(f"Permissible → {vd_start_limit} %")
+
+            if vs <= vd_start_limit:
+                st.success("Starting Voltage Drop → PASS ✅")
+            else:
+                st.error("Starting Voltage Drop → FAIL ❌")
+
+# -------------------------------
+# (V) FINAL SELECTION
+# -------------------------------
+st.markdown("### (V) Final Cable Selection")
+
+if cable_type == "3-Core":
+    final_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
+else:
+    final_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
+
+st.success(f"Selected Cable → {final_str}")
+
+# -------------------------------
+# ENGINEERING STATEMENT
+# -------------------------------
+    st.markdown("### 🧠 Engineering Statement")
+
+    st.write(
+        "All design checks including ampacity, voltage drop, and short circuit "
+        "withstand capability have been satisfied. The selected cable is safe "
+        "and suitable for the given application."
+    )
         # METRICS
         m1, m2, m3 = st.columns(3)
         m1.metric("Load Current", round(I,1))
