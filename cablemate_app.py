@@ -522,7 +522,17 @@ if run_btn:
                 "amp": amp,
                 "vd": v
             })
+            best = None
 
+            if valid_options:
+    # SORT (basic version for now)
+                valid_options.sort(key=lambda x: (x["runs"], x["size"]))
+
+                best = valid_options[0]
+
+    # IMPORTANT: assign v and vs
+                v = best["v"]
+                vs = best["vs"]
         if best:
             break
 
