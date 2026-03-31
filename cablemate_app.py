@@ -829,8 +829,37 @@ if "calculated" in st.session_state and best and "manual_done" in st.session_sta
     if load_type == "Motor" and vs_ok_val is False:
         st.write("Manual cable has high starting voltage drop.")
 
-    if amp_ok_val and vd_ok_val and sc_ok_val:
-        st.write("Manual cable is technically acceptable but not optimal compared to selected cable.")
+    # ------------------------------------
+# CHECK IF MANUAL == BEST (IMPORTANT)
+# ------------------------------------
+    manual_size_used = st.session_state.get("selected_size")
+    manual_runs_used = st.session_state.get("selected_runs")
+    manual_type_used = st.session_state.get("selected_type")
+
+    best_type = cable_type  # current selected type
+
+    if (
+        manual_size_used == best["size"]
+        and manual_runs_used == best["runs"]
+        and manual_type_used == best_type
+    ):
+        st.success("✔ Manual cable matches the optimal cable selection")
+
+    else:
+        if amp_ok_val is False:
+            st.write("Manual cable fails due to insufficient ampacity.")
+
+        if vd_ok_val is False:
+            st.write("Manual cable causes excessive voltage drop.")
+
+        if sc_ok_val is False:
+            st.write("Manual cable does not meet short circuit requirements.")
+
+        if load_type == "Motor" and vs_ok_val is False:
+            st.write("Manual cable has high starting voltage drop.")
+
+        if amp_ok_val and vd_ok_val and sc_ok_val:
+            st.write("Manual cable is technically acceptable but not optimal compared to selected cable.")
 
     # ----------------------------------------
     # IF NO CABLE FOUND
