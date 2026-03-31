@@ -466,7 +466,12 @@ if run_btn:
                 kT_local = soil * depth * group * temp
 
             # SHORT CIRCUIT (FINAL FIX)
-            if size * runs < S:
+            if cable_type == "3-Core":
+                sc_area = size * runs * 2
+            else:
+                sc_area = size * runs
+
+            if sc_area < S:
                 continue
 
             # AMPACITY
