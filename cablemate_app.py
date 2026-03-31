@@ -869,6 +869,10 @@ if "calculated" in st.session_state and "manual_done" in st.session_state:
   # ------------------------------------
 # CHECK IF MANUAL == BEST (IMPORTANT)
 # ------------------------------------
+best = st.session_state.get("best")
+if not best:
+    st.error("No suitable cable found")
+    st.stop()
 manual_size_used = st.session_state.get("selected_size")
 manual_runs_used = st.session_state.get("selected_runs")
 manual_type_used = st.session_state.get("selected_type")
