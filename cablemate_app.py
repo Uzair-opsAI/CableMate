@@ -466,8 +466,12 @@ if run_btn:
             else:
                 kT_local = soil * depth * group * temp
 
-            if size < S:
-                continue
+            if cable_type == "3-Core":
+                if size < (S / 2):
+                    continue
+            else:
+                if size < S:
+                    continue
 
             amp = catalog["amp"][size] * kT_local * runs
             if amp < I:
