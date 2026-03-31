@@ -448,15 +448,13 @@ def report(best, I, S, v, vs):
 # ENGINE (FINAL FIXED)
 # ------------------------------------------------
 
-# RUN BUTTON LOGIC (STORE DATA)
+# RUN BUTTON LOGIC (FINAL CLEAN ENGINE)
 if run_btn:
 
     I = load_current()
     S = short_circuit()
 
-    best = None
-    v = 0
-    vs = 0
+    valid_options = []
 
     for runs in range(1,4):
         for size in catalog["sizes"]:
@@ -467,37 +465,7 @@ if run_btn:
             else:
                 kT_local = soil * depth * group * temp
 
-            if cable_type == "3-Core":
-                if size < (S / 2):
-                    continue
-            else:
-                if size < S:
-                    continue
-
-            amp = catalog["amp"][size] * kT_local * runs
-            if amp < I:
-                continue
-
-            v = vd(I, catalog["R"][size], catalog["X"][size], runs)
-            if v > vd_run_limit:
-                continue
-
-            vs = vd_start(I, catalog["R"][size], catalog["X"][size], runs)
-            if vs > vd_start_limit:
-                continue
-
-            valid_options = []
-
-            for runs in range(1,4):
-                for size in catalog["sizes"]:
-
-            # DERATING
-            if runs == 1:
-                kT_local = soil * depth * temp
-            else:
-                kT_local = soil * depth * group * temp
-
-            # SHORT CIRCUIT (FIXED)
+            # SHORT CIRCUIT (FINAL FIX)
             if size * runs < S:
                 continue
 
@@ -506,43 +474,48 @@ if run_btn:
             if amp < I:
                 continue
 
-        # VD
-            v = vd(I, catalog["R"][size], catalog["X"][size], runs)
-            if v > vd_run_limit:
+            # VOLTAGE DROP
+            v_temp = vd(I, catalog["R"][size], catalog["X"][size], runs)
+            if v_temp > vd_run_limit:
                 continue
 
-            vs = vd_start(I, catalog["R"][size], catalog["X"][size], runs)
-            if vs > vd_start_limit:
+            vs_temp = vd_start(I, catalog["R"][size], catalog["X"][size], runs)
+            if vs_temp > vd_start_limit:
                 continue
 
-        # STORE ALL VALID
+            # STORE VALID OPTION
             valid_options.append({
                 "size": size,
                 "runs": runs,
-                "amp": amp,
-                "vd": v
+                "v": v_temp,
+                "vs": vs_temp
             })
-            best = None
 
-            if valid_options:
-    # SORT (basic version for now)
-                valid_options.sort(key=lambda x: (x["runs"], x["size"]))
+    # ----------------------------------------
+    # SELECT BEST OPTION
+    # ----------------------------------------
+    best = None
+    v = 0
+    vs = 0
 
-                best = valid_options[0]
+    if valid_options:
+        # BASIC SORT (can improve later)
+        valid_options.sort(key=lambda x: (x["runs"], x["size"]))
 
-    # IMPORTANT: assign v and vs
-                v = best["v"]
-                vs = best["vs"]
-        if best:
-            break
+        best = valid_options[0]
 
+        v = best["v"]
+        vs = best["vs"]
+
+    # ----------------------------------------
+    # STORE IN SESSION
+    # ----------------------------------------
     st.session_state["best"] = best
     st.session_state["v"] = v
     st.session_state["vs"] = vs
     st.session_state["calculated"] = True
     st.session_state["I"] = I
     st.session_state["S"] = S
-
 # ----------------------------------------
 # SHOW BEST CABLE (PERSISTENT)
 # ----------------------------------------
