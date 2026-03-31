@@ -809,7 +809,7 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
 # COMPARISON + JUSTIFICATION (FINAL CLEAN)
 # ============================================
 
-    if "calculated" in st.session_state and "manual_done" in st.session_state:
+if "calculated" in st.session_state and "manual_done" in st.session_state:
 
     best = st.session_state.get("best")
     if not best:
@@ -821,16 +821,17 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
     # USE STORED VALUES (NOT LIVE DROPDOWN)
     manual_size_used = st.session_state.get("selected_size")
     manual_runs_used = st.session_state.get("selected_runs")
+    manual_type_used = st.session_state.get("selected_type")
 
-    best_type = st.session_state.get("selected_type")
-    if best_type == "3-Core":
+    # BEST STRING
+    if manual_type_used == "3-Core":
         best_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
     else:
         best_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
 
     st.write(f"Best Cable → {best_str}")
-    manual_type_used = st.session_state.get("selected_type")
 
+    # MANUAL STRING
     if manual_type_used == "3-Core":
         manual_str = f"{manual_runs_used}R x 3C x {manual_size_used} sq.mm"
     else:
