@@ -612,13 +612,13 @@ if "calculated" in st.session_state:
 # -------------------------------
 # ENGINEERING STATEMENT
 # -------------------------------
-    st.markdown("### 🧠 Engineering Statement")
+        st.markdown("### 🧠 Engineering Statement")
 
-    st.write(
-        "All design checks including ampacity, voltage drop, and short circuit "
-        "withstand capability have been satisfied. The selected cable is safe "
-        "and suitable for the given application."
-    )
+        st.write(
+            "All design checks including ampacity, voltage drop, and short circuit "
+            "withstand capability have been satisfied. The selected cable is safe "
+             "and suitable for the given application."
+        )
         # METRICS
         m1, m2, m3 = st.columns(3)
         m1.metric("Load Current", round(I,1))
