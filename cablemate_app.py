@@ -822,13 +822,21 @@ if "calculated" in st.session_state and "manual_done" in st.session_state:
     manual_size_used = st.session_state.get("selected_size")
     manual_runs_used = st.session_state.get("selected_runs")
 
-    if cable_type == "3-Core":
+    best_type = st.session_state.get("selected_type")
+    if best_type == "3-Core":
         best_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
     else:
         best_str = f"{best['runs']}R x 1C x {best['size']} sq.mm"
 
     st.write(f"Best Cable → {best_str}")
-    st.write(f"Manual Cable → {manual_runs_used}R x {manual_size_used} sq.mm")
+    manual_type_used = st.session_state.get("selected_type")
+
+    if manual_type_used == "3-Core":
+        manual_str = f"{manual_runs_used}R x 3C x {manual_size_used} sq.mm"
+    else:
+        manual_str = f"{manual_runs_used}R x 1C x {manual_size_used} sq.mm"
+
+    st.write(f"Manual Cable → {manual_str}")
 
     # SAFE FETCH
     v_manual_val = st.session_state.get("v_manual")
