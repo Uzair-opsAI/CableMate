@@ -544,70 +544,91 @@ apply_manual = st.button("Apply Manual Selection")
 
 if apply_manual:
     st.session_state["manual_done"] = True
-    st.session_state["recompute"] = True 
+    # STORE CURRENT SELECTION
+    st.session_state["selected_size"] = manual_size
+    st.session_state["selected_runs"] = manual_runs
 # ============================================
-# MANUAL CALCULATION (AUTO, NO BUTTON)
+# MANUAL CALCULATION (STABLE VERSION)
 # ============================================
 
-if "calculated" in st.session_state and best and st.session_state.get("recompute", False):
+if "calculated" in st.session_state and "manual_done" in st.session_state:
 
-    amp = catalog["amp"][manual_size] * kT * manual_runs
+    # USE STORED VALUES (NOT LIVE DROPDOWN)
+    manual_size_used = st.session_state.get("selected_size")
+    manual_runs_used = st.session_state.get("selected_runs")
 
-    v_manual = vd(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
-    vs_manual = vd_start(I, catalog["R"][manual_size], catalog["X"][manual_size], manual_runs)
+    if manual_size_used is not None and manual_runs_used is not None:
 
-    sc_ok = manual_size >= S
-    amp_ok = amp >= I
-    vd_ok = v_manual <= vd_run_limit
-    vs_ok = vs_manual <= vd_start_limit
+        amp = catalog["amp"][manual_size_used] * kT * manual_runs_used
 
-    # STORE VALUES
-    st.session_state["v_manual"] = v_manual
-    st.session_state["vs_manual"] = vs_manual
-    st.session_state["amp_ok"] = amp_ok
-    st.session_state["vd_ok"] = vd_ok
-    st.session_state["vs_ok"] = vs_ok
-    st.session_state["sc_ok"] = sc_ok
-    st.session_state["recompute"] = False
-    st.markdown("### 📊 Manual Cable Result")
+        v_manual = vd(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used)
+        vs_manual = vd_start(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used)
 
-    st.write(f"**Ampacity Check** → {'✅ PASS' if amp_ok else '❌ FAIL'}")
-    st.write(f"**Running Voltage Drop** → {'✅ PASS' if vd_ok else '❌ FAIL'}")
+        sc_ok = manual_size_used >= S
+        amp_ok = amp >= I
+        vd_ok = v_manual <= vd_run_limit
+        vs_ok = vs_manual <= vd_start_limit
 
-    if load_type == "Motor":
-        st.write(f"**Starting Voltage Drop** → {'✅ PASS' if vs_ok else '❌ FAIL'}")
+        # STORE VALUES
+        st.session_state["v_manual"] = v_manual
+        st.session_state["amp_ok"] = amp_ok
+        st.session_state["vd_ok"] = vd_ok
+        st.session_state["vs_ok"] = vs_ok
+        st.session_state["sc_ok"] = sc_ok
 
-    st.write(f"**Short Circuit Check** → {'✅ PASS' if sc_ok else '❌ FAIL'}")
+        # SAFE FETCH FOR DISPLAY
+        amp_ok_val = st.session_state.get("amp_ok")
+        vd_ok_val = st.session_state.get("vd_ok")
+        vs_ok_val = st.session_state.get("vs_ok")
+        sc_ok_val = st.session_state.get("sc_ok")
 
-    # WARNINGS
-    if not amp_ok:
-        st.warning("⚠ Ampacity is insufficient → Cable may overheat")
+        # DISPLAY RESULT
+        st.markdown("### 📊 Manual Cable Result")
 
-    if not vd_ok:
-        st.warning("⚠ Voltage drop exceeds limit → Poor performance")
+        st.write(f"Manual Cable → {manual_runs_used}R x {manual_size_used} sq.mm")
 
-    if not sc_ok:
-        st.warning("⚠ Short circuit rating inadequate → Risk of damage")
+        st.write(f"Ampacity → {'PASS' if amp_ok_val else 'FAIL'}")
+        st.write(f"Voltage Drop → {'PASS' if vd_ok_val else 'FAIL'}")
 
-    if load_type == "Motor" and not vs_ok:
-        st.warning("⚠ Starting voltage drop too high → Motor may fail to start")
-        
+        if load_type == "Motor":
+            st.write(f"Starting VD → {'PASS' if vs_ok_val else 'FAIL'}")
+
+        st.write(f"Short Circuit → {'PASS' if sc_ok_val else 'FAIL'}")
+
+        # WARNINGS
+        if amp_ok_val is False:
+            st.warning("⚠ Ampacity is insufficient → Cable may overheat")
+
+        if vd_ok_val is False:
+            st.warning("⚠ Voltage drop exceeds limit → Poor performance")
+
+        if sc_ok_val is False:
+            st.warning("⚠ Short circuit rating inadequate → Risk of damage")
+
+        if load_type == "Motor" and vs_ok_val is False:
+            st.warning("⚠ Starting voltage drop too high → Motor may fail to start")
+
+
 # ============================================
-# COMPARISON + JUSTIFICATION (FINAL FIXED)
+# COMPARISON + JUSTIFICATION (FINAL CLEAN)
 # ============================================
 
 if "calculated" in st.session_state and best and "manual_done" in st.session_state:
 
     st.markdown("### 🔍 Best vs Manual Comparison")
 
-    st.write(f"Best Cable → {best['runs']}R x {best['size']} sq.mm")
-    st.write(f"Manual Cable → {manual_runs}R x {manual_size} sq.mm")
+    # USE STORED VALUES (NOT LIVE DROPDOWN)
+    manual_size_used = st.session_state.get("selected_size")
+    manual_runs_used = st.session_state.get("selected_runs")
 
-    # SAFE FETCH VALUES
-    v_manual_val = st.session_state.get("v_manual", None)
+    st.write(f"Best Cable → {best['runs']}R x {best['size']} sq.mm")
+    st.write(f"Manual Cable → {manual_runs_used}R x {manual_size_used} sq.mm")
+
+    # SAFE FETCH
+    v_manual_val = st.session_state.get("v_manual")
 
     if v_manual_val is not None:
-        st.write(f"Voltage Drop Difference → {round(v_manual_val - v,2)} %")
+        st.write(f"Voltage Drop Difference → {round(v_manual_val - v, 2)} %")
     else:
         st.info("Apply manual selection to see comparison")
 
@@ -617,11 +638,10 @@ if "calculated" in st.session_state and best and "manual_done" in st.session_sta
 
     st.markdown("### 🧠 Engineering Reasoning")
 
-    # SAFE FETCH ALL FLAGS
-    amp_ok_val = st.session_state.get("amp_ok", None)
-    vd_ok_val = st.session_state.get("vd_ok", None)
-    vs_ok_val = st.session_state.get("vs_ok", None)
-    sc_ok_val = st.session_state.get("sc_ok", None)
+    amp_ok_val = st.session_state.get("amp_ok")
+    vd_ok_val = st.session_state.get("vd_ok")
+    vs_ok_val = st.session_state.get("vs_ok")
+    sc_ok_val = st.session_state.get("sc_ok")
 
     if amp_ok_val is False:
         st.write("Manual cable fails due to insufficient ampacity.")
