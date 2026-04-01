@@ -833,51 +833,34 @@ if "calculated" in st.session_state and "manual_done" in st.session_state:
     else:
         st.info("Apply manual selection to see comparison")
 
-    # ============================================
-    # ENGINEERING JUSTIFICATION
-    # ============================================
-
-    st.markdown("### 🧠 Engineering Reasoning")
-
-    amp_ok_val = st.session_state.get("amp_ok")
-    vd_ok_val = st.session_state.get("vd_ok")
-    vs_ok_val = st.session_state.get("vs_ok")
-    sc_ok_val = st.session_state.get("sc_ok")
-
-    if amp_ok_val is False:
-        st.write("Manual cable fails due to insufficient ampacity.")
-
-    if vd_ok_val is False:
-        st.write("Manual cable causes excessive voltage drop.")
-
-    if load_type == "Motor" and vs_ok_val is False:
-        st.write("Manual cable has high starting voltage drop.")
+# ============================================
+# ENGINEERING JUSTIFICATION (FINAL CLEAN)
+# ============================================
 
 if "calculated" in st.session_state and "manual_done" in st.session_state:
 
-    # ------------------------------------
-    # CHECK IF MANUAL == BEST (IMPORTANT)
-    # ------------------------------------
+    st.markdown("### 🧠 Engineering Reasoning")
+
     best = st.session_state.get("best")
     if not best:
         st.error("No suitable cable found")
         st.stop()
 
+    # FETCH VALUES
     manual_size_used = st.session_state.get("selected_size")
     manual_runs_used = st.session_state.get("selected_runs")
-    manual_type_used = st.session_state.get("selected_type")
-
-    best_type = st.session_state.get("selected_type")
 
     amp_ok_val = st.session_state.get("amp_ok")
     vd_ok_val = st.session_state.get("vd_ok")
     sc_ok_val = st.session_state.get("sc_ok")
     vs_ok_val = st.session_state.get("vs_ok")
 
+    # ------------------------------------
+    # SINGLE DECISION LOGIC (NO DUPLICATION)
+    # ------------------------------------
     if (
         manual_size_used == best["size"]
         and manual_runs_used == best["runs"]
-        and manual_type_used == best_type
     ):
         st.success("✔ Manual cable matches the optimal cable selection")
 
@@ -895,27 +878,7 @@ if "calculated" in st.session_state and "manual_done" in st.session_state:
             st.error("Manual cable has high starting voltage drop.")
 
         else:
-            st.info("Manual cable is technically acceptable but not optimal.")
-    # ------------------------------------
-    # FAILURE CONDITIONS (PRIORITY)
-    # ------------------------------------
-    if amp_ok_val is False:
-        st.error("Manual cable fails due to insufficient ampacity.")
-
-    elif vd_ok_val is False:
-        st.error("Manual cable causes excessive voltage drop.")
-
-    elif sc_ok_val is False:
-        st.error("Manual cable does not meet short circuit requirements.")
-
-    elif load_type == "Motor" and vs_ok_val is False:
-        st.error("Manual cable has high starting voltage drop.")
-
-    # ------------------------------------
-    # IF ALL PASS BUT NOT BEST
-    # ------------------------------------
-    else:
-        st.info("Manual cable is technically acceptable but not optimal compared to selected cable.")
+            st.info("Manual cable is technically acceptable but not optimal compared to selected cable.")
 
     # ----------------------------------------
     # IF NO CABLE FOUND
