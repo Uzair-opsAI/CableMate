@@ -356,10 +356,7 @@ def report(best, I, S, v, vs):
     # --------------------------------
     # AMPACITY CHECK
     # --------------------------------
-    if best["runs"] == 1:
-        kT_rep = soil * depth * temp
-    else:
-        kT_rep = soil * depth * group * temp
+    kT_local = soil * depth * group * temp
 
     amp = catalog["amp"][best["size"]] * kT_rep * best["runs"]
     y -= 25
@@ -413,10 +410,7 @@ def report(best, I, S, v, vs):
     y -= 25
     c.drawString(50, y, "DERATING FACTOR")
     y -= 15
-    if best["runs"] == 1:
-        kT_rep = soil * depth * temp
-    else:
-        kT_rep = soil * depth * group * temp
+    kT_local = soil * depth * group * temp
 
     c.drawString(50, y, f"kT = {round(kT_rep,2)}")
 
@@ -460,10 +454,7 @@ if run_btn:
         for size in catalog["sizes"]:
 
             # DERATING
-            if runs == 1:
-                kT_local = soil * depth * temp
-            else:
-                kT_local = soil * depth * group * temp
+            kT_local = soil * depth * group * temp
 
             # SHORT CIRCUIT (FINAL FIX)
             if cable_type == "3-Core":
@@ -564,10 +555,7 @@ if "calculated" in st.session_state:
 # -------------------------------
         st.markdown("### (II) Ampacity Check")
 
-        if best["runs"] == 1:
-            kT_calc = soil * depth * temp
-        else:
-            kT_calc = soil * depth * group * temp
+        kT_local = soil * depth * group * temp
 
         amp_available = catalog["amp"][best["size"]] * kT_calc * best["runs"]
 
@@ -706,11 +694,7 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         # ------------------------------------
         # DERATING
         # ------------------------------------
-        if manual_runs_used == 1:
-            kT_manual = soil * depth * temp
-        else:
-            kT_manual = soil * depth * group * temp
-
+        kT_local = soil * depth * group * temp
         # ------------------------------------
         # CALCULATIONS
         # ------------------------------------
