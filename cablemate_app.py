@@ -357,7 +357,7 @@ def report(best, I, S, v, vs):
     # AMPACITY CHECK
     # --------------------------------
     kT_local = soil * depth * group * temp
-
+    kT_rep = soil * depth * group * temp
     amp = catalog["amp"][best["size"]] * kT_rep * best["runs"]
     y -= 25
     c.drawString(50, y, "AMPACITY CHECK")
@@ -496,7 +496,7 @@ if run_btn:
 
     if valid_options:
         # BASIC SORT (can improve later)
-        valid_options.sort(key=lambda x: (x["runs"], x["size"]))
+        valid_options.sort(key=lambda x: (x["size"], x["runs"]))
 
         best = valid_options[0]
 
@@ -556,7 +556,7 @@ if "calculated" in st.session_state:
         st.markdown("### (II) Ampacity Check")
 
         kT_local = soil * depth * group * temp
-
+        kT_calc = soil * depth * group * temp
         amp_available = catalog["amp"][best["size"]] * kT_calc * best["runs"]
 
         st.write(f"Base Ampacity → {catalog['amp'][best['size']]} A")
@@ -574,14 +574,14 @@ if "calculated" in st.session_state:
         st.markdown("### (III) Short Circuit Check")
 
         if cable_type == "3-Core":
-            S_check = S / 2
+            sc_area_best = best["size"] * best["runs"] * 2
         else:
-            S_check = S
+            sc_area_best = best["size"] * best["runs"]
 
-        st.write(f"Required Area → {round(S_check,2)} sq.mm")
-        st.write(f"Selected Cable Size → {best['size']} sq.mm")
+        st.write(f"Required Area → {round(S,2)} sq.mm")
+        st.write(f"Available Area → {round(sc_area_best,2)} sq.mm")
 
-        if best["size"] >= S_check:
+        if sc_area_best >= S:
             st.success("Short Circuit Check → PASS ✅")
         else:
             st.error("Short Circuit Check → FAIL ❌")
@@ -698,7 +698,7 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         # ------------------------------------
         # CALCULATIONS
         # ------------------------------------
-        amp = catalog["amp"][manual_size_used] * kT_manual * manual_runs_used
+        amp = catalog["amp"][manual_size_used] * kT_local * manual_runs_used
 
         v_manual = vd(
             I,
@@ -718,9 +718,11 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         # SHORT CIRCUIT FIX (IMPORTANT)
         # ------------------------------------
         if manual_type_used == "3-Core":
-            sc_ok = manual_size_used >= (S / 2)
+            sc_area_manual = manual_size_used * manual_runs_used * 2
         else:
-            sc_ok = manual_size_used >= S
+            sc_area_manual = manual_size_used * manual_runs_used
+
+        sc_ok = sc_area_manual >= S
 
         # ------------------------------------
         # CHECKS
@@ -753,11 +755,6 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         st.caption("Showing last applied manual selection")
 
         st.markdown("### 📊 Manual Cable Result")
-
-        if manual_type_used == "3-Core":
-            manual_str = f"{manual_runs_used}R x 3C x {manual_size_used} sq.mm"
-        else:
-            manual_str = f"{manual_runs_used}R x 1C x {manual_size_used} sq.mm"
 
         if manual_type_used == "3-Core":
             manual_str = f"{manual_runs_used}R x 3C x {manual_size_used} sq.mm"
@@ -856,30 +853,49 @@ if "calculated" in st.session_state and "manual_done" in st.session_state:
     if load_type == "Motor" and vs_ok_val is False:
         st.write("Manual cable has high starting voltage drop.")
 
-  # ------------------------------------
-# CHECK IF MANUAL == BEST (IMPORTANT)
-# ------------------------------------
-best = st.session_state.get("best")
-if not best:
-    st.error("No suitable cable found")
-    st.stop()
-manual_size_used = st.session_state.get("selected_size")
-manual_runs_used = st.session_state.get("selected_runs")
-manual_type_used = st.session_state.get("selected_type")
+if "calculated" in st.session_state and "manual_done" in st.session_state:
 
-best_type = st.session_state.get("selected_type")  # ✅ FIXED
-amp_ok_val = st.session_state.get("amp_ok")
-vd_ok_val = st.session_state.get("vd_ok")
-sc_ok_val = st.session_state.get("sc_ok")
-vs_ok_val = st.session_state.get("vs_ok")
-if (
-    manual_size_used == best["size"]
-    and manual_runs_used == best["runs"]
-    and manual_type_used == best_type
-):
-    st.success("✔ Manual cable matches the optimal cable selection")
+    # ------------------------------------
+    # CHECK IF MANUAL == BEST (IMPORTANT)
+    # ------------------------------------
+    best = st.session_state.get("best")
+    if not best:
+        st.error("No suitable cable found")
+        st.stop()
 
-else:
+    manual_size_used = st.session_state.get("selected_size")
+    manual_runs_used = st.session_state.get("selected_runs")
+    manual_type_used = st.session_state.get("selected_type")
+
+    best_type = st.session_state.get("selected_type")
+
+    amp_ok_val = st.session_state.get("amp_ok")
+    vd_ok_val = st.session_state.get("vd_ok")
+    sc_ok_val = st.session_state.get("sc_ok")
+    vs_ok_val = st.session_state.get("vs_ok")
+
+    if (
+        manual_size_used == best["size"]
+        and manual_runs_used == best["runs"]
+        and manual_type_used == best_type
+    ):
+        st.success("✔ Manual cable matches the optimal cable selection")
+
+    else:
+        if amp_ok_val is False:
+            st.error("Manual cable fails due to insufficient ampacity.")
+
+        elif vd_ok_val is False:
+            st.error("Manual cable causes excessive voltage drop.")
+
+        elif sc_ok_val is False:
+            st.error("Manual cable does not meet short circuit requirements.")
+
+        elif load_type == "Motor" and vs_ok_val is False:
+            st.error("Manual cable has high starting voltage drop.")
+
+        else:
+            st.info("Manual cable is technically acceptable but not optimal.")
     # ------------------------------------
     # FAILURE CONDITIONS (PRIORITY)
     # ------------------------------------
