@@ -491,7 +491,7 @@ if run_btn:
                 "size": size,
                 "runs": runs,
                 "v": v_temp,
-                "vs": vs_temp
+                "vs": vs_temp,
                 "score": (runs * 1000) + size   # 🔥 ADD THIS LINE
             })
 
