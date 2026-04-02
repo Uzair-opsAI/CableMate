@@ -471,11 +471,16 @@ if run_btn:
             # DERATING
             kT_local = soil * depth * group * temp
 
-            min_sc_size = get_equivalent_size(S)
-            equiv_size = get_equivalent_size(size * runs)
+            # 🔥 DIFFERENT SC LOGIC FOR TRANSFORMER
+            if load_type == "Transformer":
+                if size < S:
+                    continue
+            else:
+                min_sc_size = get_equivalent_size(S)
+                equiv_size = get_equivalent_size(size * runs)
 
-            if equiv_size < min_sc_size:
-                continue
+                if equiv_size < min_sc_size:
+                    continue
 
             # AMPACITY
             amp = catalog["amp"][size] * kT_local * runs
