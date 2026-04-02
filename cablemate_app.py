@@ -251,7 +251,7 @@ run_btn = st.button("🚀 Run CableMate Analysis")
 catalog_cu={
 "sizes":[50,70,95,120,150,185,240,300],
 "amp":{50:181,70:220,95:263,120:298,150:332,185:374,240:431,300:482},
-"R":{50:0.387,70:0.268,95:0.193,120:0.153,150:0.124,185:0.129,240:0.098,300:0.080,400:0.060}
+"R":{50:0.387,70:0.268,95:0.193,120:0.153,150:0.124,185:0.129,240:0.098,300:0.080,400:0.060},
 "X":{50:0.111,70:0.106,95:0.094,120:0.091,150:0.089,185:0.086,240:0.083,300:0.082}
 }
 
@@ -461,13 +461,9 @@ if run_btn:
             # DERATING
             kT_local = soil * depth * group * temp
 
-            # SHORT CIRCUIT (FINAL FIX)
-            if cable_type == "3-Core":
-                sc_area = size * runs * 2
-            else:
-                sc_area = size * runs
+            equiv_size = get_equivalent_size(size * runs)
 
-            if sc_area < S:
+            if equiv_size < S:
                 continue
 
             # AMPACITY
