@@ -308,7 +308,7 @@ if run_btn:
             })
     
     if valid_cables:
-        valid_cables.sort(key=lambda x: (x["size"], x["runs"]))
+        valid_cables.sort(key=lambda x: (x["size"] * 1000 + x["runs"]))  # Size FIRST priority
         best_cable = valid_cables[0]
         st.session_state.update({
             "calculated": True, 
