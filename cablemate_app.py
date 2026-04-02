@@ -183,4 +183,3 @@ if st.button("🚀 Run Cable Sizing"):
 
     else:
         st.error("❌ No suitable cable found")
-```
