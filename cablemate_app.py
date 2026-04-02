@@ -247,74 +247,48 @@ run_btn = st.button("🚀 Run IEC Cable Sizing Analysis", type="primary")
 if run_btn:
     I_load = load_current()
     S_req = short_circuit_withstand()
-    
-    # ✅ YOUR EXACT USER DERATING
     k_total = soil * depth * group * temp * laying_factor
     
     valid_cables = []
     
-    # DEBUG DISPLAY (REMOVE LATER)
-    st.info(f"🔍 I={I_load:.1f}A | S={S_req:.1f}mm² | k={k_total:.3f}")
+    st.info(f"🔍 I={I_load:.1f}A | S={S_req:.1f}mm² | k={k_total:.3f} | Laying={laying}")
+    
+    # ✅ 95mm² DEBUG
+    if 95 in catalog["air_amp"]:
+        air95 = catalog["air_amp"][95]
+        base95 = air95 * (2.8 if laying == "Direct Buried" else 1.0)
+        der95 = base95 * k_total * 1
+        vd95 = voltage_drop(I_load, catalog["R"][95], catalog["X"][95], 1)
+        sc95 = 95 * 2
+        
+        st.error(f"🔥 95mm²: {der95:.0f}A vs {I_load:.0f}A | VD={vd95:.1f}% | SC={sc95}vs{S_req:.0f}")
     
     for runs in range(1, 4):
         for size in catalog["sizes"]:
-            
-            # ✅ 1. SHORT CIRCUIT (UNCHANGED)
             sc_area = size * runs * (2 if cable_type == "3-Core" else 1)
-            if sc_area < S_req:
-                continue
+            if sc_area < S_req: continue
             
-            # ✅ 2. FIXED AMPACITY (KEY CHANGES)
-            air_amp = catalog["air_amp"][size]  # Air reference
-            
-            # 🔥 DIRECT BURIED = 2.8x AIR (your datasheet match)
-            if laying == "Direct Buried":
-                base_amp = air_amp * 2.8
-            elif laying == "Duct":
-                base_amp = air_amp * 1.9
-            else:  # Air/Tray
-                base_amp = air_amp
-            
+            air_amp = catalog["air_amp"][size]
+            base_amp = air_amp * (2.8 if laying == "Direct Buried" else 1.0)
             derated_amp = base_amp * k_total * runs
             
-            # ✅ NO 1.25x margin (your original logic)
-            if derated_amp < I_load:
-                continue
+            if derated_amp < I_load: continue
             
-            # ✅ 3. VOLTAGE DROP (UNCHANGED)
             vd_run = voltage_drop(I_load, catalog["R"][size], catalog["X"][size], runs)
-            if vd_run > vd_run_limit:
-                continue
+            if vd_run > vd_run_limit: continue
             
             vd_start = voltage_drop_start(I_load, catalog["R"][size], catalog["X"][size], runs)
-            if vd_start > vd_start_limit:
-                continue
+            if vd_start > vd_start_limit: continue
             
-            valid_cables.append({
-                "size": size, "runs": runs,
-                "base_air": air_amp,
-                "base_install": base_amp,
-                "derated": derated_amp,
-                "vd_run": vd_run,
-                "vd_start": vd_start,
-                "sc_area": sc_area
-            })
+            valid_cables.append({"size":size,"runs":runs,"derated":derated_amp,"vd_run":vd_run,"vd_start":vd_start})
     
     if valid_cables:
         valid_cables.sort(key=lambda x: (x["runs"], x["size"]))
         best_cable = valid_cables[0]
-        
-        st.session_state.update({
-            "calculated": True,
-            "best": best_cable,
-            "I_load": I_load,
-            "S_req": S_req,
-            "total_derating": k_total
-        })
+        st.session_state.update({"calculated": True, "best": best_cable, "I_load": I_load, "S_req": S_req, "total_derating": k_total})
+        st.success(f"✅ BEST: {best_cable['runs']}R x {best_cable['size']}mm²")
     else:
-        st.session_state["calculated"] = False
-        st.error("❌ No cable satisfies criteria")
-
+        st.error("❌ No solution")
 # ------------------------------------------------
 # RESULTS DISPLAY
 # ------------------------------------------------
