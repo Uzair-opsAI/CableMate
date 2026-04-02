@@ -298,15 +298,15 @@ def vd(I,R,X,runs):
     return (math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
 
 def vd_start(I,R,X,runs):
-    def get_run_range(load_type):
-        if load_type == "Transformer":
-            return [1]   # ONLY 1 RUN
-        else:
-            return list(range(1,11))   # 1 to 10 runs
     Ist = starting_multiple * I
     ang=math.acos(0.2)
     return (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
-
+    
+def get_run_range(load_type):
+    if load_type == "Transformer":
+        return [1]   # ONLY 1 RUN
+    else:
+        return list(range(1,11))   # 1 to 10 runs
 # ------------------------------------------------
 # PDF REPORT (UNCHANGED LOGIC)
 # ------------------------------------------------
