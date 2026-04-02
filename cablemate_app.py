@@ -141,6 +141,9 @@ material = st.selectbox("Conductor Material", ["Copper", "Aluminium"])
 cable_type = st.selectbox("Cable Type", ["1-Core", "3-Core"])
 if voltage >= 66 and cable_type == "3-Core":
     st.warning("At 66 kV and above, single-core cables are typically used.")
+    
+starting_multiple = st.number_input("Motor Starting Current Multiple", value=9.5)
+
 st.divider()
 
 # ------------------------------------------------
@@ -251,14 +254,22 @@ run_btn = st.button("🚀 Run CableMate Analysis")
 catalog_cu={
 "sizes":[50,70,95,120,150,185,240,300],
 "amp":{50:181,70:220,95:263,120:298,150:332,185:374,240:431,300:482},
-"R":{50:0.387,70:0.268,95:0.193,120:0.153,150:0.124,185:0.129,240:0.098,300:0.080,400:0.060},
+"R":catalog["R"] = {
+50:0.387,70:0.268,95:0.247,120:0.153,
+150:0.124,185:0.129,240:0.098,
+300:0.080,400:0.060
+},
 "X":{50:0.111,70:0.106,95:0.094,120:0.091,150:0.089,185:0.086,240:0.083,300:0.082}
 }
 
 catalog_al={
 "sizes":[50,70,95,120,150,185,240,300],
 "amp":{50:150,70:180,95:215,120:245,150:275,185:310,240:360,300:405},
-"R":{50:0.641,70:0.443,95:0.320,120:0.253,150:0.206,185:0.164,240:0.125,300:0.100},
+"R":catalog["R"] = {
+50:0.387,70:0.268,95:0.247,120:0.153,
+150:0.124,185:0.129,240:0.098,
+300:0.080,400:0.060
+},
 "X":{50:0.111,70:0.106,95:0.094,120:0.091,150:0.089,185:0.086,240:0.083,300:0.082}
 }
 
@@ -295,7 +306,8 @@ def vd(I,R,X,runs):
     return (math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
 
 def vd_start(I,R,X,runs):
-    Ist=6*I
+    starting_multiple = 9.5  # or make input
+    Ist = starting_multiple * I
     ang=math.acos(0.2)
     return (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
 
