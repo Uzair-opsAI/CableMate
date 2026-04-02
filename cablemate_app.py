@@ -304,7 +304,10 @@ def vd_start(I,R,X,runs):
     
 def get_run_range(load_type):
     if load_type == "Transformer":
-        S = S * 0.8   # practical margin
+        return [1]
+    else:
+        return list(range(1,11))
+     
 # ------------------------------------------------
 # PDF REPORT (UNCHANGED LOGIC)
 # ------------------------------------------------
@@ -496,6 +499,8 @@ if run_btn:
                 "vs": vs_temp,
                 "score": (runs * 1000) + size   # 🔥 ADD THIS LINE
             })
+            if load_type == "Transformer":
+                S = S * 0.8
 
     # ----------------------------------------
     # SELECT BEST OPTION
