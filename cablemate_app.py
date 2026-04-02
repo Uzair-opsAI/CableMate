@@ -502,8 +502,8 @@ if run_btn:
     if valid_options:
         # BASIC SORT (can improve later)
         valid_options.sort(key=lambda x: (
-            x["size"],
             x["runs"],
+            x["size"],
             x["v"]
         ))
 
