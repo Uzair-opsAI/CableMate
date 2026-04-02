@@ -285,9 +285,9 @@ def load_current():
 
 def short_circuit():
     if material == "Copper":
-        k = 143
+        k = 226
     else:
-        k = 94
+        k = 148
     return (fault*1000*math.sqrt(fault_time))/k
     
 def vd(I,R,X,runs):
@@ -296,7 +296,7 @@ def vd(I,R,X,runs):
 
 def vd_start(I,R,X,runs):
     Ist=6*I
-    ang=math.acos(0.25)
+    ang=math.acos(0.2)
     return (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
 
 # ------------------------------------------------
@@ -497,7 +497,11 @@ if run_btn:
 
     if valid_options:
         # BASIC SORT (can improve later)
-        valid_options.sort(key=lambda x: (x["runs"], x["size"]))
+        valid_options.sort(key=lambda x: (
+            x["runs"],
+            x["size"],
+            x["v"]
+        ))
 
         best = valid_options[0]
 
@@ -575,7 +579,7 @@ if "calculated" in st.session_state:
         st.markdown("### (III) Short Circuit Check")
 
         if cable_type == "3-Core":
-            sc_area_best = best["size"] * best["runs"] * 2
+            sc_area_best = get_equivalent_size(best["size"] * best["runs"])
         else:
             sc_area_best = best["size"] * best["runs"]
 
@@ -719,7 +723,7 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         # SHORT CIRCUIT FIX (IMPORTANT)
         # ------------------------------------
         if manual_type_used == "3-Core":
-            sc_area_manual = manual_size_used * manual_runs_used * 2
+            sc_area_manual = get_equivalent_size(manual_size_used * manual_runs_used)
         else:
             sc_area_manual = manual_size_used * manual_runs_used
 
