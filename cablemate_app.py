@@ -304,7 +304,7 @@ def vd_start(I,R,X,runs):
     
 def get_run_range(load_type):
     if load_type == "Transformer":
-    S = S * 0.8   # practical margin
+        S = S * 0.8   # practical margin
 # ------------------------------------------------
 # PDF REPORT (UNCHANGED LOGIC)
 # ------------------------------------------------
