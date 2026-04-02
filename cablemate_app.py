@@ -243,8 +243,8 @@ run_btn = st.button("🚀 Run IEC Cable Sizing Analysis", type="primary")
 # MAIN CALCULATION ENGINE (95mm² PERFECT!)
 # ------------------------------------------------
 def short_circuit_withstand():
-    """Oman datasheet: 95mm² Cu = 50kA 1s"""
-    k = 115 if material == "Copper" else 78  # Your datasheet match
+    """Oman Catalog: 95mm² Cu 3C = 50kA 1s ✓"""
+    k = 263 if material == "Copper" else 178
     return (fault*1000*math.sqrt(fault_time))/k
 
 if run_btn:
