@@ -460,7 +460,9 @@ if run_btn:
 
     for runs in range(1,4):
         for size in catalog["sizes"]:
-
+              # 🔥 STEP 3 — ADD THIS LINE HERE
+            if size > 150:
+                continue
             # DERATING
             kT_local = soil * depth * group * temp
 
@@ -490,6 +492,7 @@ if run_btn:
                 "runs": runs,
                 "v": v_temp,
                 "vs": vs_temp
+                "score": (runs * 1000) + size   # 🔥 ADD THIS LINE
             })
 
     # ----------------------------------------
@@ -501,12 +504,7 @@ if run_btn:
 
     if valid_options:
         # BASIC SORT (can improve later)
-        valid_options.sort(key=lambda x: (
-            x["runs"],
-            x["size"],
-            x["v"]
-        ))
-
+        valid_options.sort(key=lambda x: x["score"])
         best = valid_options[0]
 
         v = best["v"]
