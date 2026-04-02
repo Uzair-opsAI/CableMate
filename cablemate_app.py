@@ -335,8 +335,8 @@ if st.session_state.get("calculated", False):
     col1, col2, col3 = st.columns(3)
     
     with col1:
-    st.metric("Load Current", f"{I_load:.1f} A")
-    st.metric("Derated Ampacity", f"{best['derated']:.1f} A", 
+        st.metric("Load Current", f"{I_load:.1f} A")
+        st.metric("Derated Ampacity", f"{best['derated']:.1f} A", 
               f"{best['base_air']:.0f}×2.8×{k_total:.3f}")
     
     with col2:
