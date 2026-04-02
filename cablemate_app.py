@@ -1,13 +1,11 @@
+```python
 import streamlit as st
 import math
-import tempfile
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-import streamlit.components.v1 as components
 import os
+import streamlit.components.v1 as components
 
 # ------------------------------------------------
-# PAGE CONFIG & UI (UNCHANGED)
+# PAGE CONFIG
 # ------------------------------------------------
 st.set_page_config(page_title="CableMate", layout="wide")
 
@@ -17,337 +15,172 @@ with c1:
         st.image("logo.png", width=80)
 with c2:
     st.title("CableMate – MV Cable Sizing Tool (IEC Standards)")
-    st.caption("Standards: IEC 60364 | BS 7671 | Middle East Regs")
-
-st.markdown("""
-<style>
-.stApp {background-color:#f4f6f9;}
-section[data-testid="stSidebar"] {background-color:#0f172a;}
-section[data-testid="stSidebar"] * {color:#e5e7eb !important;}
-.block-container {padding-top:4rem;}
-.metric-box {
-    background-color:white;
-    padding:15px;
-    border-radius:10px;
-    box-shadow:0px 2px 6px rgba(0,0,0,0.1);
-}
-</style>
-""", unsafe_allow_html=True)
-
-components.html("""
-<script>
-let changed=false;
-document.addEventListener("input",()=>{changed=true;});
-window.onbeforeunload=function(e){
-if(changed){e.preventDefault();e.returnValue='';}
-};
-</script>
-""", height=0)
+    st.caption("Standards: IEC 60364 | Oman Cable Catalogue")
 
 # ------------------------------------------------
-# INPUTS (ENHANCED WITH STANDARDS)
+# INPUTS
 # ------------------------------------------------
-
 st.subheader("📁 Project Information")
 col1, col2 = st.columns(2)
 
 with col1:
-    client_name = st.text_input("Client Name", "ABC Pvt Ltd")
-    feeder_from = st.selectbox("From Equipment", ["Switchgear","Transformer","Generator"])
-    from_tag = st.text_input("From Equipment Tag", placeholder="e.g. TR-01")
-    voltage = st.selectbox("System Voltage (kV)", [3.3,6.6,11,25,33,66,132])
+    voltage = st.selectbox("System Voltage (kV)", [3.3,6.6,11,25,33])
+    length = st.number_input("Cable Length (m)", value=500)
 
 with col2:
-    project_name = st.text_input("Project Name", "MV Distribution")
-    feeder_to = st.selectbox("To Equipment", ["Motor","Transformer","Panel"])
-    to_tag = st.text_input("To Equipment Tag", placeholder="e.g. MTR-01")
-    length = st.number_input("Cable Length (m)", value=300, min_value=1)
-
-st.divider()
-
-# ------------------------------------------------
-# LOAD & INSTALLATION
-# ------------------------------------------------
-st.subheader("⚡ Load Details")
-col1, col2 = st.columns(2)
-
-with col1:
     load_type = st.selectbox("Load Type", ["Motor","Transformer","Power"])
+
+st.subheader("⚡ Load Details")
+
+col1, col2 = st.columns(2)
+
+with col1:
     if load_type == "Transformer":
-        power = st.number_input("Load (kVA)", value=500)
+        power = st.number_input("Load (kVA)", value=400)
     else:
-        power = st.number_input("Load (kW)", value=400)
+        power = st.number_input("Load (kW)", value=1000)
 
 with col2:
-    pf = st.number_input("Power Factor", value=0.9, min_value=0.7, max_value=1.0, format="%.2f")
-    eff = st.number_input("Efficiency %", value=95, min_value=80, max_value=100)/100
+    pf = st.number_input("Power Factor", value=0.9)
+    eff = st.number_input("Efficiency", value=0.97)
 
-st.subheader("🛠 Installation Details")
-col1, col2 = st.columns(2)
-
-with col1:
-    laying = st.selectbox("Laying Method (IEC 60364-5-52)", 
-                         ["Direct Buried","Duct","Tray/Ladder"])
-    
-with col2:
-    ambient_temp = st.number_input("Ambient Temp (°C)", value=40, min_value=20, max_value=60)
-
-st.divider()
-
-# ------------------------------------------------
-# CONDUCTOR & FAULT DATA
-# ------------------------------------------------
-st.subheader("🧵 Conductor Details")
-col1, col2 = st.columns(2)
-
-with col1:
-    material = st.selectbox("Conductor Material", ["Copper", "Aluminium"])
-    cable_type = st.selectbox("Cable Type", ["1-Core", "3-Core"])
-
-with col2:
-    fault = st.number_input("Fault Level (kA)", value=25, min_value=10, max_value=50)
-    fault_time = st.number_input("Fault Duration (s)", value=1.0, min_value=0.1, max_value=5.0)
-
-if voltage >= 66 and cable_type == "3-Core":
-    st.warning("⚠ IEC 60502: Single-core preferred at 66kV+")
-
-st.divider()
-
-# ------------------------------------------------
-# VOLTAGE DROP LIMITS (IEC BASED)
-# ------------------------------------------------
-st.subheader("📉 Voltage Drop Limits (IEC 60364)")
-col1, col2 = st.columns(2)
-
-with col1:
-    vd_run_limit = st.number_input("Running VD %", value=5.0, min_value=2.0, max_value=10.0)
-
-with col2:
-    if load_type == "Motor":
-        vd_start_limit = st.number_input("Starting VD %", value=15.0, min_value=10.0, max_value=20.0)
-    else:
-        vd_start_limit = 100
-
-# ------------------------------------------------
-# ✅ CORRECTED DERATING FACTORS (ALWAYS APPLIED) - FIXED KEYS
-# ------------------------------------------------
-st.subheader("🌡️ IEC Derating Factors (ALL ALWAYS APPLIED)")
-
-def derating_input(label, options, default, desc):
-    col_a, col_b = st.columns([3,1])
-    with col_a:
-        st.write(f"**{label}** ({desc})")
-        choice = st.selectbox("", options + ["Other"], key=f"derate_{label}")
-    if choice == "Other":
-        with col_b:
-            return st.number_input("Value", value=float(default), step=0.01, format="%.3f", key=f"derate_{label}_other")
-    return float(choice)
+st.subheader("🛠 Installation")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    group = derating_input("Grouping", ["1.00","0.85","0.79","0.73","0.67"], 0.85, 
-                          "Other cables in same trench/tray")
-    
-    soil = derating_input("Soil Thermal", ["1.00","0.90","0.80"], 0.90, 
-                         "Direct buried soil resistivity")
+    laying = st.selectbox("Laying Method", ["Direct Buried","Duct","Tray"])
 
 with col2:
-    temp = derating_input("Ambient Temp", ["1.00","0.95","0.89","0.82","0.71"], 0.89, 
-                         f"{ambient_temp}°C reference")
-    
-    depth = derating_input("Buried Depth", ["1.00","0.95","0.90"], 1.00, "Below ground")
+    material = st.selectbox("Material", ["Copper","Aluminium"])
 
-# Laying method factor (IEC Table 52.17)
-if laying == "Tray/Ladder":
-    laying_factor = 1.00
-elif laying == "Duct":
-    laying_factor = 0.95
-else:  # Direct Buried
-    laying_factor = 1.00
+st.subheader("🌡 Derating")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    group = st.number_input("Grouping", value=0.85)
+    soil = st.number_input("Soil", value=0.9)
+
+with col2:
+    temp = st.number_input("Temperature", value=0.9)
+    depth = st.number_input("Depth", value=1.0)
+
+k_total = group * soil * temp * depth
+st.success(f"Total Derating = {round(k_total,3)}")
+
+st.subheader("⚠ Fault Data")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    fault = st.number_input("Fault Level (kA)", value=25)
+
+with col2:
+    fault_time = st.number_input("Fault Time (s)", value=1.0)
+
+st.subheader("📉 Voltage Drop Limits")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    vd_run_limit = st.number_input("Running VD %", value=5.0)
+
+with col2:
+    vd_start_limit = st.number_input("Starting VD %", value=20.0)
 
 # ------------------------------------------------
-# 🎯 TOTAL DERATING (IEC COMPLIANT)
+# CATALOG (UPDATED 90°C VALUES)
 # ------------------------------------------------
-total_derating = group * soil * temp * depth * laying_factor
-st.markdown("### 📊 Total IEC Derating Factor")
-st.success(f"**k_total = {round(total_derating, 3)}**")
-st.caption("Grouping factor ALWAYS applied for shared trench scenario")
-
-st.info(f"""
-**Derating Breakdown:**
-- Grouping: {round(group,3)} 
-- Soil: {round(soil,3)}
-- Temp: {round(temp,3)} 
-- Depth: {round(depth,3)}
-- Laying: {round(laying_factor,3)}
-""")
-
-st.divider()
-
-# ------------------------------------------------
-# CATALOG (IEC 60502 BASED)
-# ------------------------------------------------
-catalog_cu={
-"sizes":[50,70,95,120,150,185,240,300,400],
-"air_amp":{50:181,70:220,95:263,120:298,150:332,185:374,240:431,300:482,400:545},
-"R":{50:0.387,70:0.268,95:0.193,120:0.153,150:0.124,185:0.099,240:0.075,300:0.060,400:0.047},
-"X":{50:0.111,70:0.106,95:0.094,120:0.091,150:0.089,185:0.086,240:0.083,300:0.082,400:0.080}
+catalog = {
+    "sizes":[50,70,95,120,150,185,240,300,400],
+    "R":{50:0.387,70:0.268,95:0.193,120:0.153,150:0.124,185:0.129,240:0.098,300:0.080,400:0.060},
+    "X":{50:0.111,70:0.106,95:0.094,120:0.091,150:0.089,185:0.086,240:0.083,300:0.082,400:0.080},
+    "amp":{
+        50:170,70:205,95:245,120:280,150:315,
+        185:355,240:410,300:460,400:520
+    }
 }
 
-catalog_al = {
-    "sizes": [50,70,95,120,150,185,240,300,400],
-    "air_amp": {50:150,70:180,95:215,120:245,150:275,185:310,240:360,300:405,400:460},
-    "R": {50:0.641,70:0.443,95:0.320,120:0.253,150:0.206,185:0.164,240:0.125,300:0.100,400:0.075},
-    "X": {50:0.111,70:0.106,95:0.094,120:0.091,150:0.089,185:0.086,240:0.083,300:0.082,400:0.080}
-}
-
-catalog = catalog_cu if material == "Copper" else catalog_al
-
 # ------------------------------------------------
-# ✅ FIXED BASE AMPACITY FUNCTION - ADDED
-# ------------------------------------------------
-def get_base_ampacity(laying, size):
-    """IEC 60502 correct base ratings (40°C ambient)"""
-    buried_cu = {50: 170, 70: 205, 95: 245, 120: 280, 150: 315, 185: 355, 240: 410, 300: 460, 400: 520}
-    buried_al = {50: 140, 70: 170, 95: 205, 120: 235, 150: 265, 185: 300, 240: 345, 300: 390, 400: 440}
-    
-    if laying == "Direct Buried":
-        return buried_cu[size] if material == "Copper" else buried_al[size]
-    elif laying == "Tray/Ladder":
-        return catalog["air_amp"][size]
-    else:  # Duct
-        return catalog["air_amp"][size] * 0.95
-
-# ------------------------------------------------
-# ✅ CORRECTED ENGINEERING FUNCTIONS (IEC) - YOUR ORIGINAL
+# FUNCTIONS
 # ------------------------------------------------
 def load_current():
-    """IEC 60364 load current"""
     if load_type == "Transformer":
-        return power * 1000 / (math.sqrt(3) * voltage * 1000)
+        return power*1000/(math.sqrt(3)*voltage*1000)
     else:
-        return power * 1000 / (math.sqrt(3) * voltage * 1000 * pf * eff)
+        return power*1000/(math.sqrt(3)*voltage*1000*pf*eff)
 
-def short_circuit_withstand():
-    """Oman Catalog: 95mm² Cu 3C = 50kA 1s ✓"""
-    k = 263 if material == "Copper" else 178
+def short_circuit():
+    k = 226 if material == "Copper" else 148
     return (fault*1000*math.sqrt(fault_time))/k
-    
-def voltage_drop(I, R, X, runs):
-    """IEC 60364-5-52 voltage drop"""
+
+def voltage_drop(I,R,X,runs):
     cos_phi = pf
-    sin_phi = math.sqrt(1 - cos_phi**2)
-    return (math.sqrt(3) * I * (R*cos_phi + X*sin_phi) * length) / (1000 * runs * voltage * 1000) * 100
+    sin_phi = math.sqrt(1-pf**2)
+    return (math.sqrt(3)*I*(R*cos_phi+X*sin_phi)*length)/(1000*runs*voltage*1000)*100
 
-def voltage_drop_start(I, R, X, runs):
-    """Motor starting VD (6x In, PF=0.25)"""
-    Ist = 6 * I
-    cos_phi_start = 0.25
-    sin_phi_start = math.sqrt(1 - cos_phi_start**2)
-    return (math.sqrt(3) * Ist * (R*cos_phi_start + X*sin_phi_start) * length) / (1000 * runs * voltage * 1000) * 100
+def voltage_drop_start(I,R,X,runs):
+    Ist = 6*I
+    cos_phi = 0.2
+    sin_phi = math.sqrt(1-cos_phi**2)
+    return (math.sqrt(3)*Ist*(R*cos_phi+X*sin_phi)*length)/(1000*runs*voltage*1000)*100
 
-# ------------------------------------------------
-# ✅ SINGLE RUN + RESET BUTTONS (DUPLICATE FIXED)
-# ------------------------------------------------
-st.subheader("🚀 Analysis Controls")
-col1, col2 = st.columns([1,1])
-with col1:
-    run_btn = st.button("🚀 Run IEC Cable Sizing Analysis", type="primary", key="run_main")
-with col2:
-    if st.button("🔄 Clear Results", key="clear_main"):
-        for key in list(st.session_state.keys()):
-            if not key.startswith('_'):
-                del st.session_state[key]
-        st.rerun()
+def get_equivalent_size(area):
+    for s in catalog["sizes"]:
+        if s >= area:
+            return s
+    return max(catalog["sizes"])
 
 # ------------------------------------------------
-# MAIN CALCULATION ENGINE (95mm² PERFECT!) - FIXED VERSION
+# RUN
 # ------------------------------------------------
-if run_btn:
-    I_load = load_current()
-    S_req = short_circuit_withstand()
-    k_total = total_derating  # Fixed: use total_derating
-    
-    valid_cables = []
-    
-    st.info(f"🔍 I={I_load:.1f}A | S={S_req:.1f}mm² | k={k_total:.3f}")
-    
-    # 95mm² FINAL CHECK - FIXED
-    base95 = get_base_ampacity(laying, 95)
-    der95 = base95 * k_total * 1
-    vd95 = voltage_drop(I_load, catalog["R"][95], catalog["X"][95], 1)
-    sc95 = 95 * (2 if cable_type == "3-Core" else 1)
-    
-    st.success(f"🎯 95mm²: {base95}A → {der95:.0f}A✓ | VD={vd95:.1f}%✓ | SC={sc95}vs{S_req:.0f}")
-    
-    for runs in range(1, 4):
+if st.button("🚀 Run Cable Sizing"):
+
+    I = load_current()
+    S = short_circuit()
+
+    st.info(f"Load Current = {round(I,2)} A")
+    st.info(f"Required SC Area = {round(S,2)} mm²")
+
+    valid = []
+
+    for runs in range(1,4):
         for size in catalog["sizes"]:
-            sc_area = size * runs * (2 if cable_type == "3-Core" else 1)
-            if sc_area < S_req: continue
-            
-            # FIXED: Use correct base ampacity
-            base_amp = get_base_ampacity(laying, size)
-            derated_amp = base_amp * k_total * runs
-            
-            if derated_amp < I_load: continue
-            
-            vd_run = voltage_drop(I_load, catalog["R"][size], catalog["X"][size], runs)
-            if vd_run > vd_run_limit: continue
-            
-            vd_start = voltage_drop_start(I_load, catalog["R"][size], catalog["X"][size], runs)
-            if vd_start > vd_start_limit: continue
-            
-            valid_cables.append({
-                "size": size, "runs": runs,
-                "base": base_amp,  # Added for display
-                "derated": derated_amp,
-                "vd_run": vd_run,
-                "vd_start": vd_start,
-                "sc_area": sc_area
-            })
-    
-    if valid_cables:
-        valid_cables.sort(key=lambda x: (x["size"] * 1000 + x["runs"]))  # Size FIRST priority
-        best_cable = valid_cables[0]
-        st.session_state.update({
-            "calculated": True, 
-            "best": best_cable, 
-            "I_load": I_load, 
-            "S_req": S_req, 
-            "total_derating": k_total
-        })
-    else:
-        st.error("❌ No solution")
 
-# ------------------------------------------------
-# RESULTS DISPLAY (FIXED) - SAFE VERSION
-# ------------------------------------------------
-if st.session_state.get("calculated", False):
-    best = st.session_state["best"]
-    I_load = st.session_state["I_load"]
-    S_req = st.session_state["S_req"]
-    k_total = st.session_state["total_derating"]
-    
-    cable_desc = f"{best['runs']}R × {3 if cable_type=='3-Core' else 1}C × {best['size']} mm² {material}"
-    st.success(f"**{cable_desc}**")
-    
-    # SAFE base_amp access
-    base_amp = best.get('base', best['derated'])
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Load Current", f"{I_load:.1f} A")
-        st.metric("Derated Ampacity", f"{best['derated']:.1f} A")
-    with col2:
-        st.metric("Running VD", f"{best['vd_run']:.2f} %")
-        if 'base' in best:
-            st.caption(f"Base: {base_amp:.0f}A")
-    with col3:
-        st.metric("SC Provided", f"{best['sc_area']:.1f} mm²")
-    
-    st.caption("**All checks PASS per IEC 60364-5-52 & IEC 60949**")
-    
-    # PDF Download (simplified)
-    if st.button("📄 Download IEC Report", key="pdf_download"):
-        st.info("PDF generation available in full version")
+            amp = catalog["amp"][size]*k_total*runs
+            if amp < I:
+                continue
+
+            equiv = get_equivalent_size(size*runs)
+            if equiv < S:
+                continue
+
+            vd = voltage_drop(I,catalog["R"][size],catalog["X"][size],runs)
+            if vd > vd_run_limit:
+                continue
+
+            vd_s = voltage_drop_start(I,catalog["R"][size],catalog["X"][size],runs)
+            if load_type=="Motor" and vd_s > vd_start_limit:
+                continue
+
+            valid.append({
+                "size":size,
+                "runs":runs,
+                "vd":vd,
+                "amp":amp
+            })
+
+    if valid:
+        valid.sort(key=lambda x:(x["runs"],x["size"],x["vd"]))
+        best = valid[0]
+
+        st.success(f"✅ Selected Cable → {best['runs']}R x 3C x {best['size']} sq.mm")
+
+        st.metric("Load Current", round(I,2))
+        st.metric("Voltage Drop", round(best["vd"],3))
+        st.metric("Ampacity", round(best["amp"],1))
+
+    else:
+        st.error("❌ No suitable cable found")
+```
