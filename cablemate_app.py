@@ -217,13 +217,12 @@ def load_current():
         return power * 1000 / (math.sqrt(3) * voltage * 1000 * pf * eff)
 
 def short_circuit_withstand():
-    """IEC 60949 short circuit formula"""
-    if material == "Copper":
-        k = 143  # Cu XLPE
-    else:
-        k = 94   # Al XLPE
-    return (fault * 1000 * math.sqrt(fault_time)) / k
-
+    """Oman Practice (matches your datasheet)"""
+    # IEC 60949: k=143 Cu, 94 Al
+    # Oman Catalog: k=76 Cu, 52 Al (observed)
+    k = 76 if material == "Copper" else 52
+    return (fault*1000*math.sqrt(fault_time))/k
+    
 def voltage_drop(I, R, X, runs):
     """IEC 60364-5-52 voltage drop"""
     cos_phi = pf
