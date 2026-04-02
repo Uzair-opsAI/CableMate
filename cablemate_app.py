@@ -291,7 +291,7 @@ if run_btn:
             })
     
     if valid_cables:
-        valid_cables.sort(key=lambda x: (x["runs"], x["size"]))
+        valid_cables.sort(key=lambda x: (x["size"], x["runs"]))
         best_cable = valid_cables[0]
         st.session_state.update({
             "calculated": True, 
