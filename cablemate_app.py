@@ -298,7 +298,6 @@ def vd(I,R,X,runs):
     return (math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
 
 def vd_start(I,R,X,runs):
-    starting_multiple = 9.5  # or make input
     Ist = starting_multiple * I
     ang=math.acos(0.2)
     return (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
@@ -502,8 +501,8 @@ if run_btn:
     if valid_options:
         # BASIC SORT (can improve later)
         valid_options.sort(key=lambda x: (
-            x["runs"],
             x["size"],
+            x["runs"],
             x["v"]
         ))
 
