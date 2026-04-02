@@ -232,11 +232,6 @@ def load_current():
         return power * 1000 / (math.sqrt(3) * voltage * 1000)
     else:
         return power * 1000 / (math.sqrt(3) * voltage * 1000 * pf * eff)
-
-def short_circuit_withstand():
-    """Oman Catalog: 95mm² Cu 3C = 50kA 1s ✓"""
-    k = 263 if material == "Copper" else 178
-    return (fault*1000*math.sqrt(fault_time))/k
     
 def voltage_drop(I, R, X, runs):
     """IEC 60364-5-52 voltage drop"""
@@ -255,7 +250,17 @@ def voltage_drop_start(I, R, X, runs):
 # RUN ANALYSIS BUTTON
 # ------------------------------------------------
 run_btn = st.button("🚀 Run IEC Cable Sizing Analysis", type="primary")
-
+# ------------------------------------------------
+# RUN ANALYSIS BUTTON + RESET
+# ------------------------------------------------
+col1, col2 = st.columns(2)
+with col1:
+    run_btn = st.button("🚀 Run IEC Cable Sizing Analysis", type="primary")
+with col2:
+    if st.button("🔄 Clear Results"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
 # ------------------------------------------------
 # MAIN CALCULATION ENGINE (95mm² CORRECT!) - REPLACE THIS ENTIRE BLOCK
 # ------------------------------------------------
@@ -320,7 +325,7 @@ if run_btn:
     else:
         st.error("❌ No solution found")
 # ------------------------------------------------
-# RESULTS DISPLAY (ENHANCED) - REPLACE THIS SECTION
+# RESULTS DISPLAY (ERROR-PROOF) - REPLACE THIS SECTION
 # ------------------------------------------------
 if st.session_state.get("calculated", False):
     best = st.session_state["best"]
@@ -331,11 +336,14 @@ if st.session_state.get("calculated", False):
     cable_desc = f"{best['runs']}R × {3 if cable_type=='3-Core' else 1}C × {best['size']} mm² {material}"
     st.success(f"✅ **{cable_desc}**")
     
+    # ✅ SAFE ACCESS WITH DEFAULT
+    base_amp = best.get('base', best['derated'])  # Fallback for old data
+    
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Load Current", f"{I_load:.1f} A")
     with col2:
-        st.metric("Base Ampacity", f"{best['base']:.0f} A")
+        st.metric("Base Ampacity", f"{base_amp:.0f} A")
         st.metric("Derated Ampacity", f"{best['derated']:.1f} A")
     with col3:
         st.metric("Running VD", f"{best['vd_run']:.2f} %")
