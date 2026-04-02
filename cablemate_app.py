@@ -464,9 +464,10 @@ if run_btn:
             # DERATING
             kT_local = soil * depth * group * temp
 
-            equiv_size = get_equivalent_size(size)
+            min_sc_size = get_equivalent_size(S)
+            equiv_size = get_equivalent_size(size * runs)
 
-            if equiv_size < S:
+            if equiv_size < min_sc_size:
                 continue
 
             # AMPACITY
