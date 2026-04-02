@@ -464,7 +464,7 @@ if run_btn:
             # DERATING
             kT_local = soil * depth * group * temp
 
-            equiv_size = get_equivalent_size(size * runs)
+            equiv_size = get_equivalent_size(size)
 
             if equiv_size < S:
                 continue
