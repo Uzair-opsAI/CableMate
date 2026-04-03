@@ -291,6 +291,12 @@ def short_circuit():
         k = 226
     else:
         k = 148
+    # 🔥 FEEDER-BASED FAULT LOGIC
+    if feeder_to == "Motor":
+        fault_effective = fault * 0.5   # motor feeder sees reduced fault
+    else:
+        fault_effective = fault
+
     return (fault*1000*math.sqrt(fault_time))/k
     
 def vd(I,R,X,runs):
