@@ -506,7 +506,11 @@ if run_btn:
                 continue
 
             # DERATING
-            kT_local = soil * depth * group * temp
+            # 🔥 REALISTIC GROUPING LOGIC
+            if runs == 1:
+                kT_local = soil * depth * group * temp
+            else:
+                kT_local = soil * depth * 0.85 * temp
 
             # 1️⃣ SHORT CIRCUIT CHECK
             # 🔥 STRICT SC CHECK (REAL MV PRACTICE)
@@ -741,7 +745,11 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         # ------------------------------------
         # DERATING
         # ------------------------------------
-        kT_local = soil * depth * group * temp
+        # 🔥 SAME LOGIC FOR MANUAL (VERY IMPORTANT)
+        if manual_runs_used == 1:
+            kT_local = soil * depth * group * temp
+        else:
+            kT_local = soil * depth * 0.85 * temp
         # ------------------------------------
         # CALCULATIONS
         # ------------------------------------
