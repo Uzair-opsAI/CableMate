@@ -477,8 +477,8 @@ def report(best, I, S, v, vs):
             y,
             f"FINAL SELECTED CABLE: {best['runs']}R x 3C x {best['size']} sq.mm"
         )
-        else:
-            c.drawString(50, y, "FINAL SELECTED CABLE: No suitable cable found")
+    else:
+        c.drawString(50, y, "FINAL SELECTED CABLE: No suitable cable found")
 
     c.save()
     return f.name
