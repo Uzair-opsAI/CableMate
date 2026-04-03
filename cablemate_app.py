@@ -300,26 +300,26 @@ def vd(I,R,X,runs):
 def vd_start(I,R,X,runs):
     def get_rules(feeder_from, feeder_to, load_type):
 
-    if feeder_from == "Switchgear" and feeder_to == "Motor":
-        return {"max_runs":10,"allow_multi_run":True,"sc_mode":"equivalent","vd_mode":"strict","priority":"runs_penalty"}
+        if feeder_from == "Switchgear" and feeder_to == "Motor":
+            return {"max_runs":10,"allow_multi_run":True,"sc_mode":"equivalent","vd_mode":"strict","priority":"runs_penalty"}
 
-    elif feeder_from == "Switchgear" and feeder_to == "Transformer":
-        return {"max_runs":1,"allow_multi_run":False,"sc_mode":"single","vd_mode":"strict","priority":"size_only"}
+        elif feeder_from == "Switchgear" and feeder_to == "Transformer":
+            return {"max_runs":1,"allow_multi_run":False,"sc_mode":"single","vd_mode":"strict","priority":"size_only"}
 
-    elif feeder_from == "Generator" and feeder_to == "Motor":
-        return {"max_runs":1,"allow_multi_run":False,"sc_mode":"strict","vd_mode":"very_strict","priority":"size_only"}
+        elif feeder_from == "Generator" and feeder_to == "Motor":
+            return {"max_runs":1,"allow_multi_run":False,"sc_mode":"strict","vd_mode":"very_strict","priority":"size_only"}
 
-    else:
-        return {"max_runs":10,"allow_multi_run":True,"sc_mode":"equivalent","vd_mode":"medium","priority":"balanced"}
-    Ist = starting_multiple * I
-    ang=math.acos(0.2)
-    return (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
+        else:
+            return {"max_runs":10,"allow_multi_run":True,"sc_mode":"equivalent","vd_mode":"medium","priority":"balanced"}
+        Ist = starting_multiple * I
+        ang=math.acos(0.2)
+        return (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
     
-def get_run_range(load_type):
-    if load_type == "Transformer":
-        return [1]
-    else:
-        return list(range(1,11))
+    def get_run_range(load_type):
+        if load_type == "Transformer":
+            return [1]
+        else:
+            return list(range(1,11))
      
 # ------------------------------------------------
 # PDF REPORT (UNCHANGED LOGIC)
