@@ -427,15 +427,15 @@ def report(best, I, S, v, vs):
    # --------------------------------
 # STARTING VOLTAGE DROP (ONLY MOTOR)
 # --------------------------------
-if load_type == "Motor":
-    y -= 25
-    c.drawString(50, y, "STARTING VOLTAGE DROP")
-    y -= 15
-    c.drawString(50, y, f"Calculated VD = {round(vs,2)} %")
-    y -= 15
-    c.drawString(50, y, f"Allowed VD    = {vd_start_limit} %")
-    y -= 15
-    c.drawString(50, y, f"{round(vs,2)} ≤ {vd_start_limit} → PASS ✔")
+    if load_type == "Motor":
+        y -= 25
+        c.drawString(50, y, "STARTING VOLTAGE DROP")
+        y -= 15
+        c.drawString(50, y, f"Calculated VD = {round(vs,2)} %")
+        y -= 15
+        c.drawString(50, y, f"Allowed VD    = {vd_start_limit} %")
+        y -= 15
+        c.drawString(50, y, f"{round(vs,2)} ≤ {vd_start_limit} → PASS ✔")
 
     # --------------------------------
     # DERATING FACTOR
@@ -472,8 +472,8 @@ if load_type == "Motor":
     else:
         c.drawString(50, y, "FINAL SELECTED CABLE: No suitable cable found")
 
-c.save()
-return f.name
+    c.save()
+    return f.name
 # ------------------------------------------------
 # ENGINE (FINAL CLEAN INDUSTRY LOGIC)
 # ------------------------------------------------
