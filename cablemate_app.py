@@ -300,10 +300,7 @@ def short_circuit():
     else:
         k = 148
     # 🔥 FEEDER-BASED FAULT LOGIC
-    if feeder_to == "Motor":
-        fault_effective = fault * 0.5   # motor feeder sees reduced fault
-    else:
-        fault_effective = fault
+    fault_effective = fault    # motor feeder sees reduced fault
 
     # ✅ FEEDER BASED FAULT TIME (INDUSTRY) 
     if feeder_from == "Switchgear":
