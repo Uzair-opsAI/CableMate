@@ -535,9 +535,6 @@ if run_btn:
             else:
                 if size < S:
                     continue
-                # 🔥 Prevent undersizing via parallel runs
-            if runs > 1 and size < S * 0.9:
-                continue
 
             # 2️⃣ AMPACITY CHECK
             amp = catalog["amp"][size] * kT_local * runs
