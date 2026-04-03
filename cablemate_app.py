@@ -472,8 +472,8 @@ if load_type == "Motor":
     else:
         c.drawString(50, y, "FINAL SELECTED CABLE: No suitable cable found")
 
-    c.save()
-    return f.name
+        c.save()
+        return f.name
 # ------------------------------------------------
 # ENGINE (FINAL CLEAN INDUSTRY LOGIC)
 # ------------------------------------------------
