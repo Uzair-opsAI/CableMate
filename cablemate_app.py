@@ -517,12 +517,15 @@ if run_btn:
             if not rules["allow_multi_run"] and runs > 1:
                 continue
 
-            # DERATING
-            # 🔥 REALISTIC GROUPING LOGIC
-            if runs == 1:
-                kT_local = soil * depth * group * temp
+            # 🔥 FINAL DERATING LOGIC (CLEAN)
+
+            if feeder_to == "Motor":
+    # Motor feeders → no grouping
+                kT_local = soil * depth * temp
+
             else:
-                kT_local = soil * depth * 0.85 * temp
+    # Transformer / others → full grouping
+                kT_local = soil * depth * group * temp
 
             # 1️⃣ SHORT CIRCUIT CHECK
             # 🔥 STRICT SC CHECK (REAL MV PRACTICE)
