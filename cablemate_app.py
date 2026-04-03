@@ -258,7 +258,16 @@ run_btn = st.button("🚀 Run CableMate Analysis")
 catalog_cu={
 "sizes":[50,70,95,120,150,185,240,300],
 "amp":{50:181,70:220,95:263,120:298,150:332,185:374,240:431,300:482},
-"R":{50:0.387,70:0.268,95:0.247,120:0.153,150:0.124,185:0.129,240:0.098,300:0.080,400:0.060},
+"R":{
+    50: 0.387,
+    70: 0.268,
+    95: 0.193,
+    120: 0.153,
+    150: 0.124,
+    185: 0.099,
+    240: 0.075,
+    300: 0.060
+},
 "X":{50:0.111,70:0.106,95:0.094,120:0.091,150:0.089,185:0.086,240:0.083,300:0.082}
 }
 
@@ -306,7 +315,7 @@ def short_circuit():
     
 def vd(I,R,X,runs):
     ang=math.acos(pf)
-    return (math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
+    return (math.sqrt(3) * I * (R*math.cos(ang) + X*math.sin(ang)) * (length/1000)) / (voltage * 1000 * runs) * 100
 
 def vd_start(I,R,X,runs):
         Ist = starting_multiple * I
@@ -481,6 +490,9 @@ def report(best, I, S, v, vs):
 if run_btn:
 
     I = load_current()
+    # 🔥 transformer margin
+    if feeder_to == "Transformer":
+        I = I * 1.2
     S = short_circuit()
     rules = get_rules(feeder_from, feeder_to, load_type)
 
@@ -527,8 +539,14 @@ if run_btn:
 
             # 3️⃣ VOLTAGE DROP CHECK
             v_temp = vd(I, catalog["R"][size], catalog["X"][size], runs)
-            if v_temp > vd_limit:
-                continue
+            print("SIZE:", size, "VD:", v_temp)
+            # 🔥 stricter for transformer
+            if feeder_to == "Transformer":
+                if v_temp > vd_limit * 0.9:
+                    continue
+                else:
+                    if v_temp > vd_limit:
+                        continue
 
             # 4️⃣ STARTING VOLTAGE DROP (ONLY MOTOR)
             if load_type == "Motor":
