@@ -586,7 +586,14 @@ if run_btn:
 
         else:
         # 🔥 motor → fewer runs, then smaller size
-            best = sorted(valid_options, key=lambda x: (x["size"], x["runs"]))[0]
+            # 🔥 STEP 1: Separate single-run options
+            single_run = [x for x in valid_options if x["runs"] == 1]
+            if single_run:
+                # ✔ Prefer single run if possible
+                best = sorted(single_run, key=lambda x: x["size"])[0]
+            else:
+                # ✔ fallback to multi-run optimization
+                best = sorted(valid_options, key=lambda x: (x["size"], x["runs"]))[0]
 
         v = best["v"]
         vs = best["vs"]
