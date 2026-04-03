@@ -526,8 +526,12 @@ if run_btn:
 
             # 1️⃣ SHORT CIRCUIT CHECK
             # 🔥 STRICT SC CHECK (REAL MV PRACTICE)
-            if size < S:
-                continue
+            if feeder_to == "Transformer":
+                if size < S * 1.5:
+                    continue
+            else:
+                if size < S:
+                    continue
                 # 🔥 Prevent undersizing via parallel runs
             if runs > 1 and size < S * 0.9:
                 continue
@@ -557,7 +561,13 @@ if run_btn:
                 vs_temp = 0
 
             # ✅ FIRST VALID CABLE → SELECT
+            print("---- CHECK ----")
+            print("Size:", size, "Runs:", runs)
+            print("Amp:", amp, "Required I:", I)
+            print("VD:", v_temp, "Limit:", vd_limit)
+            print("SC Required:", S)
             # 🔥 STORE ALL VALID OPTIONS
+        
             valid_options.append({
                 "size": size,
                 "runs": runs,
