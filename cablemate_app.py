@@ -581,6 +581,7 @@ if run_btn:
 # ----------------------------------------
 # FINAL SELECTION LOGIC
 # ----------------------------------------
+    print("VALID OPTIONS:", valid_options)
     if valid_options:
 
         if feeder_to == "Transformer":
