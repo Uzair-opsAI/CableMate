@@ -630,10 +630,7 @@ if "calculated" in st.session_state:
 # -------------------------------
         st.markdown("### (III) Short Circuit Check")
 
-        if cable_type == "3-Core":
-            sc_area_best = get_equivalent_size(best["size"] * best["runs"])
-        else:
-            sc_area_best = best["size"] * best["runs"]
+        sc_area_best = best["size"] * best["runs"]
 
         st.write(f"Required Area → {round(S,2)} sq.mm")
         st.write(f"Available Area → {round(sc_area_best,2)} sq.mm")
@@ -755,8 +752,10 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         # ------------------------------------
         # CALCULATIONS
         # ------------------------------------
+       # AMPACITY
         amp = catalog["amp"][manual_size_used] * kT_local * manual_runs_used
 
+# VOLTAGE DROP
         v_manual = vd(
             I,
             catalog["R"][manual_size_used],
@@ -764,21 +763,19 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
             manual_runs_used
         )
 
-        vs_manual = vd_start(
-            I,
-            catalog["R"][manual_size_used],
-            catalog["X"][manual_size_used],
-            manual_runs_used
-        )
-
-        # ------------------------------------
-        # SHORT CIRCUIT FIX (IMPORTANT)
-        # ------------------------------------
-        if manual_type_used == "3-Core":
-            sc_area_manual = manual_size_used * manual_runs_used
+# STARTING VD (ONLY MOTOR)
+        if load_type == "Motor":
+            vs_manual = vd_start(
+                I,
+                catalog["R"][manual_size_used],
+                catalog["X"][manual_size_used],
+                manual_runs_used
+            )
         else:
-            sc_area_manual = manual_size_used * manual_runs_used
+            vs_manual = 0
 
+# SHORT CIRCUIT
+        sc_area_manual = manual_size_used * manual_runs_used
         sc_ok = sc_area_manual >= S
 
         # ------------------------------------
