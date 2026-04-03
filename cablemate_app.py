@@ -509,7 +509,11 @@ if run_btn:
             kT_local = soil * depth * group * temp
 
             # 1️⃣ SHORT CIRCUIT CHECK
+            # 🔥 STRICT SC CHECK (REAL MV PRACTICE)
             if size < S:
+                continue
+                # 🔥 Prevent undersizing via parallel runs
+            if runs > 1 and size < S * 0.9:
                 continue
 
             # 2️⃣ AMPACITY CHECK
@@ -627,9 +631,17 @@ if "calculated" in st.session_state:
         st.markdown("### (IV) Voltage Drop Check")
 
         st.write(f"Calculated VD → {round(v,2)} %")
-        st.write(f"Permissible VD → {vd_limit} %")
+       
+        # Recompute vd_limit for display (same logic as engine)
+        if feeder_to == "Transformer":
+            vd_limit_display = 1
+        elif feeder_to == "Motor":
+            vd_limit_display = 5
+        else:
+            vd_limit_display = vd_run_limit
+        st.write(f"Permissible VD → {vd_limit_display} %")
 
-        if v <= vd_limit:
+        if v <= vd_limit_display:
             st.success("Running Voltage Drop → PASS ✅")
         else:
             st.error("Running Voltage Drop → FAIL ❌")
