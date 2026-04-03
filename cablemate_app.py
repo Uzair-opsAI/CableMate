@@ -554,7 +554,7 @@ if run_btn:
 
         if feeder_to == "Transformer":
         # 🔥 choose robust cable (higher ampacity)
-            best = sorted(valid_options, key=lambda x: (-x["amp"]))[0]
+            best = sorted(valid_options, key=lambda x: (x["size"]))[0]
 
         else:
         # 🔥 motor → fewer runs, then smaller size
