@@ -796,10 +796,10 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         # DERATING
         # ------------------------------------
         # 🔥 SAME LOGIC FOR MANUAL (VERY IMPORTANT)
-        if manual_runs_used == 1:
-            kT_local = soil * depth * group * temp
+        if feeder_to == "Motor":
+            kT_local = soil * depth * temp
         else:
-            kT_local = soil * depth * 0.85 * temp
+            kT_local = soil * depth * group * temp
         # ------------------------------------
         # CALCULATIONS
         # ------------------------------------
