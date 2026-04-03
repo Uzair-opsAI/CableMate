@@ -596,7 +596,12 @@ if run_btn:
                 best = sorted(single_run, key=lambda x: x["size"])[0]
             else:
                 # ✔ fallback to multi-run optimization
-                best = sorted(valid_options, key=lambda x: (x["size"], x["runs"]))[0]
+                 # 🔥 STEP 1: find minimum size available
+                min_size = min(x["size"] for x in valid_options)
+                # 🔥 STEP 2: allow slightly bigger size tolerance (avoid oversizing)
+                candidates = [x for x in valid_options if x["size"] <= min_size * 1.3]
+                # 🔥 STEP 3: from those, choose minimum runs
+                best = sorted(candidates, key=lambda x: (x["runs"], x["size"]))[0]
 
         v = best["v"]
         vs = best["vs"]
