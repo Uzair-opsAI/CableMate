@@ -556,7 +556,14 @@ if run_btn:
 
         # SCORING
             if rules["priority"] == "runs_penalty":
-                score = (runs * 1000) + size
+                material_cost = size * runs
+                run_penalty = runs * 200
+
+                size_penalty = 0
+                if size >= 240:
+                    size_penalty = 300
+
+                score = material_cost + run_penalty + size_penalty
             elif rules["priority"] == "size_only":
                 score = size
             else:
