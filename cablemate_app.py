@@ -471,11 +471,14 @@ def report(best, I, S, v, vs):
 
     y -= 20
     c.setFont("Helvetica-Bold", 11)
-    c.drawString(
-        50,
-        y,
-        f"FINAL SELECTED CABLE: {best['runs']}R x 3C x {best['size']} sq.mm"
-    )
+    if best:
+        c.drawString(
+            50,
+            y,
+            f"FINAL SELECTED CABLE: {best['runs']}R x 3C x {best['size']} sq.mm"
+        )
+        else:
+            c.drawString(50, y, "FINAL SELECTED CABLE: No suitable cable found")
 
     c.save()
     return f.name
@@ -524,13 +527,19 @@ if run_btn:
         # VOLTAGE DROP
             v_temp = vd(I, catalog["R"][size], catalog["X"][size], runs)
 
+        # ENGINEERING-BASED ACCEPTANCE
             if rules["vd_mode"] == "very_strict":
-                if v_temp > vd_run_limit * 0.8:
-                    continue
-            elif rules["vd_mode"] == "strict":
+        # Generator / sensitive loads
                 if v_temp > vd_run_limit:
                     continue
+
+            elif rules["vd_mode"] == "strict":
+        # Motors / transformers
+                if v_temp > vd_run_limit * 1.05:
+                    continue
+
             else:
+        # General feeders / non-critical
                 if v_temp > vd_run_limit * 1.1:
                     continue
 
@@ -565,7 +574,7 @@ if run_btn:
     if valid_options:
         # BASIC SORT (can improve later)
         valid_options.sort(key=lambda x: x["score"])
-        best = valid_options[0]
+        best = valid_options[0] if valid_options else None
 
         v = best["v"]
         vs = best["vs"]
