@@ -172,12 +172,16 @@ col1, col2 = st.columns(2)
 
 with col1:
     vd_run_limit = st.number_input("Running Voltage Drop (%)", value=5.0)
-
+    # 🔥 AUTO LIMIT BASED ON FEEDER
+    if feeder_to == "Transformer":
+        vd_run_limit = 1
+    elif feeder_to == "Motor":
+        vd_run_limit = 5
 if load_type == "Motor":
     with col2:
         vd_start_limit = st.number_input("Starting Voltage Drop (%)", value=15.0)
 else:
-    vd_start_limit = 100  # dummy high value so it never fails
+    vd_start_limit = None  # dummy high value so it never fails
 
 st.divider()
 
@@ -544,29 +548,20 @@ if run_btn:
             vs = vs_temp
             break
 
-        if best:
-            break
+            if best:
+                break
 
-        if not rules["allow_multi_run"] and runs > 1:
-            continue
+            if not rules["allow_multi_run"] and runs > 1:
+                continue
 
-        for size in catalog["sizes"]:
+            for size in catalog["sizes"]:
 
         # DERATING
             kT_local = soil * depth * group * temp
-
-        # ✅ SHORT CIRCUIT CHECK (RULE BASED)
-            if rules["sc_mode"] == "single":
-                if size < S:
-                    continue
-                    
+            # ✅ SHORT CIRCUIT CHECK (REAL INDUSTRY)
             if size < S:
                 continue
-
-            elif rules["sc_mode"] == "strict":
-                if size < get_equivalent_size(S):
-                    continue
-
+        
         # AMPACITY
             amp = catalog["amp"][size] * kT_local * runs
             if amp < I:
@@ -576,17 +571,7 @@ if run_btn:
             v_temp = vd(I, catalog["R"][size], catalog["X"][size], runs)
 
         # ENGINEERING-BASED ACCEPTANCE
-            if rules["vd_mode"] == "very_strict":
-        # Generator / sensitive loads
-                if v_temp > vd_run_limit:
-                    continue
-
-            elif rules["vd_mode"] == "strict":
-        # Motors / transformers
-                if v_temp > vd_run_limit * 1.05:
-                    continue
-
-            else:
+        
         # General feeders / non-critical
                 if v_temp > vd_run_limit * 1.1:
                     continue
@@ -827,7 +812,7 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         # SHORT CIRCUIT FIX (IMPORTANT)
         # ------------------------------------
         if manual_type_used == "3-Core":
-            sc_area_manual = get_equivalent_size(manual_size_used * manual_runs_used)
+            sc_area_manual = manual_size_used * manual_runs_used
         else:
             sc_area_manual = manual_size_used * manual_runs_used
 
