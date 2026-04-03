@@ -233,7 +233,7 @@ else:
 
 st.markdown("### 📊 Overall Derating Factor")
 
-kT_base = soil * depth * temp
+kT_base = soil * depth * group * temp
 st.success(f"Base Derating Factor (kT) = {round(kT_base, 3)}")
 st.caption("Note: Grouping factor applied automatically for multiple runs")
 st.divider()
@@ -314,37 +314,17 @@ def vd_start(I,R,X,runs):
         return (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
 def get_rules(feeder_from, feeder_to, load_type):
 
-        if feeder_from == "Switchgear" and feeder_to == "Motor":
-            return {"max_runs":10,
-                    "allow_multi_run":True,
-                    "sc_mode":"equivalent",
-                    "vd_mode":"strict",
-                    "priority":"runs_penalty"
-                   }
+    if feeder_from == "Switchgear" and feeder_to == "Motor":
+        return {"max_runs": 10, "allow_multi_run": True}
 
-        elif feeder_from == "Switchgear" and feeder_to == "Transformer":
-            return {"max_runs":1,
-                    "allow_multi_run":False,
-                    "sc_mode":"single",
-                    "vd_mode":"strict",
-                    "priority":"size_only"
-                   }
+    elif feeder_from == "Switchgear" and feeder_to == "Transformer":
+        return {"max_runs": 1, "allow_multi_run": False}
 
-        elif feeder_from == "Generator" and feeder_to == "Motor":
-            return {"max_runs":1,
-                    "allow_multi_run":False,
-                    "sc_mode":"strict",
-                    "vd_mode":"very_strict",
-                    "priority":"size_only"
-                   }
+    elif feeder_from == "Generator" and feeder_to == "Motor":
+        return {"max_runs": 1, "allow_multi_run": False}
 
-        else:
-            return {"max_runs":10,
-                    "allow_multi_run":True,
-                    "sc_mode":"equivalent",
-                    "vd_mode":"medium",
-                    "priority":"balanced"
-                   }  
+    else:
+        return {"max_runs": 10, "allow_multi_run": True}
      
 # ------------------------------------------------
 # PDF REPORT (UNCHANGED LOGIC)
@@ -444,9 +424,10 @@ def report(best, I, S, v, vs):
     y -= 15
     c.drawString(50, y, f"{round(v,2)} ≤ {vd_run_limit} → PASS ✔")
 
-    # --------------------------------
-    # STARTING VOLTAGE DROP
-    # --------------------------------
+   # --------------------------------
+# STARTING VOLTAGE DROP (ONLY MOTOR)
+# --------------------------------
+if load_type == "Motor":
     y -= 25
     c.drawString(50, y, "STARTING VOLTAGE DROP")
     y -= 15
@@ -646,9 +627,9 @@ if "calculated" in st.session_state:
         st.markdown("### (IV) Voltage Drop Check")
 
         st.write(f"Calculated VD → {round(v,2)} %")
-        st.write(f"Permissible VD → {vd_run_limit} %")
+        st.write(f"Permissible VD → {vd_limit} %")
 
-        if v <= vd_run_limit:
+        if v <= vd_limit:
             st.success("Running Voltage Drop → PASS ✅")
         else:
             st.error("Running Voltage Drop → FAIL ❌")
@@ -720,7 +701,7 @@ with col1:
 with col2:
     manual_runs = st.selectbox(
         "Number of Runs",
-        [1,2,3],
+        list(range(1, 11)),
         key="manual_runs_unique"
     )
 apply_manual = st.button("Apply Manual Selection")
@@ -783,8 +764,10 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         # ------------------------------------
         amp_ok = amp >= I
         vd_ok = v_manual <= vd_run_limit
-        vs_ok = vs_manual <= vd_start_limit
-
+        if load_type == "Motor":
+            vs_ok = vs_manual <= vd_start_limit
+        else:
+            vs_ok = True
         # ------------------------------------
         # STORE VALUES
         # ------------------------------------
