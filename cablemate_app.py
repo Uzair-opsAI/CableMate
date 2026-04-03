@@ -494,47 +494,54 @@ def report(best, I, S, v, vs):
     c.save()
     return f.name
 # ------------------------------------------------
-# ENGINE (FINAL FIXED)
+# ENGINE (FINAL CLEAN INDUSTRY LOGIC)
 # ------------------------------------------------
 
-# RUN BUTTON LOGIC (FINAL CLEAN ENGINE)
 if run_btn:
 
     I = load_current()
     S = short_circuit()
     rules = get_rules(feeder_from, feeder_to, load_type)
 
-    valid_options = []
+    # 🔥 Voltage drop limits based on equipment
+    if feeder_to == "Transformer":
+        vd_limit = 1
+    elif feeder_to == "Motor":
+        vd_limit = 5
+    else:
+        vd_limit = vd_run_limit
 
     best = None
     v = 0
     vs = 0
 
-    for size in catalog["sizes"]:   # ✅ SIZE FIRST
+    # 🔥 INDUSTRY APPROACH → SIZE FIRST
+    for size in catalog["sizes"]:
 
         for runs in range(1, rules["max_runs"] + 1):
 
+            # Restrict runs if not allowed
             if not rules["allow_multi_run"] and runs > 1:
                 continue
 
-        # DERATING
+            # DERATING
             kT_local = soil * depth * group * temp
 
-        # 1️⃣ SHORT CIRCUIT
+            # 1️⃣ SHORT CIRCUIT CHECK
             if size < S:
                 continue
 
-        # 2️⃣ AMPACITY
+            # 2️⃣ AMPACITY CHECK
             amp = catalog["amp"][size] * kT_local * runs
             if amp < I:
                 continue
 
-        # 3️⃣ VOLTAGE DROP
+            # 3️⃣ VOLTAGE DROP CHECK
             v_temp = vd(I, catalog["R"][size], catalog["X"][size], runs)
-            if v_temp > vd_run_limit:
+            if v_temp > vd_limit:
                 continue
 
-        # 4️⃣ STARTING VD (ONLY MOTOR)
+            # 4️⃣ STARTING VOLTAGE DROP (ONLY MOTOR)
             if load_type == "Motor":
                 vs_temp = vd_start(I, catalog["R"][size], catalog["X"][size], runs)
                 if vs_temp > vd_start_limit:
@@ -542,64 +549,20 @@ if run_btn:
             else:
                 vs_temp = 0
 
-        # ✅ FIRST VALID → SELECT
+            # ✅ FIRST VALID CABLE → SELECT
             best = {"size": size, "runs": runs}
             v = v_temp
             vs = vs_temp
-            break
 
-            if best:
-                break
+            break  # break runs loop
 
-            if not rules["allow_multi_run"] and runs > 1:
-                continue
-
-            for size in catalog["sizes"]:
-
-        # DERATING
-            kT_local = soil * depth * group * temp
-            # ✅ SHORT CIRCUIT CHECK (REAL INDUSTRY)
-                if size < S:
-                    continue
-        
-        # AMPACITY
-            amp = catalog["amp"][size] * kT_local * runs
-            if amp < I:
-                continue
-
-        # VOLTAGE DROP
-            v_temp = vd(I, catalog["R"][size], catalog["X"][size], runs)
-
-        # ENGINEERING-BASED ACCEPTANCE
-        
-        # General feeders / non-critical
-                if v_temp > vd_run_limit * 1.1:
-                    continue
-
-        # STARTING VD
-            vs_temp = vd_start(I, catalog["R"][size], catalog["X"][size], runs)
-            if vs_temp > vd_start_limit:
-                continue
-
-       
+        if best:
+            break  # break size loop
 
     # ----------------------------------------
-    # SELECT BEST OPTION
+    # STORE RESULTS
     # ----------------------------------------
-    best = None
-    v = 0
-    vs = 0
 
-    if valid_options:
-        # BASIC SORT (can improve later)
-        valid_options.sort(key=lambda x: x["score"])
-        
-        v = best["v"]
-        vs = best["vs"]
-
-    # ----------------------------------------
-    # STORE IN SESSION
-    # ----------------------------------------
     st.session_state["best"] = best
     st.session_state["v"] = v
     st.session_state["vs"] = vs
