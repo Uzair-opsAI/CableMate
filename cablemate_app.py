@@ -495,7 +495,7 @@ if run_btn:
     best = None
     v = 0
     vs = 0
-
+    valid_options = []
     # 🔥 INDUSTRY APPROACH → SIZE FIRST
     for size in catalog["sizes"]:
 
@@ -539,14 +539,29 @@ if run_btn:
                 vs_temp = 0
 
             # ✅ FIRST VALID CABLE → SELECT
-            best = {"size": size, "runs": runs}
-            v = v_temp
-            vs = vs_temp
+            # 🔥 STORE ALL VALID OPTIONS
+            valid_options.append({
+                "size": size,
+                "runs": runs,
+                "v": v_temp,
+                "vs": vs_temp,
+                "amp": amp
+            })
+# ----------------------------------------
+# FINAL SELECTION LOGIC
+# ----------------------------------------
+    if valid_options:
 
-            break  # break runs loop
+        if feeder_to == "Transformer":
+        # 🔥 choose robust cable (higher ampacity)
+            best = sorted(valid_options, key=lambda x: (-x["amp"]))[0]
 
-        if best:
-            break  # break size loop
+        else:
+        # 🔥 motor → fewer runs, then smaller size
+            best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
+
+        v = best["v"]
+        vs = best["vs"]
 
     # ----------------------------------------
     # STORE RESULTS
