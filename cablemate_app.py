@@ -298,6 +298,19 @@ def vd(I,R,X,runs):
     return (math.sqrt(3)*I*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
 
 def vd_start(I,R,X,runs):
+    def get_rules(feeder_from, feeder_to, load_type):
+
+    if feeder_from == "Switchgear" and feeder_to == "Motor":
+        return {"max_runs":10,"allow_multi_run":True,"sc_mode":"equivalent","vd_mode":"strict","priority":"runs_penalty"}
+
+    elif feeder_from == "Switchgear" and feeder_to == "Transformer":
+        return {"max_runs":1,"allow_multi_run":False,"sc_mode":"single","vd_mode":"strict","priority":"size_only"}
+
+    elif feeder_from == "Generator" and feeder_to == "Motor":
+        return {"max_runs":1,"allow_multi_run":False,"sc_mode":"strict","vd_mode":"very_strict","priority":"size_only"}
+
+    else:
+        return {"max_runs":10,"allow_multi_run":True,"sc_mode":"equivalent","vd_mode":"medium","priority":"balanced"}
     Ist = starting_multiple * I
     ang=math.acos(0.2)
     return (math.sqrt(3)*Ist*(R*math.cos(ang)+X*math.sin(ang))*length)/(1000*runs*voltage*1000)*100
@@ -461,51 +474,72 @@ if run_btn:
 
     I = load_current()
     S = short_circuit()
+    rules = get_rules(feeder_from, feeder_to, load_type)
 
     valid_options = []
 
-    for runs in get_run_range(load_type):
+    for runs in range(1, rules["max_runs"] + 1):
+
+        if not rules["allow_multi_run"] and runs > 1:
+            continue
+
         for size in catalog["sizes"]:
-              # 🔥 STEP 3 — ADD THIS LINE HERE
-            
-            # DERATING
+
+        # DERATING
             kT_local = soil * depth * group * temp
 
-            # 🔥 DIFFERENT SC LOGIC FOR TRANSFORMER
-            if load_type == "Transformer":
+        # ✅ SHORT CIRCUIT CHECK (RULE BASED)
+            if rules["sc_mode"] == "single":
                 if size < S:
                     continue
-            else:
-                min_sc_size = get_equivalent_size(S)
-                equiv_size = get_equivalent_size(size * runs)
 
-                if equiv_size < min_sc_size:
+            elif rules["sc_mode"] == "equivalent":
+                equiv_size = get_equivalent_size(size * runs)
+                if equiv_size < S:
                     continue
 
-            # AMPACITY
+            elif rules["sc_mode"] == "strict":
+                if size < get_equivalent_size(S):
+                    continue
+
+        # AMPACITY
             amp = catalog["amp"][size] * kT_local * runs
             if amp < I:
                 continue
 
-            # VOLTAGE DROP
+        # VOLTAGE DROP
             v_temp = vd(I, catalog["R"][size], catalog["X"][size], runs)
-            if v_temp > vd_run_limit:
-                continue
 
+            if rules["vd_mode"] == "very_strict":
+                if v_temp > vd_run_limit * 0.8:
+                    continue
+            elif rules["vd_mode"] == "strict":
+                if v_temp > vd_run_limit:
+                    continue
+            else:
+                if v_temp > vd_run_limit * 1.1:
+                    continue
+
+        # STARTING VD
             vs_temp = vd_start(I, catalog["R"][size], catalog["X"][size], runs)
             if vs_temp > vd_start_limit:
                 continue
 
-            # STORE VALID OPTION
+        # SCORING
+            if rules["priority"] == "runs_penalty":
+                score = (runs * 1000) + size
+            elif rules["priority"] == "size_only":
+                score = size
+            else:
+                score = (runs * 500) + size
+
             valid_options.append({
                 "size": size,
                 "runs": runs,
                 "v": v_temp,
                 "vs": vs_temp,
-                "score": (runs * 1000) + size   # 🔥 ADD THIS LINE
+                "score": score
             })
-            if load_type == "Transformer":
-                S = S * 0.8
 
     # ----------------------------------------
     # SELECT BEST OPTION
