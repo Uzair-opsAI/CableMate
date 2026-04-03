@@ -536,6 +536,7 @@ if run_btn:
             # 2️⃣ AMPACITY CHECK
             amp = catalog["amp"][size] * kT_local * runs
             if amp < I:
+                print("REJECTED (AMPACITY FAIL):", size, "runs:", runs, "amp:", amp)
                 continue
 
             # 3️⃣ VOLTAGE DROP CHECK
@@ -576,6 +577,7 @@ if run_btn:
 # FINAL SELECTION LOGIC
 # ----------------------------------------
     print("VALID OPTIONS:", valid_options)
+    valid_options = [x for x in valid_options if x["amp"] >= I]
     if valid_options:
 
         if feeder_to == "Transformer":
