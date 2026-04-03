@@ -272,12 +272,7 @@ else:
 # ------------------------------------------------
 # FUNCTIONS (UNCHANGED LOGIC)
 # ------------------------------------------------
-def get_equivalent_size(area):
-    for s in catalog["sizes"]:
-        if s >= area:
-            return s
-    return max(catalog["sizes"])
-    
+
 def load_current():
     if load_type=="Motor":
         return power*1000/(math.sqrt(3)*voltage*1000*pf*eff)
@@ -297,7 +292,13 @@ def short_circuit():
     else:
         fault_effective = fault
 
-    return (fault*1000*math.sqrt(fault_time))/k
+    # ✅ FEEDER BASED FAULT TIME (INDUSTRY) 
+    if feeder_from == "Switchgear":
+        t = 0.25   # outgoing feeder 
+    else:
+        t = fault_time
+        
+    return (fault_effective * 1000 * math.sqrt(t)) / k
     
 def vd(I,R,X,runs):
     ang=math.acos(pf)
@@ -501,7 +502,50 @@ if run_btn:
 
     valid_options = []
 
-    for runs in range(1, rules["max_runs"] + 1):
+    best = None
+    v = 0
+    vs = 0
+
+    for size in catalog["sizes"]:   # ✅ SIZE FIRST
+
+        for runs in range(1, rules["max_runs"] + 1):
+
+            if not rules["allow_multi_run"] and runs > 1:
+                continue
+
+        # DERATING
+            kT_local = soil * depth * group * temp
+
+        # 1️⃣ SHORT CIRCUIT
+            if size < S:
+                continue
+
+        # 2️⃣ AMPACITY
+            amp = catalog["amp"][size] * kT_local * runs
+            if amp < I:
+                continue
+
+        # 3️⃣ VOLTAGE DROP
+            v_temp = vd(I, catalog["R"][size], catalog["X"][size], runs)
+            if v_temp > vd_run_limit:
+                continue
+
+        # 4️⃣ STARTING VD (ONLY MOTOR)
+            if load_type == "Motor":
+                vs_temp = vd_start(I, catalog["R"][size], catalog["X"][size], runs)
+                if vs_temp > vd_start_limit:
+                    continue
+            else:
+                vs_temp = 0
+
+        # ✅ FIRST VALID → SELECT
+            best = {"size": size, "runs": runs}
+            v = v_temp
+            vs = vs_temp
+            break
+
+        if best:
+            break
 
         if not rules["allow_multi_run"] and runs > 1:
             continue
@@ -515,11 +559,9 @@ if run_btn:
             if rules["sc_mode"] == "single":
                 if size < S:
                     continue
-
-            elif rules["sc_mode"] == "equivalent":
-                equiv_size = get_equivalent_size(size * runs)
-                if equiv_size < S:
-                    continue
+                    
+            if size < S:
+                continue
 
             elif rules["sc_mode"] == "strict":
                 if size < get_equivalent_size(S):
@@ -554,28 +596,7 @@ if run_btn:
             if vs_temp > vd_start_limit:
                 continue
 
-        # SCORING
-            if rules["priority"] == "runs_penalty":
-                material_cost = size * runs
-                run_penalty = runs * 200
-
-                size_penalty = 0
-                if size >= 240:
-                    size_penalty = 300
-
-                score = material_cost + run_penalty + size_penalty
-            elif rules["priority"] == "size_only":
-                score = size
-            else:
-                score = (runs * 500) + size
-
-            valid_options.append({
-                "size": size,
-                "runs": runs,
-                "v": v_temp,
-                "vs": vs_temp,
-                "score": score
-            })
+       
 
     # ----------------------------------------
     # SELECT BEST OPTION
@@ -587,8 +608,7 @@ if run_btn:
     if valid_options:
         # BASIC SORT (can improve later)
         valid_options.sort(key=lambda x: x["score"])
-        best = valid_options[0] if valid_options else None
-
+        
         v = best["v"]
         vs = best["vs"]
 
