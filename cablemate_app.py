@@ -586,7 +586,7 @@ if run_btn:
 
         else:
         # 🔥 motor → fewer runs, then smaller size
-            best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
+            best = sorted(valid_options, key=lambda x: (x["size"], x["runs"]))[0]
 
         v = best["v"]
         vs = best["vs"]
