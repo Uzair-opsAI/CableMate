@@ -559,8 +559,8 @@ if run_btn:
         # DERATING
             kT_local = soil * depth * group * temp
             # ✅ SHORT CIRCUIT CHECK (REAL INDUSTRY)
-            if size < S:
-                continue
+                if size < S:
+                    continue
         
         # AMPACITY
             amp = catalog["amp"][size] * kT_local * runs
