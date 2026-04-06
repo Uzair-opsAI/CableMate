@@ -582,17 +582,16 @@ if run_btn:
 
         if feeder_to == "Transformer":
         # 🔥 choose robust cable (higher ampacity)
-            best = sorted(valid_options, key=lambda x: (x["size"]))[0]
-
+            best = sorted(valid_options, key=lambda x: (x["size"]))[0] 
+    # ----------------------------------------
+    # 🔥 MOTOR (FIXED LOGIC)
+    # ----------------------------------------
+        elif feeder_to == "Motor":
+        # STEP 1 → Prefer minimum runs
+            min_runs = min(x["runs"] for x in valid_options)
+            run_filtered = [x for x in valid_options if x["runs"] == min_runs]
         else:
-    # 🔥 STEP 1: Find minimum size
-            min_size = min(x["size"] for x in valid_options)
-
-    # 🔥 STEP 2: Keep only near-minimum sizes (avoid oversizing)
-            filtered = [x for x in valid_options if x["size"] <= min_size * 1.1]
-
-    # 🔥 STEP 3: From these, choose least runs
-            best = sorted(filtered, key=lambda x: (x["runs"], x["size"]))[0]
+            best = sorted(run_filtered, key=lambda x: x["size"])[0]
 
         v = best["v"]
         vs = best["vs"]
