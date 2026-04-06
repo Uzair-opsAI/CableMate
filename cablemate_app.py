@@ -604,7 +604,7 @@ if run_btn:
 
             candidates = [
                 x for x in valid_options
-                if x["total_copper"] <= min_copper * 1.1   # small tolerance
+                if x["total_copper"] == min_copper
             ]
 
     # 🔥 KEY CHANGE → prefer fewer runs BUT avoid oversizing
