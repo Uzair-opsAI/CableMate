@@ -499,7 +499,7 @@ if run_btn:
                 continue
 
             # DERATING
-            kT_local = soil * depth * group * temp * laying_factor
+            kT_local = soil * depth * group * temp 
 
             # 1️⃣ SHORT CIRCUIT
             if feeder_to == "Transformer":
