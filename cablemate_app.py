@@ -578,38 +578,38 @@ if run_btn:
 # FINAL SELECTION LOGIC (FIXED)
 # ----------------------------------------
 
-print("VALID OPTIONS BEFORE FILTER:", valid_options)
-print("LOAD CURRENT:", I)
+    print("VALID OPTIONS BEFORE FILTER:", valid_options)
+    print("LOAD CURRENT:", I)
 
-valid_options = [x for x in valid_options if x["amp"] >= I]
+    valid_options = [x for x in valid_options if x["amp"] >= I]
 
-best = None
+    best = None
 
-if valid_options:
+    if valid_options:
 
     # 🔵 TRANSFORMER
-    if feeder_to == "Transformer":
-        best = sorted(valid_options, key=lambda x: x["size"])[0]
+        if feeder_to == "Transformer":
+            best = sorted(valid_options, key=lambda x: x["size"])[0]
 
     # 🔴 MOTOR (FIXED)
-    elif feeder_to == "Motor":
-        min_runs = min(x["runs"] for x in valid_options)
-        run_filtered = [x for x in valid_options if x["runs"] == min_runs]
+        elif feeder_to == "Motor":
+            min_runs = min(x["runs"] for x in valid_options)
+            run_filtered = [x for x in valid_options if x["runs"] == min_runs]
 
         # ✅ THIS LINE WAS MISSING
-        best = sorted(run_filtered, key=lambda x: x["size"])[0]
+            best = sorted(run_filtered, key=lambda x: x["size"])[0]
 
     # ⚪ DEFAULT
-    else:
-        best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
+        else:
+            best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
 
 # SAFE ACCESS
-if best:
-    v = best["v"]
-    vs = best["vs"]
-else:
-    v = 0
-    vs = 0
+    if best:
+        v = best["v"]
+        vs = best["vs"]
+    else:
+        v = 0
+        vs = 0
     # ----------------------------------------
     # STORE RESULTS
     # ----------------------------------------
