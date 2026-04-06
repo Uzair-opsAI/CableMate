@@ -595,7 +595,7 @@ if run_btn:
         elif feeder_to == "Motor":
             min_runs = min(x["runs"] for x in valid_options)
             run_filtered = [x for x in valid_options if x["runs"] == min_runs]
-
+            best = sorted(run_filtered, key=lambda x: x["size"])[0]   # ✅ THIS WAS MISSING
         # ✅ THIS LINE WAS MISSING
             best = sorted(run_filtered, key=lambda x: x["size"])[0]
 
