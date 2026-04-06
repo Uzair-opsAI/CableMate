@@ -610,8 +610,8 @@ if run_btn:
     # 🔥 KEY CHANGE → prefer fewer runs BUT avoid oversizing
             best = sorted(candidates, key=lambda x: (x["total_copper"], x["runs"]))[0]
     # ⚪ DEFAULT
-            else:
-                best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
+        else:
+            best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
 # SAFE ACCESS
         if best:
             v = best["v"]
