@@ -518,7 +518,7 @@ if run_btn:
 
             if feeder_to == "Motor":
     # Motor feeders → no grouping
-                kT_local = soil * depth * temp
+                kT_local = soil * depth * group * temp
 
             else:
     # Transformer / others → full grouping
