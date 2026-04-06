@@ -603,7 +603,7 @@ if run_btn:
 
             candidates = [
                 x for x in valid_options
-                if x["total_copper"] <= min_copper * 0.2   # tolerance band
+                if x["total_copper"] <= min_copper * 1.01   # tolerance band
             ]
 
     # 🔥 STEP 3 → among those, prefer fewer runs slightly
