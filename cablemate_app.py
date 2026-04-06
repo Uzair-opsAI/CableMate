@@ -487,6 +487,8 @@ def report(best, I, S, v, vs):
 if run_btn:
 
     I = load_current()
+    if feeder_to == "Motor":
+        I = I * 1.25   # 🔥 INDUSTRY PRACTICE
     # 🔥 transformer margin
     if feeder_to == "Transformer":
         I = I * 1.2
@@ -595,24 +597,25 @@ if run_btn:
         elif feeder_to == "Motor":
     # 🔥 STEP 1 → calculate total conductor usage
             print("🔥 MOTOR LOGIC RUNNING")
-            feasible = []
             for x in valid_options:
-        # per run ampacity check (VERY IMPORTANT)
-                per_run_amp = catalog["amp"][x["size"]] * kT_local
-
-                if per_run_amp >= (I / x["runs"]):
-                    feasible.append(x)
-
-    # STEP 2 → calculate total copper only on feasible ones
-            for x in feasible:
                 x["total_copper"] = x["size"] * x["runs"]
 
-    # STEP 3 → find best based on practical balance
-            best = sorted(feasible, key=lambda x: (x["total_copper"], x["runs"]))[0]
+    # 🔥 STEP 2 → avoid unrealistic large cables
+    # prefer practical range (not extreme sizes)
+            min_copper = min(x["total_copper"] for x in valid_options)
+
+            candidates = [
+                x for x in valid_options
+                if x["total_copper"] == min_copper  
+            ]
+
+    # 🔥 STEP 3 → among those, prefer fewer runs slightly
+            best = sorted(candidates, key=lambda x: x["runs"])[0]
 
     # ⚪ DEFAULT
         else:
             best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
+
 # SAFE ACCESS
     if best:
         v = best["v"]
