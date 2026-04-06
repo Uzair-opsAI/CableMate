@@ -506,7 +506,7 @@ if run_btn:
                 if size < S * 1.5:
                     continue
             else:
-                if size < S:
+                if (size * runs) < S:
                     continue
 
             # 2️⃣ AMPACITY
