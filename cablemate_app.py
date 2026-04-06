@@ -173,15 +173,11 @@ col1, col2 = st.columns(2)
 with col1:
     vd_run_limit = st.number_input("Running Voltage Drop (%)", value=5.0)
     # 🔥 AUTO LIMIT BASED ON FEEDER
-    if feeder_to == "Transformer":
-        vd_run_limit = 1
-    elif feeder_to == "Motor":
-        vd_run_limit = 5
-if load_type == "Motor":
-    with col2:
+with col2:
+    if load_type == "Motor":
         vd_start_limit = st.number_input("Starting Voltage Drop (%)", value=15.0)
-else:
-    vd_start_limit = None  # dummy high value so it never fails
+    else:
+        vd_start_limit = None  # dummy high value so it never fails
 
 st.divider()
 
@@ -481,51 +477,31 @@ def report(best, I, S, v, vs):
     c.save()
     return f.name
 # ------------------------------------------------
-# ENGINE (FINAL CLEAN INDUSTRY LOGIC)
+# ENGINE (CORRECTED VERSION)
 # ------------------------------------------------
-
 if run_btn:
-
     I = load_current()
-    # 🔥 transformer margin
     if feeder_to == "Transformer":
         I = I * 1.2
+
     S = short_circuit()
     rules = get_rules(feeder_from, feeder_to, load_type)
-
-    # 🔥 Voltage drop limits based on equipment
-    if feeder_to == "Transformer":
-        vd_limit = 1
-    elif feeder_to == "Motor":
-        vd_limit = 5
-    else:
-        vd_limit = vd_run_limit
 
     best = None
     v = 0
     vs = 0
     valid_options = []
-    # 🔥 INDUSTRY APPROACH → SIZE FIRST
-    for size in catalog["sizes"]:
 
+    for size in catalog["sizes"]:
         for runs in range(1, rules["max_runs"] + 1):
 
-            # Restrict runs if not allowed
             if not rules["allow_multi_run"] and runs > 1:
                 continue
 
-            # 🔥 FINAL DERATING LOGIC (CLEAN)
+            # DERATING
+            kT_local = soil * depth * group * temp * laying_factor
 
-            if feeder_to == "Motor":
-    # Motor feeders → no grouping
-                kT_local = soil * depth * group * temp
-
-            else:
-    # Transformer / others → full grouping
-                kT_local = soil * depth * group * temp
-
-            # 1️⃣ SHORT CIRCUIT CHECK
-            # 🔥 STRICT SC CHECK (REAL MV PRACTICE)
+            # 1️⃣ SHORT CIRCUIT
             if feeder_to == "Transformer":
                 if size < S * 1.5:
                     continue
@@ -533,25 +509,25 @@ if run_btn:
                 if size < S:
                     continue
 
-            # 2️⃣ AMPACITY CHECK
+            # 2️⃣ AMPACITY
             amp = catalog["amp"][size] * kT_local * runs
-            print("CHECK:", size, runs, amp)
             if amp < I:
-                print("REJECTED (AMPACITY FAIL):", size, "runs:", runs, "amp:", amp)
                 continue
 
-            # 3️⃣ VOLTAGE DROP CHECK
+            # 3️⃣ VOLTAGE DROP
             v_temp = vd(I, catalog["R"][size], catalog["X"][size], runs)
-            print("SIZE:", size, "VD:", v_temp)
-            # 🔥 stricter for transformer
-            if feeder_to == "Transformer":
-                if v_temp > vd_limit * 0.9:
-                    continue
-                else:
-                    if v_temp > vd_limit:
-                        continue
 
-            # 4️⃣ STARTING VOLTAGE DROP (ONLY MOTOR)
+            if feeder_to == "Transformer":
+                vd_limit_check = 1.0
+            elif load_type == "Motor":
+                vd_limit_check = vd_run_limit
+            else:
+                vd_limit_check = vd_run_limit
+
+            if v_temp > vd_limit_check:
+                continue
+
+            # 4️⃣ STARTING VD (MOTOR)
             if load_type == "Motor":
                 vs_temp = vd_start(I, catalog["R"][size], catalog["X"][size], runs)
                 if vs_temp > vd_start_limit:
@@ -559,14 +535,7 @@ if run_btn:
             else:
                 vs_temp = 0
 
-            # ✅ FIRST VALID CABLE → SELECT
-            print("---- CHECK ----")
-            print("Size:", size, "Runs:", runs)
-            print("Amp:", amp, "Required I:", I)
-            print("VD:", v_temp, "Limit:", vd_limit)
-            print("SC Required:", S)
-            # 🔥 STORE ALL VALID OPTIONS
-        
+            # STORE VALID
             valid_options.append({
                 "size": size,
                 "runs": runs,
@@ -574,32 +543,20 @@ if run_btn:
                 "vs": vs_temp,
                 "amp": amp
             })
-# ----------------------------------------
-# FINAL SELECTION LOGIC (FIXED)
-# ----------------------------------------
 
-    print("VALID OPTIONS BEFORE FILTER:", valid_options)
-    print("LOAD CURRENT:", I)
-
-    valid_options = [x for x in valid_options if x["amp"] >= I]
-
-    best = None
-
+    # ----------------------------------------
+    # FINAL SELECTION
+    # ----------------------------------------
     if valid_options:
 
-    # 🔵 TRANSFORMER
         if feeder_to == "Transformer":
             best = sorted(valid_options, key=lambda x: x["size"])[0]
 
-    # 🔴 MOTOR (FIXED)
         elif feeder_to == "Motor":
-
-            print("🔥 MOTOR LOGIC RUNNING")
 
             for x in valid_options:
                 x["total_copper"] = x["size"] * x["runs"]
 
-    # 🔥 FIND MINIMUM PRACTICAL SOLUTION
             min_copper = min(x["total_copper"] for x in valid_options)
 
             candidates = [
@@ -607,22 +564,16 @@ if run_btn:
                 if x["total_copper"] == min_copper
             ]
 
-    # 🔥 KEY CHANGE → prefer fewer runs BUT avoid oversizing
-            best = sorted(candidates, key=lambda x: (x["total_copper"], x["runs"]))[0]
-    # ⚪ DEFAULT
+            best = sorted(candidates, key=lambda x: x["runs"])[0]
+
         else:
             best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
-# SAFE ACCESS
+
         if best:
             v = best["v"]
             vs = best["vs"]
-        else:
-            v = 0
-            vs = 0
-    # ----------------------------------------
-    # STORE RESULTS
-    # ----------------------------------------
 
+    # STORE RESULTS
     st.session_state["best"] = best
     st.session_state["v"] = v
     st.session_state["vs"] = vs
