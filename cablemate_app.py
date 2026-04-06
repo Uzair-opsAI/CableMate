@@ -535,6 +535,7 @@ if run_btn:
 
             # 2️⃣ AMPACITY CHECK
             amp = catalog["amp"][size] * kT_local * runs
+            print("CHECK:", size, runs, amp)
             if amp < I:
                 print("REJECTED (AMPACITY FAIL):", size, "runs:", runs, "amp:", amp)
                 continue
