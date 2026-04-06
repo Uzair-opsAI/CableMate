@@ -593,11 +593,21 @@ if run_btn:
 
     # 🔴 MOTOR (FIXED)
         elif feeder_to == "Motor":
-            min_runs = min(x["runs"] for x in valid_options)
-            run_filtered = [x for x in valid_options if x["runs"] == min_runs]
-            best = sorted(run_filtered, key=lambda x: x["size"])[0]   # ✅ THIS WAS MISSING
-        # ✅ THIS LINE WAS MISSING
-            best = sorted(run_filtered, key=lambda x: x["size"])[0]
+    # 🔥 STEP 1 → calculate total conductor usage
+            for x in valid_options:
+                x["total_copper"] = x["size"] * x["runs"]
+
+    # 🔥 STEP 2 → avoid unrealistic large cables
+    # prefer practical range (not extreme sizes)
+            min_copper = min(x["total_copper"] for x in valid_options)
+
+            candidates = [
+                x for x in valid_options
+                if x["total_copper"] <= min_copper * 1.3   # tolerance band
+            ]
+
+    # 🔥 STEP 3 → among those, prefer fewer runs slightly
+            best = sorted(candidates, key=lambda x: (x["total_copper"], x["runs"]))[0]
 
     # ⚪ DEFAULT
         else:
