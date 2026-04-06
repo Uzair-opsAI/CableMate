@@ -592,33 +592,33 @@ if run_btn:
             best = sorted(valid_options, key=lambda x: x["size"])[0]
 
     # 🔴 MOTOR (FIXED)
-    elif feeder_to == "Motor":
+        elif feeder_to == "Motor":
 
-        print("🔥 MOTOR LOGIC RUNNING")
+            print("🔥 MOTOR LOGIC RUNNING")
 
-        for x in valid_options:
-            x["total_copper"] = x["size"] * x["runs"]
+            for x in valid_options:
+                x["total_copper"] = x["size"] * x["runs"]
 
     # 🔥 FIND MINIMUM PRACTICAL SOLUTION
-        min_copper = min(x["total_copper"] for x in valid_options)
+            min_copper = min(x["total_copper"] for x in valid_options)
 
-        candidates = [
-            x for x in valid_options
-            if x["total_copper"] <= min_copper * 1.1   # small tolerance
-        ]
+            candidates = [
+                x for x in valid_options
+                if x["total_copper"] <= min_copper * 1.1   # small tolerance
+            ]
 
     # 🔥 KEY CHANGE → prefer fewer runs BUT avoid oversizing
-        best = sorted(candidates, key=lambda x: (x["total_copper"], x["runs"]))[0]
+            best = sorted(candidates, key=lambda x: (x["total_copper"], x["runs"]))[0]
     # ⚪ DEFAULT
-        else:
-            best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
+            else:
+                best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
 # SAFE ACCESS
-    if best:
-        v = best["v"]
-        vs = best["vs"]
-    else:
-        v = 0
-        vs = 0
+        if best:
+            v = best["v"]
+            vs = best["vs"]
+        else:
+            v = 0
+            vs = 0
     # ----------------------------------------
     # STORE RESULTS
     # ----------------------------------------
