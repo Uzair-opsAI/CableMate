@@ -593,9 +593,13 @@ if run_btn:
         else:
             best = sorted(run_filtered, key=lambda x: x["size"])[0]
 
+   # ✅ SAFE ACCESS
+    if best:
         v = best["v"]
         vs = best["vs"]
-
+    else:
+        v = 0
+        vs = 0
     # ----------------------------------------
     # STORE RESULTS
     # ----------------------------------------
