@@ -594,6 +594,7 @@ if run_btn:
     # 🔴 MOTOR (FIXED)
         elif feeder_to == "Motor":
     # 🔥 STEP 1 → calculate total conductor usage
+            print("🔥 MOTOR LOGIC RUNNING")
             for x in valid_options:
                 x["total_copper"] = x["size"] * x["runs"]
 
