@@ -554,18 +554,22 @@ if run_btn:
 
         elif feeder_to == "Motor":
 
+            print("🔥 FINAL MOTOR CORRECTION")
+
+    # STEP 1 → sort by size first (engineering preference)
+            valid_options = sorted(valid_options, key=lambda x: x["size"])
+
+    # STEP 2 → group by size
+            size_groups = {}
             for x in valid_options:
-                x["total_copper"] = x["size"] * x["runs"]
+                size_groups.setdefault(x["size"], []).append(x)
 
-            min_copper = min(x["total_copper"] for x in valid_options)
+    # STEP 3 → pick smallest size that works
+            smallest_size = min(size_groups.keys())
+            candidates = size_groups[smallest_size]
 
-            candidates = [
-                x for x in valid_options
-                if x["total_copper"] == min_copper
-            ]
-
+    # STEP 4 → among same size, pick minimum runs
             best = sorted(candidates, key=lambda x: x["runs"])[0]
-
         else:
             best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
 
