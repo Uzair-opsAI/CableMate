@@ -604,11 +604,11 @@ if run_btn:
 
             candidates = [
                 x for x in valid_options
-                if x["total_copper"] <= min_copper * 1.01   # tolerance band
+                if x["total_copper"] == min_copper  
             ]
 
     # 🔥 STEP 3 → among those, prefer fewer runs slightly
-            best = sorted(candidates, key=lambda x: (x["total_copper"], x["runs"]))[0]
+            best = sorted(candidates, key=lambda x: x["runs"])[0]
 
     # ⚪ DEFAULT
         else:
