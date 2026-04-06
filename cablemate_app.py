@@ -576,6 +576,8 @@ if run_btn:
 # ----------------------------------------
 # FINAL SELECTION LOGIC
 # ----------------------------------------
+    print("VALID OPTIONS BEFORE FILTER:", valid_options)
+    print("LOAD CURRENT:", I)
     print("VALID OPTIONS:", valid_options)
     valid_options = [x for x in valid_options if x["amp"] >= I]
     if valid_options:
