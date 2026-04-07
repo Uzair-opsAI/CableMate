@@ -304,7 +304,7 @@ def short_circuit():
     else:
         t = fault_time
         
-    return (fault_effective * 1000 * math.sqrt(t)) / k
+    return (fault * 1000 * math.sqrt(t)) / k
     
 def vd(I,R,X,runs):
     ang=math.acos(pf)
