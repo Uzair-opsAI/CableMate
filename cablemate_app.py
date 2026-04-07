@@ -511,7 +511,8 @@ if run_btn:
 
             # 2️⃣ AMPACITY
             amp = catalog["amp"][size] * kT_local * runs
-            if amp < I:
+            # 🔥 APPLY ENGINEERING SAFETY MARGIN
+            if amp < I * 1.15:
                 continue
 
             # 3️⃣ VOLTAGE DROP
