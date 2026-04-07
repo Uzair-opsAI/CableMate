@@ -554,7 +554,7 @@ if run_btn:
 
         elif feeder_to == "Motor":
 
-        print("🔥 FINAL STABLE MOTOR LOGIC")
+            print("🔥 FINAL STABLE MOTOR LOGIC")
 
     # STEP 1 → calculate total copper (real engineering basis)
             for x in valid_options:
