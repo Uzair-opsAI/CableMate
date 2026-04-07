@@ -386,6 +386,10 @@ def report(best, I, S, v, vs):
     y -= 25
     c.drawString(50, y, "LOAD CURRENT CALCULATION")
     y -= 15
+    c.setFont("Helvetica-Oblique", 10)
+    c.drawString(50, y, "(IEC 60038 / IEC 60909)")
+    y -= 15
+    c.setFont("Helvetica", 11)
     c.drawString(50, y, f"I = {round(I,2)} A")
 
     # --------------------------------
@@ -397,6 +401,10 @@ def report(best, I, S, v, vs):
     y -= 25
     c.drawString(50, y, "AMPACITY CHECK")
     y -= 15
+    c.setFont("Helvetica-Oblique", 10)
+    c.drawString(50, y, "(IEC 60287)")
+    y -= 15
+    c.setFont("Helvetica", 11)
     c.drawString(50, y, f"Available Ampacity = {round(amp,1)} A")
     y -= 15
     c.drawString(50, y, f"Load Current       = {round(I,1)} A")
@@ -409,6 +417,10 @@ def report(best, I, S, v, vs):
     y -= 25
     c.drawString(50, y, "SHORT CIRCUIT CHECK")
     y -= 15
+    c.setFont("Helvetica-Oblique", 10)
+    c.drawString(50, y, "(IEC 60949 / IEC 60364-5-54)")
+    y -= 15
+    c.setFont("Helvetica", 11)
     c.drawString(50, y, f"Required Size = {round(S,1)} mm²")
     y -= 15
     c.drawString(50, y, f"{round(S,1)} < {best['size']} mm²")
@@ -421,6 +433,10 @@ def report(best, I, S, v, vs):
     y -= 25
     c.drawString(50, y, "RUNNING VOLTAGE DROP")
     y -= 15
+    c.setFont("Helvetica-Oblique", 10)
+    c.drawString(50, y, "(IEC 60364-5-52)")
+    y -= 15
+    c.setFont("Helvetica", 11)
     c.drawString(50, y, f"Calculated VD = {round(v,2)} %")
     y -= 15
     c.drawString(50, y, f"Allowed VD    = {vd_run_limit} %")
@@ -434,6 +450,10 @@ def report(best, I, S, v, vs):
         y -= 25
         c.drawString(50, y, "STARTING VOLTAGE DROP")
         y -= 15
+        c.setFont("Helvetica-Oblique", 10)
+        c.drawString(50, y, "(IEC 60034)")
+        y -= 15
+        c.setFont("Helvetica", 11)
         c.drawString(50, y, f"Calculated VD = {round(vs,2)} %")
         y -= 15
         c.drawString(50, y, f"Allowed VD    = {vd_start_limit} %")
@@ -446,26 +466,49 @@ def report(best, I, S, v, vs):
     y -= 25
     c.drawString(50, y, "DERATING FACTOR")
     y -= 15
+    c.setFont("Helvetica-Oblique", 10)
+    c.drawString(50, y, "(IEC 60364-5-52)")
+    y -= 15
+    c.setFont("Helvetica", 11)
     kT_local = soil * depth * group * temp
 
     c.drawString(50, y, f"kT = {round(kT_rep,2)}")
 
-    # --------------------------------
-    # FINAL STATEMENT
-    # --------------------------------
+# --------------------------------
+# FINAL STATEMENT
+# --------------------------------
     y -= 30
+
+    if y < 100:
+        c.showPage()
+        y = 750
+
     c.setFont("Helvetica-Bold", 12)
     c.drawString(50, y, "FINAL ENGINEERING DECISION")
 
     y -= 20
+    c.setFont("Helvetica", 10)
+
+    c.drawString(50, y, "• IEC 60364 – Electrical Installations"); y -= 15
+    c.drawString(50, y, "• IEC 60287 – Cable Current Rating"); y -= 15
+    c.drawString(50, y, "• IEC 60949 – Short Circuit Capacity"); y -= 15
+    c.drawString(50, y, "• IEC 60034 – Motor Starting"); y -= 15
+    c.drawString(50, y, "• IEC 60947 – Protection Systems"); y -= 15
+    c.drawString(50, y, "• Cable Data: Oman Cable Catalogue"); y -= 15
+
+    y -= 20
     c.setFont("Helvetica", 11)
 
-    c.drawString(50, y, "All design checks (Ampacity, Voltage Drop, Short Circuit)")
-    y -= 15
-    c.drawString(50, y, "have been successfully satisfied.")
+    if best:
+        c.drawString(50, y, "All design checks (Ampacity, Voltage Drop, Short Circuit)")
+        y -= 15
+        c.drawString(50, y, "have been successfully satisfied.")
+    else:
+        c.drawString(50, y, "No cable satisfies all design criteria.")
 
     y -= 20
     c.setFont("Helvetica-Bold", 11)
+
     if best:
         c.drawString(
             50,
@@ -622,6 +665,7 @@ if "calculated" in st.session_state:
         # (I) CURRENT CALCULATION
         # -------------------------------
         st.markdown("### (I) Current Calculation")
+        st.caption("📘 Standard: IEC 60038 / IEC 60909 (Load Current Calculation)")
 
         st.write(f"Voltage → {voltage} kV")
         st.write(f"Load → {power} {'kVA' if load_type=='Transformer' else 'kW'}")
@@ -633,6 +677,7 @@ if "calculated" in st.session_state:
 # (II) AMPACITY CHECK
 # -------------------------------
         st.markdown("### (II) Ampacity Check")
+        st.caption("📘 Standard: IEC 60287 (Current Carrying Capacity of Cables)")
 
         kT_local = soil * depth * group * temp
         kT_calc = soil * depth * group * temp
@@ -651,6 +696,7 @@ if "calculated" in st.session_state:
 # (III) SHORT CIRCUIT CHECK
 # -------------------------------
         st.markdown("### (III) Short Circuit Check")
+        st.caption("📘 Standard: IEC 60949 / IEC 60364-5-54 (Short Circuit Withstand Capacity)")
 
 # ✅ DIFFERENT LOGIC FOR TRANSFORMER VS MOTOR
         if feeder_to == "Transformer":
@@ -670,6 +716,7 @@ if "calculated" in st.session_state:
 # (IV) VOLTAGE DROP
 # -------------------------------
         st.markdown("### (IV) Voltage Drop Check")
+        st.caption("📘 Standard: IEC 60364-5-52 (Voltage Drop Limits)")
 
         st.write(f"Calculated VD → {round(v,2)} %")
        
@@ -688,6 +735,7 @@ if "calculated" in st.session_state:
             st.error("Running Voltage Drop → FAIL ❌")
 
         if load_type == "Motor":
+            st.caption("📘 Standard: IEC 60034 (Motor Starting Performance)")
             st.write(f"Starting VD → {round(vs,2)} %")
             st.write(f"Permissible → {vd_start_limit} %")
 
@@ -700,6 +748,7 @@ if "calculated" in st.session_state:
 # (V) FINAL SELECTION
 # -------------------------------
         st.markdown("### (V) Final Cable Selection")
+        st.caption("📘 Based on IEC Standards + Oman Cable Catalogue")
 
         if cable_type == "3-Core":
             final_str = f"{best['runs']}R x 3C x {best['size']} sq.mm"
