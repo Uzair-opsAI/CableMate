@@ -299,10 +299,11 @@ def short_circuit():
     fault_effective = fault    # motor feeder sees reduced fault
 
     # ✅ FEEDER BASED FAULT TIME (INDUSTRY) 
-    if feeder_to == "Motor":
-        t = 0.25   # outgoing feeder 
+   # IEC / PROJECT BASED LOGIC
+    if feeder_from == "Switchgear" and feeder_to in ["Motor", "Transformer"]:
+        t = 0.25   # outgoing feeders (as per your sheet)
     else:
-        t = fault_time
+        t = fault_time  # incomer or others
         
     return (fault * 1000 * math.sqrt(t)) / k
     
