@@ -548,9 +548,6 @@ if run_btn:
     # ----------------------------------------
     # FINAL SELECTION
     # ----------------------------------------
-    st.write("------ VALID OPTIONS DEBUG ------")
-    st.write(valid_options)
-
     if valid_options:
 
         if feeder_to == "Transformer":
