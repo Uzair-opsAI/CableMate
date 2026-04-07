@@ -547,9 +547,8 @@ if run_btn:
     # ----------------------------------------
     # FINAL SELECTION
     # ----------------------------------------
-    print("------ VALID OPTIONS DEBUG ------")
-    for x in valid_options:
-        print(x)
+   st.write("------ VALID OPTIONS DEBUG ------")
+    st.write(valid_options)
 
     if valid_options:
 
