@@ -554,27 +554,30 @@ if run_btn:
 
         elif feeder_to == "Motor":
 
-            print("🔥 FINAL PRACTICAL MOTOR LOGIC")
+            print("🔥 FINAL INDUSTRY MOTOR LOGIC")
 
-    # STEP 1 → compute copper
-            for x in valid_options:
-                x["total_copper"] = x["size"] * x["runs"]
+    # STEP 1 → Separate single-run and multi-run
+            single_run = [x for x in valid_options if x["runs"] == 1]
+            multi_run = [x for x in valid_options if x["runs"] > 1]
 
-    # STEP 2 → find minimum size (NOT copper)
-            min_size = min(x["size"] for x in valid_options)
+    # STEP 2 → Prefer single run if reasonable
+            if single_run:
 
-    # STEP 3 → eliminate too small cables (avoid borderline designs)
-            candidates = [
-                x for x in valid_options
-                if x["size"] >= min_size * 1.3   # 🔥 key fix
-            ]
+        # find smallest single-run cable
+                best_single = sorted(single_run, key=lambda x: x["size"])[0]
 
-    # fallback if filtering too strict
-            if not candidates:
-                candidates = valid_options
+        # check if it is not excessively oversized
+                min_multi_size = min(x["size"] for x in multi_run) if multi_run else best_single["size"]
 
-    # STEP 4 → prefer fewer runs, then size
-            best = sorted(candidates, key=lambda x: (x["runs"], x["size"]))[0]
+                if best_single["size"] <= min_multi_size * 1.5:
+                    best = best_single
+                else:
+            # too large → go multi-run
+                    best = sorted(multi_run, key=lambda x: (x["runs"], x["size"]))[0]
+
+            else:
+        # no single run possible → go multi-run
+                best = sorted(multi_run, key=lambda x: (x["runs"], x["size"]))[0]
         if best:
             v = best["v"]
             vs = best["vs"]
