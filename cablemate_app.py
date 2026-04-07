@@ -554,26 +554,24 @@ if run_btn:
 
         elif feeder_to == "Motor":
 
-            print("🔥 FINAL MOTOR CORRECTION")
+        print("🔥 FINAL STABLE MOTOR LOGIC")
 
-    # STEP 1 → sort by size first (engineering preference)
-            valid_options = sorted(valid_options, key=lambda x: x["size"])
-
-    # STEP 2 → group by size
-            size_groups = {}
+    # STEP 1 → calculate total copper (real engineering basis)
             for x in valid_options:
-                size_groups.setdefault(x["size"], []).append(x)
+                x["total_copper"] = x["size"] * x["runs"]
 
-    # STEP 3 → pick smallest size that works
-            for x in valid_options:
-                x["score"] = (x["runs"] * 1000) + x["size"]
+    # STEP 2 → find minimum copper required
+            min_copper = min(x["total_copper"] for x in valid_options)
 
-# 🔥 STEP 2 → pick minimum score
-            best = sorted(valid_options, key=lambda x: x["score"])[0]
+    # STEP 3 → eliminate oversized cables (practical tolerance)
+            candidates = [
+                x for x in valid_options
+                if x["total_copper"] <= min_copper * 1.2
+            ]
 
-        else:
-            best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
-
+    # STEP 4 → from practical options, choose:
+    # fewer runs first, then smaller size
+            best = sorted(candidates, key=lambda x: (x["runs"], x["size"]))[0]
         if best:
             v = best["v"]
             vs = best["vs"]
