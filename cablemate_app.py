@@ -651,7 +651,11 @@ if "calculated" in st.session_state:
 # -------------------------------
         st.markdown("### (III) Short Circuit Check")
 
-        sc_area_best = best["size"] * best["runs"]
+# ✅ DIFFERENT LOGIC FOR TRANSFORMER VS MOTOR
+        if feeder_to == "Transformer":
+            sc_area_best = best["size"]   # single cable governs
+        else:
+            sc_area_best = best["size"] * best["runs"]  # total copper
 
         st.write(f"Required Area → {round(S,2)} sq.mm")
         st.write(f"Available Area → {round(sc_area_best,2)} sq.mm")
@@ -805,9 +809,11 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
             vs_manual = 0
 
 # SHORT CIRCUIT
-        sc_area_manual = manual_size_used * manual_runs_used
+        if feeder_to == "Transformer":
+            sc_area_manual = manual_size_used
+        else:
+            sc_area_manual = manual_size_used * manual_runs_used
         sc_ok = sc_area_manual >= S
-
         # ------------------------------------
         # CHECKS
         # ------------------------------------
