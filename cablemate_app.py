@@ -547,6 +547,10 @@ if run_btn:
     # ----------------------------------------
     # FINAL SELECTION
     # ----------------------------------------
+    print("------ VALID OPTIONS DEBUG ------")
+    for x in valid_options:
+        print(x)
+
     if valid_options:
 
         if feeder_to == "Transformer":
