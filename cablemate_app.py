@@ -1021,7 +1021,3 @@ if "calculated" in st.session_state and "manual_done" in st.session_state:
 
         else:
             st.info("Manual cable is technically acceptable but not optimal compared to selected cable.")
-
-    # ----------------------------------------
-    # IF NO CABLE FOUND
-    # ----------------------------------------
