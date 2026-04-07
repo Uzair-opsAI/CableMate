@@ -565,11 +565,12 @@ if run_btn:
                 size_groups.setdefault(x["size"], []).append(x)
 
     # STEP 3 → pick smallest size that works
-            smallest_size = min(size_groups.keys())
-            candidates = size_groups[smallest_size]
+            for x in valid_options:
+                x["score"] = (x["runs"] * 1000) + x["size"]
 
-    # STEP 4 → among same size, pick minimum runs
-            best = sorted(candidates, key=lambda x: x["runs"])[0]
+# 🔥 STEP 2 → pick minimum score
+            best = sorted(valid_options, key=lambda x: x["score"])[0]
+
         else:
             best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
 
