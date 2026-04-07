@@ -299,7 +299,7 @@ def short_circuit():
     fault_effective = fault    # motor feeder sees reduced fault
 
     # ✅ FEEDER BASED FAULT TIME (INDUSTRY) 
-    if feeder_from == "Motor":
+    if feeder_to == "Motor":
         t = 0.25   # outgoing feeder 
     else:
         t = fault_time
