@@ -292,14 +292,14 @@ def load_current():
 
 def short_circuit():
     if material == "Copper":
-        k = 226
+        k = 143
     else:
-        k = 148
+        k = 94
     # 🔥 FEEDER-BASED FAULT LOGIC
     fault_effective = fault    # motor feeder sees reduced fault
 
     # ✅ FEEDER BASED FAULT TIME (INDUSTRY) 
-    if feeder_from == "Switchgear":
+    if feeder_from == "Motor":
         t = 0.25   # outgoing feeder 
     else:
         t = fault_time
@@ -503,7 +503,7 @@ if run_btn:
 
             # 1️⃣ SHORT CIRCUIT
             if feeder_to == "Transformer":
-                if size < S * 1.5:
+                if size < S:
                     continue
             else:
                 if (size * runs) < S:
@@ -512,7 +512,7 @@ if run_btn:
             # 2️⃣ AMPACITY
             amp = catalog["amp"][size] * kT_local * runs
             # 🔥 APPLY ENGINEERING SAFETY MARGIN
-            if amp < I * 1.15:
+            if amp < I:
                 continue
 
             # 3️⃣ VOLTAGE DROP
