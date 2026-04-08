@@ -831,7 +831,7 @@ def report(best, I, S, v, vs):
 # ─────────────────────────────────────────────────
 # ENGINE  (unchanged logic)
 # ─────────────────────────────────────────────────
-st.write("FINAL S VALUE:", round(S, 2))
+
 if run_btn:
     I = load_current()
     if feeder_to == "Transformer":
@@ -839,6 +839,7 @@ if run_btn:
 
     S     = short_circuit()
     rules = get_rules(feeder_from, feeder_to, load_type)
+    st.write("FINAL S VALUE:", round(S, 2))
     best  = None
     v     = 0
     vs    = 0
@@ -854,16 +855,7 @@ if run_btn:
             if feeder_to == "Transformer":
                 if size <= S
                     continue
-            elif feeder_to == "Motor":
-            # Each cable must independently withstand fault
-                if size < S:
-                    continue
-            else:
-                if (size * runs) < S:
-                    continue
-             # ✅ ADD DEBUG HERE
             debug_mode = True
-
             if debug_mode:
                 st.write({
                     "DEBUG_size": size,
@@ -871,6 +863,14 @@ if run_btn:
                     "S_required": round(S, 2),
                     "SC_passed_for_size": size >= S,
                 })
+            elif feeder_to == "Motor":
+            # Each cable must independently withstand fault
+                if size < S:
+                    continue
+            else:
+                if (size * runs) < S:
+                    continue
+            
             amp = catalog["amp"][size] * kT_local * runs
             if amp < I:
                 continue
