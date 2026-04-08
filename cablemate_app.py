@@ -961,7 +961,10 @@ if "calculated" in st.session_state:
         # (III) Short Circuit
         st.markdown("### (III) &nbsp; Short Circuit Check")
         st.caption("IEC 60949 / IEC 60364-5-54 — Short Circuit Withstand Capacity")
-        sc_area_best = best["size"] if feeder_to == "Transformer" else best["size"] * best["runs"]
+        if feeder_to == "Motor":
+            sc_area_best = best["size"]   # per cable check
+        else:
+            sc_area_best = best["size"] * best["runs"]
         c1, c2 = st.columns(2)
         c1.metric("Required Area",  f"{round(S, 2)} mm²")
         c2.metric("Available Area", f"{round(sc_area_best, 2)} mm²")
@@ -1072,8 +1075,10 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         amp            = catalog["amp"][manual_size_used] * kT_local * manual_runs_used
         v_manual       = vd(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used)
         vs_manual      = vd_start(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used) if load_type == "Motor" else 0
-        sc_area_manual = manual_size_used if feeder_to == "Transformer" else manual_size_used * manual_runs_used
-
+        if feeder_to == "Motor":
+            sc_area_manual = manual_size_used
+        else:
+            sc_area_manual = manual_size_used * manual_runs_used
         amp_ok = amp >= I
         vd_ok  = v_manual <= vd_run_limit
         sc_ok  = sc_area_manual >= S
