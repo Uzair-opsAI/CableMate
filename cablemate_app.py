@@ -853,7 +853,7 @@ if run_btn:
             kT_local = soil * depth * group * temp
 
             if feeder_to == "Transformer":
-                if size <= S
+                if size <= S:
                     continue
             debug_mode = True
             if debug_mode:
