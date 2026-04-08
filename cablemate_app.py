@@ -699,7 +699,10 @@ def load_current():
 
 def short_circuit():
     k = 143 if material == "Copper" else 94
-    t = fault_time
+    if feeder_from == "Switchgear":
+      t = min(fault_time, 0.3)
+    else:
+      t = fault_time
     S = (fault * 1000 * math.sqrt(t)) / k
     S = S * 1.15   # adding 15% safety margin
     return S
