@@ -851,10 +851,6 @@ if run_btn:
                 continue
 
             kT_local = soil * depth * group * temp
-
-            if feeder_to == "Transformer":
-                if size <= S:
-                    continue
             debug_mode = True
             if debug_mode:
                 st.write({
@@ -863,6 +859,10 @@ if run_btn:
                     "S_required": round(S, 2),
                     "SC_passed_for_size": size >= S,
                 })
+            if feeder_to == "Transformer":
+                if size <= S:
+                    continue
+            
             elif feeder_to == "Motor":
             # Each cable must independently withstand fault
                 if size < S:
