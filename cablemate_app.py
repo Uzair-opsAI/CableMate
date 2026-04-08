@@ -860,7 +860,13 @@ if run_btn:
             else:
                 if (size * runs) < S:
                     continue
-
+             # ✅ ADD DEBUG HERE
+            st.write({
+                "DEBUG_size": size,
+                "DEBUG_runs": runs,
+                "S_required": round(S, 2),
+                "SC_passed_for_size": size >= S,
+            })
             amp = catalog["amp"][size] * kT_local * runs
             if amp < I:
                 continue
