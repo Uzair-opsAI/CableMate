@@ -699,12 +699,11 @@ def load_current():
 
 def short_circuit():
     k = 143 if material == "Copper" else 94
-    if feeder_from == "Switchgear" and feeder_to in ["Motor", "Transformer"]:
-        t = 0.25
-    else:
-        t = fault_time
-    return (fault * 1000 * math.sqrt(t)) / k
-
+    t = fault_time
+    S = (fault * 1000 * math.sqrt(t)) / k
+    S = S * 1.15   # adding 15% safety margin
+    return S
+    
 def vd(I, R, X, runs):
     ang = math.acos(pf)
     return (math.sqrt(3) * I * (R * math.cos(ang) + X * math.sin(ang)) * (length / 1000)) / (voltage * 1000 * runs) * 100
@@ -845,7 +844,7 @@ if run_btn:
             kT_local = soil * depth * group * temp
 
             if feeder_to == "Transformer":
-                if size < S:
+                if size <= S:
                     continue
             else:
                 if (size * runs) < S:
