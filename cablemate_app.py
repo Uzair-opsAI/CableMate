@@ -846,7 +846,8 @@ if run_btn:
             kT_local = soil * depth * group * temp
 
             if feeder_to == "Transformer":
-                if size <= S:
+                tolerance = 0.9
+                if size <= (S * tolerance):
                     continue
             else:
                 if (size * runs) < S:
