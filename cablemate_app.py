@@ -828,7 +828,7 @@ def report(best, I, S, v, vs):
 if run_btn:
     I = load_current()
     if feeder_to == "Transformer":
-        I = I * 1.1
+        I = I * 1
 
     S     = short_circuit()
     rules = get_rules(feeder_from, feeder_to, load_type)
