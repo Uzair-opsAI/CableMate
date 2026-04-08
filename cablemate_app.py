@@ -848,6 +848,10 @@ if run_btn:
             if feeder_to == "Transformer":
                 if size <= S
                     continue
+            elif feeder_to == "Motor":
+            # Each cable must independently withstand fault
+                if size < S:
+                    continue
             else:
                 if (size * runs) < S:
                     continue
