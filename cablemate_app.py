@@ -705,7 +705,12 @@ def short_circuit():
         t = min(fault_time, 0.3)
     else:
         t = fault_time
-    S = (fault * 1000 * math.sqrt(t)) / k
+    if feeder_to == "Motor":
+        fault_effective = fault * 0.65   # motor feeder correction
+    else:
+        fault_effective = fault
+
+    S = (fault_effective * 1000 * math.sqrt(t)) / k
     return S
     
 def vd(I, R, X, runs):
