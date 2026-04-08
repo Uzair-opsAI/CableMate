@@ -831,6 +831,7 @@ def report(best, I, S, v, vs):
 # ─────────────────────────────────────────────────
 # ENGINE  (unchanged logic)
 # ─────────────────────────────────────────────────
+st.write("FINAL S VALUE:", round(S, 2))
 if run_btn:
     I = load_current()
     if feeder_to == "Transformer":
@@ -842,7 +843,7 @@ if run_btn:
     v     = 0
     vs    = 0
     valid_options = []
-
+    
     for size in catalog["sizes"]:
         for runs in range(1, rules["max_runs"] + 1):
             if not rules["allow_multi_run"] and runs > 1:
@@ -861,12 +862,15 @@ if run_btn:
                 if (size * runs) < S:
                     continue
              # ✅ ADD DEBUG HERE
-            st.write({
-                "DEBUG_size": size,
-                "DEBUG_runs": runs,
-                "S_required": round(S, 2),
-                "SC_passed_for_size": size >= S,
-            })
+            debug_mode = True
+
+            if debug_mode:
+                st.write({
+                    "DEBUG_size": size,
+                    "DEBUG_runs": runs,
+                    "S_required": round(S, 2),
+                    "SC_passed_for_size": size >= S,
+                })
             amp = catalog["amp"][size] * kT_local * runs
             if amp < I:
                 continue
