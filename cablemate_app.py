@@ -699,9 +699,7 @@ def load_current():
 
 def short_circuit():
     k = 143 if material == "Copper" else 94
-    if feeder_to == "Motor":
-        t = min(fault_time, 0.2)   # faster clearing for motors
-    elif feeder_from == "Switchgear":
+    if feeder_from == "Switchgear":
         t = min(fault_time, 0.3)
     else:
         t = fault_time
