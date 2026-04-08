@@ -6,408 +6,431 @@ from reportlab.pdfgen import canvas
 import streamlit.components.v1 as components
 import os
 
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
 # PAGE CONFIG
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
 st.set_page_config(page_title="CableMate", layout="wide", page_icon="⚡")
 
-# ------------------------------------------------
-# GLOBAL STYLES
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
+# GLOBAL CSS  — Light "Luxury EPC" Theme
+# ─────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,300&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
-/* ── ROOT PALETTE ─────────────────────────────── */
+/* ── TOKENS ─────────────────────────────────────── */
 :root {
-    --bg-deep:      #080c14;
-    --bg-panel:     #0d1422;
-    --bg-card:      #111827;
-    --bg-card2:     #141d2e;
-    --border:       #1e2d45;
-    --border-glow:  #1e4a7a;
-    --accent:       #0ea5e9;
-    --accent2:      #38bdf8;
-    --accent-dim:   #0c3f5e;
-    --success:      #10b981;
-    --success-dim:  #064e3b;
-    --warning:      #f59e0b;
-    --danger:       #ef4444;
-    --danger-dim:   #450a0a;
-    --text-hi:      #e2e8f0;
-    --text-mid:     #94a3b8;
-    --text-lo:      #4b6080;
-    --mono:         'IBM Plex Mono', monospace;
-    --head:         'Rajdhani', sans-serif;
-    --body:         'Inter', sans-serif;
+  --bg:          #f7f6f2;
+  --surface:     #ffffff;
+  --surface2:    #f0efe9;
+  --border:      #e2dfd6;
+  --border-dark: #c8c4b8;
+  --accent:      #c0392b;     /* deep engineering red */
+  --accent2:     #e74c3c;
+  --accent-soft: #fdf1f0;
+  --amber:       #d35400;
+  --green:       #1a7a4a;
+  --green-bg:    #edf7f1;
+  --red-bg:      #fdf1f0;
+  --warn-bg:     #fef9ec;
+  --warn:        #b7791f;
+  --text-hi:     #1a1916;
+  --text-mid:    #5a574f;
+  --text-lo:     #9e9b94;
+  --shadow-sm:   0 1px 4px rgba(0,0,0,0.06);
+  --shadow-md:   0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg:   0 8px 40px rgba(0,0,0,0.10);
+  --radius:      12px;
+  --font-head:   'Fraunces', Georgia, serif;
+  --font-body:   'DM Sans', sans-serif;
+  --font-mono:   'DM Mono', monospace;
 }
 
-/* ── GLOBAL RESET ─────────────────────────────── */
+/* ── BASE ────────────────────────────────────────── */
 html, body, .stApp {
-    background-color: var(--bg-deep) !important;
-    color: var(--text-hi) !important;
-    font-family: var(--body) !important;
+  background-color: var(--bg) !important;
+  font-family: var(--font-body) !important;
+  color: var(--text-hi) !important;
 }
 .block-container {
-    padding: 2rem 2.5rem 4rem !important;
-    max-width: 1400px !important;
+  padding: 0 2.5rem 5rem !important;
+  max-width: 1380px !important;
 }
+#MainMenu, footer, header { visibility: hidden !important; }
 
-/* ── SIDEBAR ──────────────────────────────────── */
+/* ── SIDEBAR ─────────────────────────────────────── */
 section[data-testid="stSidebar"] {
-    background: var(--bg-panel) !important;
-    border-right: 1px solid var(--border) !important;
-}
-section[data-testid="stSidebar"] * { color: var(--text-mid) !important; }
-
-/* ── HEADER BAND ──────────────────────────────── */
-.cm-header {
-    display: flex;
-    align-items: center;
-    gap: 1.4rem;
-    padding: 1.6rem 2rem;
-    background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #081221 100%);
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--accent);
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    position: relative;
-    overflow: hidden;
-}
-.cm-header::before {
-    content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 180px; height: 180px;
-    background: radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 70%);
-    pointer-events: none;
-}
-.cm-logo-ring {
-    width: 56px; height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0ea5e9, #0369a1);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.6rem;
-    box-shadow: 0 0 20px rgba(14,165,233,0.4);
-    flex-shrink: 0;
-}
-.cm-title {
-    font-family: var(--head) !important;
-    font-size: 2rem !important;
-    font-weight: 700 !important;
-    letter-spacing: 3px !important;
-    color: var(--text-hi) !important;
-    margin: 0 !important; line-height: 1.1 !important;
-}
-.cm-subtitle {
-    font-family: var(--mono) !important;
-    font-size: 0.7rem !important;
-    color: var(--accent) !important;
-    letter-spacing: 2px !important;
-    text-transform: uppercase !important;
-    margin-top: 3px !important;
-}
-.cm-badge {
-    margin-left: auto;
-    background: var(--accent-dim);
-    border: 1px solid var(--accent);
-    color: var(--accent2) !important;
-    font-family: var(--mono) !important;
-    font-size: 0.65rem !important;
-    padding: 4px 10px;
-    border-radius: 20px;
-    letter-spacing: 1px;
+  background: var(--surface) !important;
+  border-right: 1px solid var(--border) !important;
 }
 
-/* ── SECTION HEADERS ──────────────────────────── */
-.cm-section {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 1.8rem 0 1rem 0;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
+/* ── HERO HEADER ─────────────────────────────────── */
+.cm-hero {
+  background: var(--surface);
+  border-bottom: 3px solid var(--accent);
+  padding: 2rem 2.5rem 1.6rem;
+  margin: 0 -2.5rem 2.5rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+}
+.cm-hero-left { display: flex; align-items: center; gap: 1.2rem; }
+.cm-logo {
+  width: 52px; height: 52px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 14px rgba(192,57,43,0.35);
+  flex-shrink: 0;
+}
+.cm-brand-name {
+  font-family: var(--font-head) !important;
+  font-size: 2.2rem !important;
+  font-weight: 700 !important;
+  color: var(--text-hi) !important;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  margin: 0;
+}
+.cm-brand-sub {
+  font-family: var(--font-mono) !important;
+  font-size: 0.68rem !important;
+  color: var(--text-lo) !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  margin-top: 5px;
+}
+.cm-hero-right {
+  display: flex; gap: 10px; align-items: center;
+}
+.cm-pill {
+  font-family: var(--font-mono) !important;
+  font-size: 0.62rem !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border-dark);
+  color: var(--text-mid);
+  background: var(--surface2);
+}
+.cm-pill-red {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ── SECTION CARD ────────────────────────────────── */
+.cm-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.8rem 2rem 1.6rem;
+  margin-bottom: 1.4rem;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+.cm-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--amber));
+}
+.cm-card-blue::before  { background: linear-gradient(90deg, #1a5276, #2e86c1); }
+.cm-card-green::before { background: linear-gradient(90deg, #1a7a4a, #27ae60); }
+.cm-card-amber::before { background: linear-gradient(90deg, #d35400, #e67e22); }
+.cm-card-slate::before { background: linear-gradient(90deg, #4a4e5a, #7f8492); }
+
+.cm-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.4rem;
 }
 .cm-section-icon {
-    width: 32px; height: 32px;
-    border-radius: 8px;
-    background: var(--accent-dim);
-    border: 1px solid var(--border-glow);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.9rem;
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
 }
 .cm-section-title {
-    font-family: var(--head) !important;
-    font-size: 1.1rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 2px !important;
-    color: var(--text-hi) !important;
-    text-transform: uppercase !important;
+  font-family: var(--font-head) !important;
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  color: var(--text-hi) !important;
+  letter-spacing: 0.3px !important;
 }
-.cm-section-line {
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(to right, var(--border-glow), transparent);
+.cm-section-tag {
+  margin-left: auto;
+  font-family: var(--font-mono) !important;
+  font-size: 0.6rem !important;
+  color: var(--text-lo) !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
 }
 
-/* ── INPUT FIELDS ──────────────────────────────── */
+/* ── INPUTS ──────────────────────────────────────── */
 div[data-testid="stTextInput"] input,
-div[data-testid="stNumberInput"] input,
-div[data-testid="stSelectbox"] > div > div {
-    background-color: var(--bg-card2) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 8px !important;
-    color: var(--text-hi) !important;
-    font-family: var(--body) !important;
-    font-size: 0.88rem !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+div[data-testid="stNumberInput"] input {
+  background: var(--surface2) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 8px !important;
+  color: var(--text-hi) !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.9rem !important;
+  transition: all 0.18s ease !important;
 }
 div[data-testid="stTextInput"] input:focus,
 div[data-testid="stNumberInput"] input:focus {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 0 3px rgba(14,165,233,0.12) !important;
-    outline: none !important;
+  border-color: var(--accent) !important;
+  background: var(--surface) !important;
+  box-shadow: 0 0 0 3px rgba(192,57,43,0.1) !important;
+}
+div[data-testid="stSelectbox"] > div > div {
+  background: var(--surface2) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 8px !important;
+  color: var(--text-hi) !important;
 }
 label[data-testid="stWidgetLabel"] p {
-    font-family: var(--mono) !important;
-    font-size: 0.72rem !important;
-    color: var(--text-mid) !important;
-    letter-spacing: 0.5px !important;
-    text-transform: uppercase !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.7rem !important;
+  font-weight: 500 !important;
+  color: var(--text-mid) !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  margin-bottom: 4px !important;
 }
 
-/* ── BUTTON ────────────────────────────────────── */
+/* ── BUTTONS ─────────────────────────────────────── */
+div[data-testid="stButton"] > button[kind="primary"],
 div[data-testid="stButton"] > button {
-    background: linear-gradient(135deg, #0ea5e9, #0369a1) !important;
-    border: none !important;
-    border-radius: 8px !important;
-    color: white !important;
-    font-family: var(--head) !important;
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 2px !important;
-    padding: 0.65rem 2rem !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 4px 20px rgba(14,165,233,0.3) !important;
-    text-transform: uppercase !important;
+  background: var(--accent) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.92rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  padding: 0.7rem 2.2rem !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 3px 14px rgba(192,57,43,0.28) !important;
 }
 div[data-testid="stButton"] > button:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 28px rgba(14,165,233,0.45) !important;
+  background: var(--accent2) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 22px rgba(192,57,43,0.38) !important;
 }
-div[data-testid="stButton"] > button:active {
-    transform: translateY(0) !important;
+div[data-testid="stDownloadButton"] > button {
+  background: var(--surface) !important;
+  border: 1.5px solid var(--accent) !important;
+  border-radius: 8px !important;
+  color: var(--accent) !important;
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  transition: all 0.18s !important;
+}
+div[data-testid="stDownloadButton"] > button:hover {
+  background: var(--accent-soft) !important;
 }
 
-/* ── METRIC CARDS ──────────────────────────────── */
+/* ── METRIC ──────────────────────────────────────── */
 div[data-testid="stMetric"] {
-    background: var(--bg-card) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 10px !important;
-    padding: 1rem 1.2rem !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.3rem !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+div[data-testid="stMetricLabel"] p {
+  font-family: var(--font-mono) !important;
+  font-size: 0.68rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  color: var(--text-lo) !important;
 }
 div[data-testid="stMetricValue"] {
-    font-family: var(--mono) !important;
-    color: var(--accent2) !important;
-    font-size: 1.5rem !important;
-}
-div[data-testid="stMetricLabel"] {
-    font-family: var(--mono) !important;
-    color: var(--text-mid) !important;
-    font-size: 0.72rem !important;
-    text-transform: uppercase !important;
-    letter-spacing: 1px !important;
+  font-family: var(--font-head) !important;
+  font-size: 1.55rem !important;
+  color: var(--text-hi) !important;
+  font-weight: 600 !important;
 }
 
-/* ── SUCCESS / ERROR / WARNING ─────────────────── */
+/* ── ALERTS ──────────────────────────────────────── */
 div[data-testid="stAlert"] {
-    border-radius: 8px !important;
-    font-family: var(--body) !important;
+  border-radius: 8px !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.9rem !important;
+  border-left-width: 3px !important;
 }
 div[data-testid="stAlert"][class*="success"] {
-    background: rgba(16,185,129,0.08) !important;
-    border: 1px solid var(--success) !important;
-    color: #6ee7b7 !important;
+  background: var(--green-bg) !important;
+  border-color: var(--green) !important;
+  color: #145a38 !important;
 }
 div[data-testid="stAlert"][class*="error"] {
-    background: rgba(239,68,68,0.08) !important;
-    border: 1px solid var(--danger) !important;
-    color: #fca5a5 !important;
+  background: var(--red-bg) !important;
+  border-color: var(--accent) !important;
+  color: #922b21 !important;
 }
 div[data-testid="stAlert"][class*="warning"] {
-    background: rgba(245,158,11,0.08) !important;
-    border: 1px solid var(--warning) !important;
-    color: #fcd34d !important;
+  background: var(--warn-bg) !important;
+  border-color: var(--warn) !important;
+  color: #7d5a17 !important;
 }
 div[data-testid="stAlert"][class*="info"] {
-    background: rgba(14,165,233,0.08) !important;
-    border: 1px solid var(--accent) !important;
-    color: var(--accent2) !important;
+  background: #eaf3fb !important;
+  border-color: #2e86c1 !important;
+  color: #1a5276 !important;
 }
 
-/* ── DIVIDER ───────────────────────────────────── */
-hr {
-    border: none !important;
-    border-top: 1px solid var(--border) !important;
-    margin: 1.6rem 0 !important;
-}
-
-/* ── CAPTION / SMALL TEXT ───────────────────────── */
+/* ── CAPTION ─────────────────────────────────────── */
 div[data-testid="stCaptionContainer"] p {
-    font-family: var(--mono) !important;
-    font-size: 0.68rem !important;
-    color: var(--text-lo) !important;
-    letter-spacing: 0.5px !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.67rem !important;
+  color: var(--text-lo) !important;
+  letter-spacing: 0.3px !important;
 }
 
-/* ── MARKDOWN HEADINGS ─────────────────────────── */
-h1, h2, h3, h4 {
-    font-family: var(--head) !important;
-    letter-spacing: 1.5px !important;
-    color: var(--text-hi) !important;
-}
-h3 { color: var(--accent2) !important; font-size: 1rem !important; }
-
-/* ── CARDS / INFO BOXES ─────────────────────────── */
-.cm-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.2rem 1.4rem;
-    margin-bottom: 1rem;
-}
-.cm-card-accent {
-    border-left: 3px solid var(--accent);
-}
-.cm-result-banner {
-    background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(14,165,233,0.05));
-    border: 1px solid var(--success);
-    border-left: 4px solid var(--success);
-    border-radius: 10px;
-    padding: 1.2rem 1.6rem;
-    margin: 1rem 0;
-}
-.cm-result-label {
-    font-family: var(--mono) !important;
-    font-size: 0.7rem !important;
-    color: var(--success) !important;
-    letter-spacing: 2px !important;
-    text-transform: uppercase !important;
-}
-.cm-result-value {
-    font-family: var(--head) !important;
-    font-size: 1.5rem !important;
-    font-weight: 700 !important;
-    color: #6ee7b7 !important;
-    letter-spacing: 2px !important;
-}
-.cm-check-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    font-family: var(--body);
-    font-size: 0.88rem;
-}
-.cm-check-label { color: var(--text-mid); flex: 1; }
-.cm-check-pass { color: var(--success); font-weight: 600; font-family: var(--mono); font-size: 0.8rem; }
-.cm-check-fail { color: var(--danger); font-weight: 600; font-family: var(--mono); font-size: 0.8rem; }
-.cm-val { color: var(--text-hi); font-family: var(--mono); font-size: 0.82rem; }
-
-/* ── DERATING BOX ─────────────────────────────── */
-.cm-derating {
-    background: linear-gradient(135deg, #0d1e35, #0a1525);
-    border: 1px solid var(--border-glow);
-    border-radius: 10px;
-    padding: 1rem 1.4rem;
-    text-align: center;
-}
-.cm-derating-val {
-    font-family: var(--mono) !important;
-    font-size: 2rem !important;
-    font-weight: 500 !important;
-    color: var(--accent) !important;
-}
-.cm-derating-label {
-    font-family: var(--mono) !important;
-    font-size: 0.65rem !important;
-    color: var(--text-lo) !important;
-    letter-spacing: 2px !important;
-    text-transform: uppercase !important;
+/* ── DIVIDER ─────────────────────────────────────── */
+hr {
+  border: none !important;
+  border-top: 1px solid var(--border) !important;
+  margin: 1.5rem 0 !important;
 }
 
-/* ── SELECTBOX DROPDOWN ─────────────────────────── */
-div[data-testid="stSelectbox"] * {
-    background-color: var(--bg-card2) !important;
-    color: var(--text-hi) !important;
+/* ── H3 OVERRIDES ────────────────────────────────── */
+h3 {
+  font-family: var(--font-head) !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  color: var(--text-hi) !important;
+  margin-top: 1.6rem !important;
+  letter-spacing: 0.2px !important;
 }
 
-/* ── DOWNLOAD BUTTON ─────────────────────────── */
-div[data-testid="stDownloadButton"] > button {
-    background: linear-gradient(135deg, #0f4c75, #1b262c) !important;
-    border: 1px solid var(--border-glow) !important;
-    border-radius: 8px !important;
-    color: var(--accent2) !important;
-    font-family: var(--mono) !important;
-    font-size: 0.8rem !important;
-    letter-spacing: 1px !important;
-    text-transform: uppercase !important;
+/* ── RESULT BANNER ───────────────────────────────── */
+.cm-result {
+  background: linear-gradient(135deg, #edf7f1 0%, #f0faf5 100%);
+  border: 1.5px solid #27ae60;
+  border-left: 5px solid var(--green);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.8rem;
+  margin: 1.2rem 0;
+}
+.cm-result-eyebrow {
+  font-family: var(--font-mono) !important;
+  font-size: 0.65rem !important;
+  color: var(--green) !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+}
+.cm-result-cable {
+  font-family: var(--font-head) !important;
+  font-size: 1.8rem !important;
+  font-weight: 700 !important;
+  color: #145a38 !important;
+  margin-top: 4px !important;
+  letter-spacing: -0.5px !important;
 }
 
-/* ── NUMBER INPUT ARROWS ─────────────────────── */
+/* ── KT BOX ──────────────────────────────────────── */
+.cm-kt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.4rem 2rem;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+.cm-kt-label {
+  font-family: var(--font-mono) !important;
+  font-size: 0.65rem !important;
+  color: var(--text-lo) !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+}
+.cm-kt-val {
+  font-family: var(--font-head) !important;
+  font-size: 2.4rem !important;
+  font-weight: 700 !important;
+  color: var(--accent) !important;
+  line-height: 1.1 !important;
+  margin: 4px 0 2px !important;
+}
+
+/* ── PROJECT STRIP ───────────────────────────────── */
+.cm-proj-strip {
+  background: var(--text-hi);
+  border-radius: var(--radius);
+  padding: 1rem 1.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+  margin-bottom: 1.6rem;
+}
+.cm-proj-item { display: flex; flex-direction: column; gap: 2px; }
+.cm-proj-key {
+  font-family: var(--font-mono) !important;
+  font-size: 0.58rem !important;
+  color: rgba(255,255,255,0.45) !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+}
+.cm-proj-val {
+  font-family: var(--font-body) !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  color: rgba(255,255,255,0.9) !important;
+}
+.cm-proj-divider {
+  width: 1px; height: 30px;
+  background: rgba(255,255,255,0.15);
+}
+
+/* ── CHECK TABLE ─────────────────────────────────── */
+.cm-check {
+  display: flex; align-items: center;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.cm-check:last-child { border-bottom: none; }
+.cm-check-label {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--text-mid);
+  flex: 1;
+}
+.cm-check-val {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-hi);
+}
+.cm-pass { color: var(--green) !important; font-weight: 600; font-family: var(--font-mono); font-size: 0.78rem; }
+.cm-fail { color: var(--accent) !important; font-weight: 600; font-family: var(--font-mono); font-size: 0.78rem; }
+
+/* ── NUMBER INPUT CONTROLS ───────────────────────── */
 div[data-testid="stNumberInput"] button {
-    background: var(--bg-card) !important;
-    border-color: var(--border) !important;
-    color: var(--accent) !important;
-}
-
-/* ── TABLE  ──────────────────────────────────── */
-.cm-proj-info {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.4rem;
-    font-family: var(--body);
-    font-size: 0.88rem;
-    color: var(--text-mid);
-    line-height: 1.8;
-}
-.cm-proj-info strong { color: var(--text-hi); font-weight: 500; }
-
-/* Hide default streamlit header/footer */
-#MainMenu, footer, header { visibility: hidden; }
-
-/* Subheader override */
-div[data-testid="stHeadingWithActionElements"] h2 {
-    font-family: var(--head) !important;
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 2px !important;
-    color: var(--text-hi) !important;
-    text-transform: uppercase !important;
-    padding-bottom: 8px !important;
-    border-bottom: 1px solid var(--border) !important;
+  background: var(--surface2) !important;
+  border-color: var(--border) !important;
+  color: var(--text-mid) !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------------------------------------
-# HEADER
-# ------------------------------------------------
-st.markdown("""
-<div class="cm-header">
-    <div class="cm-logo-ring">⚡</div>
-    <div>
-        <div class="cm-title">CABLE MATE</div>
-        <div class="cm-subtitle">MV Cable Sizing &amp; Analysis Platform</div>
-    </div>
-    <div class="cm-badge">IEC COMPLIANT · v2.0</div>
-</div>
-""", unsafe_allow_html=True)
-
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
 # CLOSE WARNING
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
 components.html("""
 <script>
 let changed=false;
@@ -418,43 +441,65 @@ if(changed){e.preventDefault();e.returnValue='';}
 </script>
 """, height=0)
 
-# ------------------------------------------------
-# SECTION HELPER
-# ------------------------------------------------
-def section(icon, title):
+# ─────────────────────────────────────────────────
+# HERO HEADER
+# ─────────────────────────────────────────────────
+st.markdown("""
+<div class="cm-hero">
+  <div class="cm-hero-left">
+    <div class="cm-logo">⚡</div>
+    <div>
+      <div class="cm-brand-name">CableMate</div>
+      <div class="cm-brand-sub">MV Cable Sizing &amp; Analysis Platform</div>
+    </div>
+  </div>
+  <div class="cm-hero-right">
+    <span class="cm-pill">IEC 60287 · 60949 · 60364</span>
+    <span class="cm-pill cm-pill-red">v 2.0</span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────
+# HELPER: section card opener
+# ─────────────────────────────────────────────────
+def open_card(icon, title, tag="", color=""):
+    cls = f"cm-card cm-card-{color}" if color else "cm-card"
     st.markdown(f"""
-    <div class="cm-section">
+    <div class="{cls}">
+      <div class="cm-section-heading">
         <div class="cm-section-icon">{icon}</div>
         <div class="cm-section-title">{title}</div>
-        <div class="cm-section-line"></div>
-    </div>
+        <div class="cm-section-tag">{tag}</div>
+      </div>
     """, unsafe_allow_html=True)
 
-# ------------------------------------------------
-# PROJECT INFORMATION
-# ------------------------------------------------
-section("📁", "Project Information")
+def close_card():
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────────
+# ① PROJECT INFORMATION
+# ─────────────────────────────────────────────────
+open_card("📁", "Project Information", "STEP 01", "blue")
 
 col1, col2 = st.columns(2)
-
 with col1:
-    client_name = st.text_input("Client Name", "ABC Pvt Ltd")
-    feeder_from = st.selectbox("From Equipment", ["Switchgear", "Transformer", "Generator"])
-    from_tag = st.text_input("From Equipment Tag", placeholder="e.g. TR-01 / SWGR-A1")
-    voltage = st.selectbox("System Voltage (kV)", [3.3, 6.6, 11, 25, 33, 66, 132])
-
+    client_name  = st.text_input("Client Name", "ABC Pvt Ltd")
+    feeder_from  = st.selectbox("From Equipment", ["Switchgear", "Transformer", "Generator"])
+    from_tag     = st.text_input("From Equipment Tag", placeholder="e.g. TR-01 / SWGR-A1")
+    voltage      = st.selectbox("System Voltage (kV)", [3.3, 6.6, 11, 25, 33, 66, 132])
 with col2:
     project_name = st.text_input("Project Name", "Electrical Distribution System")
-    feeder_to = st.selectbox("To Equipment", ["Motor", "Transformer", "Panel"])
-    to_tag = st.text_input("To Equipment Tag", placeholder="e.g. MTR-01 / PNL-B2")
-    length = st.number_input("Cable Length (m)", value=300)
+    feeder_to    = st.selectbox("To Equipment", ["Motor", "Transformer", "Panel"])
+    to_tag       = st.text_input("To Equipment Tag", placeholder="e.g. MTR-01 / PNL-B2")
+    length       = st.number_input("Cable Length (m)", value=300)
 
-st.divider()
+close_card()
 
-# ------------------------------------------------
-# INSTALLATION
-# ------------------------------------------------
-section("🛠", "Installation Details")
+# ─────────────────────────────────────────────────
+# ② INSTALLATION DETAILS
+# ─────────────────────────────────────────────────
+open_card("🛠", "Installation Details", "STEP 02", "slate")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -462,32 +507,30 @@ with col1:
 with col2:
     pass
 
-st.divider()
+close_card()
 
-# ------------------------------------------------
-# LOAD DETAILS
-# ------------------------------------------------
-section("⚡", "Load Details")
+# ─────────────────────────────────────────────────
+# ③ LOAD DETAILS
+# ─────────────────────────────────────────────────
+open_card("⚡", "Load Details", "STEP 03", "amber")
 
 col1, col2 = st.columns(2)
-
 with col1:
     load_type = st.selectbox("Load Type", ["Motor", "Transformer", "Power"])
     if load_type == "Transformer":
         power = st.number_input("Load (kVA)", value=500)
     else:
         power = st.number_input("Load (kW)", value=400)
-
 with col2:
-    pf = st.number_input("Power Factor", value=0.9)
+    pf  = st.number_input("Power Factor", value=0.9)
     eff = st.number_input("Efficiency", value=0.95)
 
-st.divider()
+close_card()
 
-# ------------------------------------------------
-# CONDUCTOR DETAILS
-# ------------------------------------------------
-section("🧵", "Conductor Details")
+# ─────────────────────────────────────────────────
+# ④ CONDUCTOR DETAILS
+# ─────────────────────────────────────────────────
+open_card("🧵", "Conductor Details", "STEP 04")
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -498,27 +541,27 @@ with col3:
     starting_multiple = st.number_input("Motor Starting Current Multiple", value=9.5)
 
 if voltage >= 66 and cable_type == "3-Core":
-    st.warning("⚠  At 66 kV and above, single-core cables are typically used.")
+    st.warning("At 66 kV and above, single-core cables are typically used.")
 
-st.divider()
+close_card()
 
-# ------------------------------------------------
-# FAULT CONDITIONS
-# ------------------------------------------------
-section("⚠", "Fault Conditions")
+# ─────────────────────────────────────────────────
+# ⑤ FAULT CONDITIONS
+# ─────────────────────────────────────────────────
+open_card("⚠", "Fault Conditions", "STEP 05", "amber")
 
 col1, col2 = st.columns(2)
 with col1:
-    fault = st.number_input("Fault Level (kA)", value=25)
+    fault      = st.number_input("Fault Level (kA)", value=25)
 with col2:
     fault_time = st.number_input("Fault Duration (s)", value=0.4)
 
-st.divider()
+close_card()
 
-# ------------------------------------------------
-# VOLTAGE DROP LIMITS
-# ------------------------------------------------
-section("📉", "Voltage Drop Limits")
+# ─────────────────────────────────────────────────
+# ⑥ VOLTAGE DROP LIMITS
+# ─────────────────────────────────────────────────
+open_card("📉", "Voltage Drop Limits", "STEP 06", "blue")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -529,12 +572,12 @@ with col2:
     else:
         vd_start_limit = None
 
-st.divider()
+close_card()
 
-# ------------------------------------------------
-# DERATING FACTORS
-# ------------------------------------------------
-section("🌡", "Derating Factors")
+# ─────────────────────────────────────────────────
+# ⑦ DERATING FACTORS
+# ─────────────────────────────────────────────────
+open_card("🌡", "Derating Factors", "STEP 07", "slate")
 
 def input_with_other(label, options, default):
     col_a, col_b = st.columns([2, 1])
@@ -554,6 +597,7 @@ with col2:
     depth = input_with_other("Depth Factor", [0.8, 1.0], 1.0)
     temp  = input_with_other("Temperature Factor", [1, 0.85], 1.0)
 
+# laying factor logic (unchanged)
 if laying == "Air":
     laying_factor = 1.0
 elif laying == "Duct":
@@ -561,69 +605,90 @@ elif laying == "Duct":
 else:
     laying_factor = 0.85
 
-# ------------------------------------------------
-# OVERALL DERATING DISPLAY
-# ------------------------------------------------
+close_card()
+
+# ─────────────────────────────────────────────────
+# kT DISPLAY
+# ─────────────────────────────────────────────────
 kT_base = soil * depth * group * temp
 
-st.markdown("<br>", unsafe_allow_html=True)
-c1, c2, c3 = st.columns([1, 2, 1])
-with c2:
+_, col_kt, _ = st.columns([1, 2, 1])
+with col_kt:
     st.markdown(f"""
-    <div class="cm-derating">
-        <div class="cm-derating-label">Overall Derating Factor (kT)</div>
-        <div class="cm-derating-val">{round(kT_base, 3)}</div>
-        <div class="cm-derating-label" style="color:#4b6080;margin-top:4px;">
-            Soil × Depth × Group × Temp — Note: Grouping factor applied automatically for multiple runs
-        </div>
+    <div class="cm-kt">
+      <div class="cm-kt-label">Overall Derating Factor (kT)</div>
+      <div class="cm-kt-val">{round(kT_base, 3)}</div>
+      <div class="cm-kt-label" style="font-size:0.6rem;color:#b8b5ae;">
+        Soil × Depth × Group × Temp &nbsp;·&nbsp; Grouping factor applied automatically for multiple runs
+      </div>
     </div>
     """, unsafe_allow_html=True)
 
-st.divider()
-
-# ------------------------------------------------
-# PROJECT SUMMARY CARD
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
+# PROJECT SUMMARY STRIP
+# ─────────────────────────────────────────────────
+st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(f"""
-<div class="cm-proj-info">
-    <strong>CLIENT</strong> &nbsp;{client_name} &nbsp;&nbsp;|&nbsp;&nbsp;
-    <strong>PROJECT</strong> &nbsp;{project_name} &nbsp;&nbsp;|&nbsp;&nbsp;
-    <strong>FEEDER</strong> &nbsp;{feeder_from} → {feeder_to} &nbsp;&nbsp;|&nbsp;&nbsp;
-    <strong>VOLTAGE</strong> &nbsp;{voltage} kV &nbsp;&nbsp;|&nbsp;&nbsp;
-    <strong>LENGTH</strong> &nbsp;{length} m
+<div class="cm-proj-strip">
+  <div class="cm-proj-item">
+    <span class="cm-proj-key">Client</span>
+    <span class="cm-proj-val">{client_name}</span>
+  </div>
+  <div class="cm-proj-divider"></div>
+  <div class="cm-proj-item">
+    <span class="cm-proj-key">Project</span>
+    <span class="cm-proj-val">{project_name}</span>
+  </div>
+  <div class="cm-proj-divider"></div>
+  <div class="cm-proj-item">
+    <span class="cm-proj-key">Feeder</span>
+    <span class="cm-proj-val">{feeder_from} → {feeder_to}</span>
+  </div>
+  <div class="cm-proj-divider"></div>
+  <div class="cm-proj-item">
+    <span class="cm-proj-key">Voltage</span>
+    <span class="cm-proj-val">{voltage} kV</span>
+  </div>
+  <div class="cm-proj-divider"></div>
+  <div class="cm-proj-item">
+    <span class="cm-proj-key">Length</span>
+    <span class="cm-proj-val">{length} m</span>
+  </div>
+  <div class="cm-proj-divider"></div>
+  <div class="cm-proj-item">
+    <span class="cm-proj-key">Material</span>
+    <span class="cm-proj-val">{material}</span>
+  </div>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
-
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
 # RUN BUTTON
-# ------------------------------------------------
-col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
-with col_btn2:
-    run_btn = st.button("⚡  RUN CABLEMATE ANALYSIS", use_container_width=True)
+# ─────────────────────────────────────────────────
+_, col_run, _ = st.columns([1, 2, 1])
+with col_run:
+    run_btn = st.button("⚡  Run CableMate Analysis", use_container_width=True)
 
-# ------------------------------------------------
-# CATALOG
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
+# CATALOG  (unchanged)
+# ─────────────────────────────────────────────────
 catalog_cu = {
     "sizes": [50, 70, 95, 120, 150, 185, 240, 300],
     "amp":   {50:181, 70:220, 95:263, 120:298, 150:332, 185:374, 240:431, 300:482},
     "R":     {50:0.387, 70:0.268, 95:0.193, 120:0.153, 150:0.124, 185:0.099, 240:0.075, 300:0.060},
-    "X":     {50:0.111, 70:0.106, 95:0.094, 120:0.091, 150:0.089, 185:0.086, 240:0.083, 300:0.082}
+    "X":     {50:0.111, 70:0.106, 95:0.094, 120:0.091, 150:0.089, 185:0.086, 240:0.083, 300:0.082},
 }
 catalog_al = {
     "sizes": [50, 70, 95, 120, 150, 185, 240, 300],
     "amp":   {50:150, 70:180, 95:215, 120:245, 150:275, 185:310, 240:360, 300:405},
     "R":     {50:0.387, 70:0.268, 95:0.247, 120:0.153, 150:0.124, 185:0.129, 240:0.098, 300:0.080, 400:0.060},
-    "X":     {50:0.111, 70:0.106, 95:0.094, 120:0.091, 150:0.089, 185:0.086, 240:0.083, 300:0.082}
+    "X":     {50:0.111, 70:0.106, 95:0.094, 120:0.091, 150:0.089, 185:0.086, 240:0.083, 300:0.082},
 }
-
 catalog = catalog_cu if material == "Copper" else catalog_al
 
-# ------------------------------------------------
-# FUNCTIONS (UNCHANGED LOGIC)
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
+# FUNCTIONS  (unchanged logic)
+# ─────────────────────────────────────────────────
 def load_current():
     if load_type == "Motor":
         return power * 1000 / (math.sqrt(3) * voltage * 1000 * pf * eff)
@@ -659,9 +724,9 @@ def get_rules(feeder_from, feeder_to, load_type):
     else:
         return {"max_runs": 10, "allow_multi_run": True}
 
-# ------------------------------------------------
-# PDF REPORT (UNCHANGED LOGIC)
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
+# PDF REPORT  (unchanged logic)
+# ─────────────────────────────────────────────────
 def report(best, I, S, v, vs):
     f = tempfile.NamedTemporaryFile(delete=False)
     c = canvas.Canvas(f.name, pagesize=A4)
@@ -674,13 +739,13 @@ def report(best, I, S, v, vs):
     c.drawString(50, 720, "PROJECT DETAILS")
     c.setFont("Helvetica", 12)
     y = 690
-    c.drawString(50, y, f"Client Name      : {client_name}");          y -= 20
-    c.drawString(50, y, f"Project Name     : {project_name}");          y -= 20
+    c.drawString(50, y, f"Client Name      : {client_name}");            y -= 20
+    c.drawString(50, y, f"Project Name     : {project_name}");            y -= 20
     c.drawString(50, y, f"Feeder           : {feeder_from} → {feeder_to}"); y -= 20
-    c.drawString(50, y, f"Voltage Level    : {voltage} kV");             y -= 20
-    c.drawString(50, y, f"Cable Length     : {length} m");               y -= 20
-    c.drawString(50, y, f"Load Type        : {load_type}");              y -= 20
-    c.drawString(50, y, f"Power            : {power}");                  y -= 20
+    c.drawString(50, y, f"Voltage Level    : {voltage} kV");               y -= 20
+    c.drawString(50, y, f"Cable Length     : {length} m");                 y -= 20
+    c.drawString(50, y, f"Load Type        : {load_type}");                y -= 20
+    c.drawString(50, y, f"Power            : {power}");                    y -= 20
     c.drawString(50, y, f"Laying Method    : {laying}")
     c.showPage()
 
@@ -692,52 +757,50 @@ def report(best, I, S, v, vs):
     c.drawString(50, y, f"Selected Cable: {best['runs']}R x 3C x {best['size']} sq.mm")
 
     kT_rep = soil * depth * group * temp
-    amp = catalog["amp"][best["size"]] * kT_rep * best["runs"]
+    amp    = catalog["amp"][best["size"]] * kT_rep * best["runs"]
 
     y -= 25; c.drawString(50, y, "LOAD CURRENT CALCULATION")
     y -= 15; c.setFont("Helvetica-Oblique", 10); c.drawString(50, y, "(IEC 60038 / IEC 60909)")
-    y -= 15; c.setFont("Helvetica", 11);         c.drawString(50, y, f"I = {round(I,2)} A")
+    y -= 15; c.setFont("Helvetica", 11);         c.drawString(50, y, f"I = {round(I, 2)} A")
 
     y -= 25; c.drawString(50, y, "AMPACITY CHECK")
     y -= 15; c.setFont("Helvetica-Oblique", 10); c.drawString(50, y, "(IEC 60287)")
     y -= 15; c.setFont("Helvetica", 11)
-    c.drawString(50, y, f"Available Ampacity = {round(amp,1)} A");  y -= 15
-    c.drawString(50, y, f"Load Current       = {round(I,1)} A");   y -= 15
+    c.drawString(50, y, f"Available Ampacity = {round(amp, 1)} A");  y -= 15
+    c.drawString(50, y, f"Load Current       = {round(I, 1)} A");   y -= 15
     c.drawString(50, y, f"{round(amp,1)} ≥ {round(I,1)} → PASS ✔")
 
     y -= 25; c.drawString(50, y, "SHORT CIRCUIT CHECK")
     y -= 15; c.setFont("Helvetica-Oblique", 10); c.drawString(50, y, "(IEC 60949 / IEC 60364-5-54)")
     y -= 15; c.setFont("Helvetica", 11)
-    c.drawString(50, y, f"Required Size = {round(S,1)} mm²");       y -= 15
-    c.drawString(50, y, f"{round(S,1)} < {best['size']} mm²");      y -= 15
+    c.drawString(50, y, f"Required Size = {round(S, 1)} mm²");     y -= 15
+    c.drawString(50, y, f"{round(S,1)} < {best['size']} mm²");     y -= 15
     c.drawString(50, y, f"Next Standard Size Selected → {best['size']} mm² ✔")
 
     y -= 25; c.drawString(50, y, "RUNNING VOLTAGE DROP")
     y -= 15; c.setFont("Helvetica-Oblique", 10); c.drawString(50, y, "(IEC 60364-5-52)")
     y -= 15; c.setFont("Helvetica", 11)
-    c.drawString(50, y, f"Calculated VD = {round(v,2)} %");         y -= 15
-    c.drawString(50, y, f"Allowed VD    = {vd_run_limit} %");       y -= 15
+    c.drawString(50, y, f"Calculated VD = {round(v, 2)} %");       y -= 15
+    c.drawString(50, y, f"Allowed VD    = {vd_run_limit} %");      y -= 15
     c.drawString(50, y, f"{round(v,2)} ≤ {vd_run_limit} → PASS ✔")
 
     if load_type == "Motor":
         y -= 25; c.drawString(50, y, "STARTING VOLTAGE DROP")
         y -= 15; c.setFont("Helvetica-Oblique", 10); c.drawString(50, y, "(IEC 60034)")
         y -= 15; c.setFont("Helvetica", 11)
-        c.drawString(50, y, f"Calculated VD = {round(vs,2)} %");    y -= 15
+        c.drawString(50, y, f"Calculated VD = {round(vs, 2)} %");  y -= 15
         c.drawString(50, y, f"Allowed VD    = {vd_start_limit} %"); y -= 15
         c.drawString(50, y, f"{round(vs,2)} ≤ {vd_start_limit} → PASS ✔")
 
     y -= 25; c.drawString(50, y, "DERATING FACTOR")
     y -= 15; c.setFont("Helvetica-Oblique", 10); c.drawString(50, y, "(IEC 60364-5-52)")
-    y -= 15; c.setFont("Helvetica", 11)
-    c.drawString(50, y, f"kT = {round(kT_rep,2)}")
+    y -= 15; c.setFont("Helvetica", 11); c.drawString(50, y, f"kT = {round(kT_rep, 2)}")
 
     y -= 30
     if y < 100:
         c.showPage(); y = 750
 
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(50, y, "FINAL ENGINEERING DECISION")
+    c.setFont("Helvetica-Bold", 12); c.drawString(50, y, "FINAL ENGINEERING DECISION")
     y -= 20; c.setFont("Helvetica", 10)
     c.drawString(50, y, "• IEC 60364 – Electrical Installations");  y -= 15
     c.drawString(50, y, "• IEC 60287 – Cable Current Rating");      y -= 15
@@ -745,38 +808,33 @@ def report(best, I, S, v, vs):
     c.drawString(50, y, "• IEC 60034 – Motor Starting");            y -= 15
     c.drawString(50, y, "• IEC 60947 – Protection Systems");        y -= 15
     c.drawString(50, y, "• Cable Data: Oman Cable Catalogue");      y -= 15
-
     y -= 20; c.setFont("Helvetica", 11)
     if best:
-        c.drawString(50, y, "All design checks (Ampacity, Voltage Drop, Short Circuit)")
-        y -= 15
+        c.drawString(50, y, "All design checks (Ampacity, Voltage Drop, Short Circuit)"); y -= 15
         c.drawString(50, y, "have been successfully satisfied.")
     else:
         c.drawString(50, y, "No cable satisfies all design criteria.")
-
     y -= 20; c.setFont("Helvetica-Bold", 11)
     if best:
         c.drawString(50, y, f"FINAL SELECTED CABLE: {best['runs']}R x 3C x {best['size']} sq.mm")
     else:
         c.drawString(50, y, "FINAL SELECTED CABLE: No suitable cable found")
-
     c.save()
     return f.name
 
-# ------------------------------------------------
-# ENGINE (UNCHANGED LOGIC)
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
+# ENGINE  (unchanged logic)
+# ─────────────────────────────────────────────────
 if run_btn:
     I = load_current()
     if feeder_to == "Transformer":
         I = I * 1.2
 
-    S = short_circuit()
+    S     = short_circuit()
     rules = get_rules(feeder_from, feeder_to, load_type)
-
-    best = None
-    v = 0
-    vs = 0
+    best  = None
+    v     = 0
+    vs    = 0
     valid_options = []
 
     for size in catalog["sizes"]:
@@ -798,14 +856,7 @@ if run_btn:
                 continue
 
             v_temp = vd(I, catalog["R"][size], catalog["X"][size], runs)
-
-            if feeder_to == "Transformer":
-                vd_limit_check = 1.0
-            elif load_type == "Motor":
-                vd_limit_check = vd_run_limit
-            else:
-                vd_limit_check = vd_run_limit
-
+            vd_limit_check = 1.0 if feeder_to == "Transformer" else vd_run_limit
             if v_temp > vd_limit_check:
                 continue
 
@@ -825,7 +876,7 @@ if run_btn:
             single_run = [x for x in valid_options if x["runs"] == 1]
             multi_run  = [x for x in valid_options if x["runs"] > 1]
             if single_run:
-                best_single   = sorted(single_run, key=lambda x: x["size"])[0]
+                best_single    = sorted(single_run, key=lambda x: x["size"])[0]
                 min_multi_size = min(x["size"] for x in multi_run) if multi_run else best_single["size"]
                 if best_single["size"] <= min_multi_size * 1.5:
                     best = best_single
@@ -833,21 +884,21 @@ if run_btn:
                     best = sorted(multi_run, key=lambda x: (x["runs"], x["size"]))[0]
             else:
                 best = sorted(multi_run, key=lambda x: (x["runs"], x["size"]))[0]
+        else:
+            best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
 
         if best:
             v  = best["v"]
             vs = best["vs"]
 
-    st.session_state["best"]       = best
-    st.session_state["v"]          = v
-    st.session_state["vs"]         = vs
-    st.session_state["calculated"] = True
-    st.session_state["I"]          = I
-    st.session_state["S"]          = S
+    st.session_state.update({
+        "best": best, "v": v, "vs": vs,
+        "calculated": True, "I": I, "S": S,
+    })
 
-# ------------------------------------------------
-# RESULTS DISPLAY
-# ------------------------------------------------
+# ─────────────────────────────────────────────────
+# RESULTS
+# ─────────────────────────────────────────────────
 if "calculated" in st.session_state:
     best = st.session_state["best"]
     I    = st.session_state["I"]
@@ -855,114 +906,129 @@ if "calculated" in st.session_state:
     v    = st.session_state["v"]
     vs   = st.session_state["vs"]
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
     if best:
-        cable_str = f"{best['runs']}R × {'3C' if cable_type == '3-Core' else '1C'} × {best['size']} mm²"
+        core_str  = "3C" if cable_type == "3-Core" else "1C"
+        cable_str = f"{best['runs']}R × {core_str} × {best['size']} mm²"
 
         st.markdown(f"""
-        <div class="cm-result-banner">
-            <div class="cm-result-label">✔  Optimal Cable Selected</div>
-            <div class="cm-result-value">{cable_str}</div>
+        <div class="cm-result">
+          <div class="cm-result-eyebrow">✔ &nbsp; Optimal Cable Selected</div>
+          <div class="cm-result-cable">{cable_str}</div>
         </div>
         """, unsafe_allow_html=True)
 
-        # ── CALCULATION SHEET ──────────────────────────────
+        # ── CALCULATION SHEET ──────────────────────────
+        open_card("📄", "Cable Calculation Sheet", "IEC VERIFIED", "green")
+
+        # (I) Current
+        st.markdown("### (I) &nbsp; Current Calculation")
+        st.caption("IEC 60038 / IEC 60909 — Load Current Calculation")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Voltage", f"{voltage} kV")
+        c2.metric("Load", f"{power} {'kVA' if load_type=='Transformer' else 'kW'}")
+        c3.metric("Calculated Current", f"{round(I, 2)} A")
+
         st.divider()
-        section("📄", "Cable Calculation Sheet")
 
-        # (I) CURRENT
-        st.markdown("### (I)  Current Calculation")
-        st.caption("📘  IEC 60038 / IEC 60909 — Load Current Calculation")
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Voltage", f"{voltage} kV")
-        col2.metric("Load", f"{power} {'kVA' if load_type=='Transformer' else 'kW'}")
-        col3.metric("Load Current", f"{round(I,2)} A")
-
-        # (II) AMPACITY
-        st.markdown("### (II)  Ampacity Check")
-        st.caption("📘  IEC 60287 — Current Carrying Capacity of Cables")
-        kT_calc = soil * depth * group * temp
+        # (II) Ampacity
+        st.markdown("### (II) &nbsp; Ampacity Check")
+        st.caption("IEC 60287 — Current Carrying Capacity of Cables")
+        kT_calc       = soil * depth * group * temp
         amp_available = catalog["amp"][best["size"]] * kT_calc * best["runs"]
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Base Ampacity", f"{catalog['amp'][best['size']]} A")
-        col2.metric("Derating Factor", f"{round(kT_calc, 3)}")
-        col3.metric("Available Ampacity", f"{round(amp_available, 2)} A")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Base Ampacity",      f"{catalog['amp'][best['size']]} A")
+        c2.metric("Derating Factor kT", f"{round(kT_calc, 3)}")
+        c3.metric("Available Ampacity", f"{round(amp_available, 1)} A")
         if amp_available >= I:
-            st.success("✅  Ampacity Check → PASS")
+            st.success("✅  Ampacity Check — PASS")
         else:
-            st.error("❌  Ampacity Check → FAIL")
+            st.error("❌  Ampacity Check — FAIL")
 
-        # (III) SHORT CIRCUIT
-        st.markdown("### (III)  Short Circuit Check")
-        st.caption("📘  IEC 60949 / IEC 60364-5-54 — Short Circuit Withstand Capacity")
+        st.divider()
+
+        # (III) Short Circuit
+        st.markdown("### (III) &nbsp; Short Circuit Check")
+        st.caption("IEC 60949 / IEC 60364-5-54 — Short Circuit Withstand Capacity")
         sc_area_best = best["size"] if feeder_to == "Transformer" else best["size"] * best["runs"]
-        col1, col2 = st.columns(2)
-        col1.metric("Required Area", f"{round(S,2)} mm²")
-        col2.metric("Available Area", f"{round(sc_area_best,2)} mm²")
+        c1, c2 = st.columns(2)
+        c1.metric("Required Area",  f"{round(S, 2)} mm²")
+        c2.metric("Available Area", f"{round(sc_area_best, 2)} mm²")
         if sc_area_best >= S:
-            st.success("✅  Short Circuit Check → PASS")
+            st.success("✅  Short Circuit Check — PASS")
         else:
-            st.error("❌  Short Circuit Check → FAIL")
+            st.error("❌  Short Circuit Check — FAIL")
 
-        # (IV) VOLTAGE DROP
-        st.markdown("### (IV)  Voltage Drop Check")
-        st.caption("📘  IEC 60364-5-52 — Voltage Drop Limits")
+        st.divider()
+
+        # (IV) Voltage Drop
+        st.markdown("### (IV) &nbsp; Voltage Drop Check")
+        st.caption("IEC 60364-5-52 — Voltage Drop Limits")
         vd_limit_display = 1 if feeder_to == "Transformer" else (5 if feeder_to == "Motor" else vd_run_limit)
-        col1, col2 = st.columns(2)
-        col1.metric("Calculated VD", f"{round(v,2)} %")
-        col2.metric("Permissible VD", f"{vd_limit_display} %")
+        c1, c2 = st.columns(2)
+        c1.metric("Calculated VD",  f"{round(v, 2)} %")
+        c2.metric("Permissible VD", f"{vd_limit_display} %")
         if v <= vd_limit_display:
-            st.success("✅  Running Voltage Drop → PASS")
+            st.success("✅  Running Voltage Drop — PASS")
         else:
-            st.error("❌  Running Voltage Drop → FAIL")
+            st.error("❌  Running Voltage Drop — FAIL")
 
         if load_type == "Motor":
-            st.caption("📘  IEC 60034 — Motor Starting Performance")
-            col1, col2 = st.columns(2)
-            col1.metric("Starting VD", f"{round(vs,2)} %")
-            col2.metric("Permissible", f"{vd_start_limit} %")
+            st.caption("IEC 60034 — Motor Starting Performance")
+            c1, c2 = st.columns(2)
+            c1.metric("Starting VD",  f"{round(vs, 2)} %")
+            c2.metric("Permissible",  f"{vd_start_limit} %")
             if vs <= vd_start_limit:
-                st.success("✅  Starting Voltage Drop → PASS")
+                st.success("✅  Starting Voltage Drop — PASS")
             else:
-                st.error("❌  Starting Voltage Drop → FAIL")
+                st.error("❌  Starting Voltage Drop — FAIL")
 
-        # (V) FINAL SELECTION
-        st.markdown("### (V)  Final Cable Selection")
-        st.caption("📘  Based on IEC Standards + Oman Cable Catalogue")
+        st.divider()
+
+        # (V) Final
+        st.markdown("### (V) &nbsp; Final Cable Selection")
+        st.caption("Based on IEC Standards + Oman Cable Catalogue")
         final_str = f"{best['runs']}R × {'3C' if cable_type=='3-Core' else '1C'} × {best['size']} mm²"
         st.success(f"✅  Selected Cable →  {final_str}")
 
-        # ENGINEERING STATEMENT
-        st.markdown("### 🧠  Engineering Statement")
+        st.markdown("### 🧠 &nbsp; Engineering Statement")
         st.info(
             "All design checks including ampacity, voltage drop, and short circuit "
             "withstand capability have been satisfied. The selected cable is safe "
             "and suitable for the given application."
         )
 
-        # METRICS ROW
-        st.divider()
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Load Current", f"{round(I,1)} A")
-        m2.metric("Running VD", f"{round(v,2)} %")
-        if load_type == "Motor":
-            m3.metric("Starting VD", f"{round(vs,2)} %")
+        close_card()
 
-        # PDF DOWNLOAD
+        # ── METRIC ROW ─────────────────────────────────
         st.markdown("<br>", unsafe_allow_html=True)
-        pdf = report(best, I, S, v, vs)
-        col_dl1, col_dl2, col_dl3 = st.columns([1, 2, 1])
-        with col_dl2:
-            with open(pdf, "rb") as f:
-                st.download_button("📥  Download Engineering Report", f,
-                                   "CableMate_Report.pdf", use_container_width=True)
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Load Current",  f"{round(I, 1)} A")
+        m2.metric("Running VD",    f"{round(v, 2)} %")
+        if load_type == "Motor":
+            m3.metric("Starting VD", f"{round(vs, 2)} %")
+
+        # ── DOWNLOAD ────────────────────────────────────
+        st.markdown("<br>", unsafe_allow_html=True)
+        _, col_dl, _ = st.columns([1, 2, 1])
+        with col_dl:
+            pdf = report(best, I, S, v, vs)
+            with open(pdf, "rb") as f_pdf:
+                st.download_button(
+                    "📥  Download Engineering Report (PDF)",
+                    f_pdf,
+                    "CableMate_Report.pdf",
+                    use_container_width=True,
+                )
     else:
         st.error("⚠  No suitable cable found for the given parameters.")
 
-# ================================================
+# ─────────────────────────────────────────────────
 # MANUAL CABLE EVALUATION
-# ================================================
-st.divider()
-section("🔧", "Manual Cable Evaluation")
+# ─────────────────────────────────────────────────
+st.markdown("<br>", unsafe_allow_html=True)
+open_card("🔧", "Manual Cable Evaluation", "OVERRIDE", "slate")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -970,29 +1036,32 @@ with col1:
 with col2:
     manual_runs = st.selectbox("Number of Runs", list(range(1, 11)), key="manual_runs_unique")
 
-col_m1, col_m2, col_m3 = st.columns([1, 2, 1])
-with col_m2:
-    apply_manual = st.button("🔧  APPLY MANUAL SELECTION", use_container_width=True)
+_, col_m, _ = st.columns([1, 2, 1])
+with col_m:
+    apply_manual = st.button("🔧  Apply Manual Selection", use_container_width=True)
+
+close_card()
 
 if apply_manual:
-    st.session_state["manual_done"]        = True
-    st.session_state["calculate_manual"]   = True
-    st.session_state["selected_size"]      = manual_size
-    st.session_state["selected_runs"]      = manual_runs
-    st.session_state["selected_type"]      = cable_type
+    st.session_state.update({
+        "manual_done":      True,
+        "calculate_manual": True,
+        "selected_size":    manual_size,
+        "selected_runs":    manual_runs,
+        "selected_type":    cable_type,
+    })
 
-# ── MANUAL RESULTS ──────────────────────────────────
+# ── MANUAL CALC ────────────────────────────────────
 if "calculated" in st.session_state and st.session_state.get("calculate_manual", False):
-
     manual_size_used = st.session_state.get("selected_size")
     manual_runs_used = st.session_state.get("selected_runs")
     manual_type_used = st.session_state.get("selected_type")
 
-    if manual_size_used is not None and manual_runs_used is not None and manual_type_used is not None:
-        kT_local   = soil * depth * group * temp
-        amp        = catalog["amp"][manual_size_used] * kT_local * manual_runs_used
-        v_manual   = vd(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used)
-        vs_manual  = vd_start(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used) if load_type == "Motor" else 0
+    if None not in (manual_size_used, manual_runs_used, manual_type_used):
+        kT_local       = soil * depth * group * temp
+        amp            = catalog["amp"][manual_size_used] * kT_local * manual_runs_used
+        v_manual       = vd(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used)
+        vs_manual      = vd_start(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used) if load_type == "Motor" else 0
         sc_area_manual = manual_size_used if feeder_to == "Transformer" else manual_size_used * manual_runs_used
 
         amp_ok = amp >= I
@@ -1001,22 +1070,20 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         vs_ok  = (vs_manual <= vd_start_limit) if load_type == "Motor" else True
 
         st.session_state.update({
-            "v_manual":  v_manual,
-            "vs_manual": vs_manual,
-            "amp_ok": amp_ok, "vd_ok": vd_ok,
-            "vs_ok":  vs_ok,  "sc_ok": sc_ok
+            "v_manual": v_manual, "vs_manual": vs_manual,
+            "amp_ok": amp_ok, "vd_ok": vd_ok, "vs_ok": vs_ok, "sc_ok": sc_ok,
         })
 
-        manual_str_display = f"{manual_runs_used}R × {'3C' if manual_type_used == '3-Core' else '1C'} × {manual_size_used} mm²"
-        st.markdown(f"<div style='font-family:var(--mono,monospace);font-size:0.75rem;color:#4b6080;margin-bottom:4px;'>MANUAL SELECTION RESULT</div>", unsafe_allow_html=True)
-        st.markdown(f"**{manual_str_display}**")
+        manual_label = f"{manual_runs_used}R × {'3C' if manual_type_used=='3-Core' else '1C'} × {manual_size_used} mm²"
+        st.caption("Showing last applied manual selection")
+        st.markdown(f"**Manual Cable →** `{manual_label}`")
 
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Ampacity",     "✅ PASS" if amp_ok else "❌ FAIL")
-        c2.metric("Voltage Drop", "✅ PASS" if vd_ok  else "❌ FAIL")
-        c3.metric("Short Circuit","✅ PASS" if sc_ok  else "❌ FAIL")
+        c1.metric("Ampacity",      "✅ PASS" if amp_ok else "❌ FAIL")
+        c2.metric("Voltage Drop",  "✅ PASS" if vd_ok  else "❌ FAIL")
+        c3.metric("Short Circuit", "✅ PASS" if sc_ok  else "❌ FAIL")
         if load_type == "Motor":
-            c4.metric("Starting VD",  "✅ PASS" if vs_ok  else "❌ FAIL")
+            c4.metric("Starting VD", "✅ PASS" if vs_ok else "❌ FAIL")
 
         if not amp_ok: st.warning("⚠  Ampacity insufficient — cable may overheat.")
         if not vd_ok:  st.warning("⚠  Voltage drop exceeds limit — poor performance expected.")
@@ -1026,39 +1093,37 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
 
         st.session_state["calculate_manual"] = False
 
-# ── COMPARISON + JUSTIFICATION ──────────────────────
+# ── COMPARISON ─────────────────────────────────────
 if "calculated" in st.session_state and "manual_done" in st.session_state:
     best = st.session_state.get("best")
     if not best:
         st.error("No suitable cable found.")
         st.stop()
 
-    st.divider()
-    section("🔍", "Best vs Manual Comparison")
+    st.markdown("<br>", unsafe_allow_html=True)
+    open_card("🔍", "Best vs Manual Comparison", "ANALYSIS", "blue")
 
     manual_size_used = st.session_state.get("selected_size")
     manual_runs_used = st.session_state.get("selected_runs")
     manual_type_used = st.session_state.get("selected_type")
+    core_label       = "3C" if manual_type_used == "3-Core" else "1C"
 
-    best_str_c   = f"{best['runs']}R × {'3C' if manual_type_used == '3-Core' else '1C'} × {best['size']} mm²"
-    manual_str_c = f"{manual_runs_used}R × {'3C' if manual_type_used == '3-Core' else '1C'} × {manual_size_used} mm²"
+    best_str_c   = f"{best['runs']}R × {core_label} × {best['size']} mm²"
+    manual_str_c = f"{manual_runs_used}R × {core_label} × {manual_size_used} mm²"
 
-    col1, col2 = st.columns(2)
-    col1.metric("🏆  Optimal Cable",  best_str_c)
-    col2.metric("🔧  Manual Cable",   manual_str_c)
+    c1, c2 = st.columns(2)
+    c1.metric("🏆  Optimal Cable", best_str_c)
+    c2.metric("🔧  Manual Cable",  manual_str_c)
 
     v_manual_val = st.session_state.get("v_manual")
     if v_manual_val is not None:
         diff = round(v_manual_val - v, 2)
         sign = "+" if diff > 0 else ""
-        st.metric("Voltage Drop Δ", f"{sign}{diff} %",
-                  delta=f"{sign}{diff} %",
-                  delta_color="inverse")
+        st.metric("Voltage Drop Δ", f"{sign}{diff} %", delta=f"{sign}{diff} %", delta_color="inverse")
     else:
         st.info("Apply manual selection to see comparison.")
 
-    # ENGINEERING REASONING
-    st.markdown("### 🧠  Engineering Reasoning")
+    st.markdown("### 🧠 &nbsp; Engineering Reasoning")
 
     amp_ok_val = st.session_state.get("amp_ok")
     vd_ok_val  = st.session_state.get("vd_ok")
@@ -1078,3 +1143,5 @@ if "calculated" in st.session_state and "manual_done" in st.session_state:
             st.error("❌  Manual cable has unacceptably high starting voltage drop.")
         else:
             st.info("ℹ  Manual cable is technically acceptable but not the most optimal selection.")
+
+    close_card()
