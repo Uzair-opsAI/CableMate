@@ -704,7 +704,6 @@ def short_circuit():
     else:
       t = fault_time
     S = (fault * 1000 * math.sqrt(t)) / k
-    S = S * 1.15   # adding 15% safety margin
     return S
     
 def vd(I, R, X, runs):
