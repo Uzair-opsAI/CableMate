@@ -541,9 +541,10 @@ if run_btn:
     for size in catalog["sizes"]:
         for runs in range(1, rules["max_runs"] + 1):
         # 🔴 ADD THIS BLOCK HERE (VERY IMPORTANT POSITION)
-            if feeder_to == "Transformer":
-                if size < S_min:
-                    continue
+             # 🔴 HARD FILTER — Transformer SC enforcement (ONLY HERE)
+            if feeder_to == "Transformer" and size < S_min:
+                continue
+
             if runs >= 2 and size < 95:
                 continue
 
@@ -556,12 +557,7 @@ if run_btn:
             # ── CHECK 1: SHORT CIRCUIT WITHSTAND ─────────────────────────────
             # Total cross-section of all parallel conductors must ≥ S_min.
             # For Transformer feeder (1 run forced), compare the single cable size.
-            if feeder_to == "Transformer":
-    # 🔴 Transformer → single cable must satisfy SC
-                if size < S_min:
-                    st.write(f"❌ Transformer SC reject: {size} < {S_min}")
-                    continue
-            else:
+            if feeder_to == "Motor":
     # 🔵 Motor / others → total area allowed
                 sc_area = size * runs
                 if sc_area < S_min:
