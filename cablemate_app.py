@@ -667,7 +667,8 @@ st.markdown(f"""
 # ─────────────────────────────────────────────────
 _, col_run, _ = st.columns([1, 2, 1])
 with col_run:
-    run_btn = st.button("⚡  Run CableMate Analysis", use_container_width=True)
+    if st.button("⚡  Run CableMate Analysis"):
+        st.session_state["run_analysis"] = True
 
 # ─────────────────────────────────────────────────
 # CATALOG  (unchanged)
@@ -832,7 +833,7 @@ def report(best, I, S, v, vs):
 # ENGINE  (unchanged logic)
 # ─────────────────────────────────────────────────
 
-if run_btn:
+if st.session_state.get("run_analysis", False):
     I = load_current()
     if feeder_to == "Transformer":
         I = I * 1
