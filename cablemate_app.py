@@ -537,11 +537,9 @@ if run_btn:
             #DEBUG STARTS
             if not rules["allow_multi_run"] and runs > 1:
                 continue
-            st.write(f"Checking → {runs}R x {size} mm²")
-
-            st.write(f"SC: {size*runs} vs {round(S_min,1)}")
-
-            st.write(f"Ampacity: {round(catalog['amp'][size]*kT*runs,1)} vs {round(I_design,1)}")
+            st.text(f"Checking → {runs}R x {size} mm²")
+            st.text(f"SC: {size*runs} vs {round(S_min,1)}")
+            st.text(f"Ampacity: {round(catalog['amp'][size]*kT*runs,1)} vs {round(I_design,1)}")
             # ── CHECK 1: SHORT CIRCUIT WITHSTAND ─────────────────────────────
             # Total cross-section of all parallel conductors must ≥ S_min.
             # For Transformer feeder (1 run forced), compare the single cable size.
@@ -577,10 +575,10 @@ if run_btn:
                 "amp":   amp_avail,
                 "score": vd_r + (vd_s if load_type=="Motor" else 0)
             })
-            single_run_options = [opt for opt in valid_options if opt["runs"] == 1]
+    single_run_options = [opt for opt in valid_options if opt["runs"] == 1]
 
-            if single_run_options:
-                valid_options = single_run_options
+    if single_run_options:
+        valid_options = single_run_options
     best = pick_best(valid_options)
 
     st.session_state.update({
