@@ -552,10 +552,17 @@ if run_btn:
             # ── CHECK 1: SHORT CIRCUIT WITHSTAND ─────────────────────────────
             # Total cross-section of all parallel conductors must ≥ S_min.
             # For Transformer feeder (1 run forced), compare the single cable size.
-            sc_area = size * runs
-            if size < S_min:
-                st.write(f"❌ Rejected by SC: size {size} < {S_min}")
-                continue
+            if feeder_to == "Transformer":
+    # 🔴 Transformer → single cable must satisfy SC
+                if size < S_min:
+                    st.write(f"❌ Transformer SC reject: {size} < {S_min}")
+                    continue
+            else:
+    # 🔵 Motor / others → total area allowed
+                sc_area = size * runs
+                if sc_area < S_min:
+                    st.write(f"❌ SC reject: {sc_area} < {S_min}")
+                    continue
 
             # ── CHECK 2: AMPACITY ─────────────────────────────────────────────
             # Derated ampacity of (runs) parallel cables must ≥ design current.
