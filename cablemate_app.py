@@ -493,7 +493,10 @@ def get_feeder_rules():
     else:
         return {"max_runs": 4, "allow_multi_run": True}
 
+single_run_options = [opt for opt in valid_options if opt["runs"] == 1]
 
+if single_run_options:
+    valid_options = single_run_options
 def pick_best(valid_options):
     """
     Engineering cost-optimised selection from passing candidates.
@@ -512,8 +515,8 @@ def pick_best(valid_options):
         return None
     return sorted(valid_options, key=lambda x: (
         x["runs"],              # 🔴 PRIORITY 1 → fewer runs (very important)
-        x["size"],              # 🔴 PRIORITY 2 → smaller cable
-        x["score"]              # 🔴 PRIORITY 3 → cost
+        x["score"],              # 🔴 PRIORITY 2 → smaller cable
+        x["size"]              # 🔴 PRIORITY 3 → cost
     ))[0]
 
 
