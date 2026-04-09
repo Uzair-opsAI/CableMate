@@ -852,14 +852,19 @@ if st.session_state.get("run_analysis", False):
                 continue
 
             kT_local = soil * depth * group * temp
-            debug_mode = True
-            if debug_mode:
-                st.write({
-                    "DEBUG_size": size,
-                    "DEBUG_runs": runs,
-                    "S_required": round(S, 2),
-                    "SC_passed_for_size": size >= S,
-                })
+            debug_data = []
+
+                for size in catalog["sizes"]:
+                    for runs in range(1, rules["max_runs"] + 1):
+
+                        debug_data.append({
+                            "size": size,
+                            "runs": runs,
+                            "S_required": round(S, 2),
+                            "size>=S": size >= S
+                        })
+
+                st.write(debug_data)
             if feeder_to == "Transformer":
                 if size <= S:
                     continue
