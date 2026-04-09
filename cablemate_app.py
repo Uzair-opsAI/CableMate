@@ -510,7 +510,11 @@ def pick_best(valid_options):
     """
     if not valid_options:
         return None
-    return sorted(valid_options, key=lambda x: (x["runs"] * x["size"], x["runs"], x["size"]))[0]
+    return sorted(valid_options, key=lambda x: (
+        x["runs"],              # 🔴 PRIORITY 1 → fewer runs (very important)
+        x["size"],              # 🔴 PRIORITY 2 → smaller cable
+        x["score"]              # 🔴 PRIORITY 3 → cost
+    ))[0]
 
 
 # ─────────────────────────────────────────────────
@@ -528,10 +532,17 @@ if run_btn:
 
     for size in catalog["sizes"]:
         for runs in range(1, rules["max_runs"] + 1):
-
-            if not rules["allow_multi_run"] and runs > 1:
+            if runs > 2 and size < 95:
                 continue
 
+            #DEBUG STARTS
+            if not rules["allow_multi_run"] and runs > 1:
+                continue
+            st.write(f"Checking → {runs}R x {size} mm²")
+
+            st.write(f"SC: {size*runs} vs {round(S_min,1)}")
+
+            st.write(f"Ampacity: {round(catalog['amp'][size]*kT*runs,1)} vs {round(I_design,1)}")
             # ── CHECK 1: SHORT CIRCUIT WITHSTAND ─────────────────────────────
             # Total cross-section of all parallel conductors must ≥ S_min.
             # For Transformer feeder (1 run forced), compare the single cable size.
@@ -565,6 +576,7 @@ if run_btn:
                 "v":     vd_r,
                 "vs":    vd_s,
                 "amp":   amp_avail,
+                "score": vd_r + (vd_s if load_type=="Motor" else 0)
             })
 
     best = pick_best(valid_options)
