@@ -789,7 +789,7 @@ def report(best, I, S, v, vs):
     y -= 15; c.setFont("Helvetica-Oblique", 10); c.drawString(50, y, "(IEC 60949 / IEC 60364-5-54)")
     y -= 15; c.setFont("Helvetica", 11)
     c.drawString(50, y, f"Required Size = {round(S, 1)} mm²");     y -= 15
-    c.drawString(50, y, f"{round(S,1)} < {best['size']} mm²");     y -= 15
+    c.drawString(50, y, f"{round(S,1)} < {best['size'] * best['runs']} mm²");     y -= 15
     c.drawString(50, y, f"Next Standard Size Selected → {best['size']} mm² ✔")
 
     y -= 25; c.drawString(50, y, "RUNNING VOLTAGE DROP")
@@ -843,8 +843,6 @@ def report(best, I, S, v, vs):
 
 if st.session_state.get("run_analysis", False):
     I = load_current()
-    if feeder_to == "Transformer":
-        I = I * 1
 
     S     = short_circuit()
     rules = get_rules(feeder_from, feeder_to, load_type)
@@ -858,16 +856,18 @@ if st.session_state.get("run_analysis", False):
         for runs in range(1, rules["max_runs"] + 1):
             if not rules["allow_multi_run"] and runs > 1:
                 continue
-            st.write({
+            debug_list = []
+            debug_list.append({
                 "size": size,
                 "runs": runs,
-                "S_required": round(S, 2),
-                "available_area": size * runs,
-                "SC_pass": (size * runs) >= S
+                "S": round(S,2),
+                "available": size * runs,
+                "pass": (size * runs) >= S
             })
+            st.write(debug_list)
             kT_local = soil * depth * group * temp
            # ✅ UNIFIED SC CHECK (correct engineering logic)
-            if (size * runs) < S:
+            if (size * runs) < (0.98 * S):
                 continue
             
             amp = catalog["amp"][size] * kT_local * runs
