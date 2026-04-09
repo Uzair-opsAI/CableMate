@@ -590,6 +590,7 @@ if run_btn:
     for opt in valid_options:
         st.write(opt)
     st.code(str(valid_options))
+    print("VALID OPTIONS:", valid_options)
     best = pick_best(valid_options)
 
     st.session_state.update({
