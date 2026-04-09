@@ -860,9 +860,14 @@ if st.session_state.get("run_analysis", False):
             debug_list.append({
                 "size": size,
                 "runs": runs,
-                "S": round(S,2),
-                "available": size * runs,
-                "pass": (size * runs) >= S
+                "S_required": round(S, 2),
+                "available_area": size * runs,
+                "SC_pass": (size * runs) >= S,
+                "Ampacity_pass": amp >= I,
+                "VD_run": round(v_temp,2),
+                "VD_run_pass": v_temp <= vd_run_limit,
+                "VD_start": round(vs_temp,2),
+                "VD_start_pass": (vs_temp <= vd_start_limit) if load_type=="Motor" else True
             })
             st.write(debug_list)
             kT_local = soil * depth * group * temp
