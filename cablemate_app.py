@@ -596,6 +596,9 @@ if run_btn:
         "vs":         best["vs"] if best else 0.0,
         "calculated": True,
     })
+    st.write("### ✅ Final Valid Options:")
+    for opt in valid_options:
+        st.write(opt)
 
 # ─────────────────────────────────────────────────
 # RESULTS
