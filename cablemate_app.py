@@ -186,14 +186,14 @@ def close_card():
 open_card("📁", "Project Information", "STEP 01", "blue")
 col1, col2 = st.columns(2)
 with col1:
-    client_name = st.text_input("Client Name", "ABC Pvt Ltd")
+    client_name = st.write_input("Client Name", "ABC Pvt Ltd")
     feeder_from = st.selectbox("From Equipment", ["Switchgear", "Transformer", "Generator"])
-    from_tag    = st.text_input("From Equipment Tag", placeholder="e.g. TR-01 / SWGR-A1")
+    from_tag    = st.write_input("From Equipment Tag", placeholder="e.g. TR-01 / SWGR-A1")
     voltage     = st.selectbox("System Voltage (kV)", [3.3, 6.6, 11, 25, 33, 66, 132])
 with col2:
-    project_name = st.text_input("Project Name", "Electrical Distribution System")
+    project_name = st.write_input("Project Name", "Electrical Distribution System")
     feeder_to    = st.selectbox("To Equipment", ["Motor", "Transformer", "Panel"])
-    to_tag       = st.text_input("To Equipment Tag", placeholder="e.g. MTR-01 / PNL-B2")
+    to_tag       = st.write_input("To Equipment Tag", placeholder="e.g. MTR-01 / PNL-B2")
     length       = st.number_input("Cable Length (m)", value=300, min_value=1)
 close_card()
 
@@ -545,14 +545,14 @@ if run_btn:
             #DEBUG STARTS
             if not rules["allow_multi_run"] and runs > 1:
                 continue
-            st.text(f"Checking → {runs}R x {size} mm²")
-            st.text(f"SC: {size*runs} vs {round(S_min,1)}")
-            st.text(f"Ampacity: {round(catalog['amp'][size]*kT*runs,1)} vs {round(I_design,1)}")
+            st.write(f"Checking → {runs}R x {size} mm²")
+            st.write(f"SC: {size*runs} vs {round(S_min,1)}")
+            st.write(f"Ampacity: {round(catalog['amp'][size]*kT*runs,1)} vs {round(I_design,1)}")
             # ── CHECK 1: SHORT CIRCUIT WITHSTAND ─────────────────────────────
             # Total cross-section of all parallel conductors must ≥ S_min.
             # For Transformer feeder (1 run forced), compare the single cable size.
             sc_area = size * runs
-            if sc_area < S_min:
+            if size < S_min:
                 st.write(f"❌ Rejected by SC: size {size} < {S_min}")
                 continue
 
