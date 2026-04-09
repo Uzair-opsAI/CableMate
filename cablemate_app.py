@@ -493,10 +493,6 @@ def get_feeder_rules():
     else:
         return {"max_runs": 4, "allow_multi_run": True}
 
-single_run_options = [opt for opt in valid_options if opt["runs"] == 1]
-
-if single_run_options:
-    valid_options = single_run_options
 def pick_best(valid_options):
     """
     Engineering cost-optimised selection from passing candidates.
@@ -535,7 +531,7 @@ if run_btn:
 
     for size in catalog["sizes"]:
         for runs in range(1, rules["max_runs"] + 1):
-            if runs > 2 and size < 95:
+            if runs >= 2 and size < 95:
                 continue
 
             #DEBUG STARTS
@@ -581,7 +577,10 @@ if run_btn:
                 "amp":   amp_avail,
                 "score": vd_r + (vd_s if load_type=="Motor" else 0)
             })
+            single_run_options = [opt for opt in valid_options if opt["runs"] == 1]
 
+            if single_run_options:
+                valid_options = single_run_options
     best = pick_best(valid_options)
 
     st.session_state.update({
