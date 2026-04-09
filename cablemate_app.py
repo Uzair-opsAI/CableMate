@@ -445,7 +445,14 @@ def calc_sc_min_area():
     """
     k = 143 if material == "Copper" else 94
     t = 0.25 if feeder_from == "Switchgear" else fault_time
-    return (fault * 1000 * math.sqrt(t)) / k
+    raw = (fault * 1000 * math.sqrt(t)) / k
+
+# Round to next standard cable size
+    for s in catalog["sizes"]:
+        if s >= raw:
+            return s
+
+    return max(catalog["sizes"])
 
 
 def calc_vd_run(I, R, X, runs):
@@ -511,8 +518,8 @@ def pick_best(valid_options):
         return None
     return sorted(valid_options, key=lambda x: (
         x["runs"],              # 🔴 PRIORITY 1 → fewer runs (very important)
-        x["size"],              # 🔴 PRIORITY 2 → smaller cable
-        x["score"]              # 🔴 PRIORITY 3 → cost
+        x["score"],              # 🔴 PRIORITY 2 → smaller cable
+        x["size"]              # 🔴 PRIORITY 3 → cost
     ))[0]
 
 
@@ -543,7 +550,6 @@ if run_btn:
             # ── CHECK 1: SHORT CIRCUIT WITHSTAND ─────────────────────────────
             # Total cross-section of all parallel conductors must ≥ S_min.
             # For Transformer feeder (1 run forced), compare the single cable size.
-            sc_area = size * runs   # total conductor cross-section [mm²]
             if sc_area < S_min:
                 continue
 
@@ -575,10 +581,6 @@ if run_btn:
                 "amp":   amp_avail,
                 "score": vd_r + (vd_s if load_type=="Motor" else 0)
             })
-    single_run_options = [opt for opt in valid_options if opt["runs"] == 1]
-
-    if single_run_options:
-        valid_options = single_run_options
     best = pick_best(valid_options)
 
     st.session_state.update({
