@@ -585,6 +585,10 @@ if run_btn:
                 "amp":   amp_avail,
                 "score": vd_r + (vd_s if load_type=="Motor" else 0)
             })
+            st.write("### ✅ Final Valid Options:")
+            for opt in valid_options:
+                st.write(opt)
+
     best = pick_best(valid_options)
 
     st.session_state.update({
@@ -596,10 +600,7 @@ if run_btn:
         "vs":         best["vs"] if best else 0.0,
         "calculated": True,
     })
-    st.write("### ✅ Final Valid Options:")
-    for opt in valid_options:
-        st.write(opt)
-
+    
 # ─────────────────────────────────────────────────
 # RESULTS
 # ─────────────────────────────────────────────────
