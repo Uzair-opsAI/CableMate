@@ -551,24 +551,28 @@ if run_btn:
             # Total cross-section of all parallel conductors must ≥ S_min.
             # For Transformer feeder (1 run forced), compare the single cable size.
             if sc_area < S_min:
+                st.write(f"❌ Rejected by SC: size {size} < {S_min}")
                 continue
 
             # ── CHECK 2: AMPACITY ─────────────────────────────────────────────
             # Derated ampacity of (runs) parallel cables must ≥ design current.
             amp_avail = catalog["amp"][size] * kT * runs
             if amp_avail < I_design:
+                st.write(f"❌ Rejected by Ampacity: {round(amp_avail,1)} < {round(I_design,1)}")
                 continue
 
             # ── CHECK 3: RUNNING VOLTAGE DROP ─────────────────────────────────
             vd_r = calc_vd_run(I_fl, catalog["R"][size], catalog["X"][size], runs)
             vd_limit = 1.0 if feeder_to == "Transformer" else vd_run_limit
             if vd_r > vd_limit:
+                st.write(f"❌ Rejected by VD Running: {vd_r:.2f}% > {vd_limit}%")
                 continue
 
             # ── CHECK 4: STARTING VOLTAGE DROP (Motor only) ───────────────────
             if load_type == "Motor":
                 vd_s = calc_vd_start(I_fl, catalog["R"][size], catalog["X"][size], runs)
                 if vd_s > vd_start_limit:
+                    st.write(f"❌ Rejected by VD Starting: {vd_s:.2f}% > {vd_start_limit}%")
                     continue
             else:
                 vd_s = 0.0
