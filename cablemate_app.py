@@ -551,6 +551,7 @@ if run_btn:
             # ── CHECK 1: SHORT CIRCUIT WITHSTAND ─────────────────────────────
             # Total cross-section of all parallel conductors must ≥ S_min.
             # For Transformer feeder (1 run forced), compare the single cable size.
+            sc_area = size * runs
             if sc_area < S_min:
                 st.write(f"❌ Rejected by SC: size {size} < {S_min}")
                 continue
