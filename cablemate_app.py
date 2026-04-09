@@ -527,6 +527,7 @@ def pick_best(valid_options):
 # ENGINE
 # ─────────────────────────────────────────────────
 if run_btn:
+    st.write("🚀 ENGINE STARTED")
     I_fl  = calc_load_current()
     S_min = calc_sc_min_area()
     rules = get_feeder_rules()
@@ -585,10 +586,10 @@ if run_btn:
                 "amp":   amp_avail,
                 "score": vd_r + (vd_s if load_type=="Motor" else 0)
             })
-            st.write("### ✅ Final Valid Options:")
-            for opt in valid_options:
-                st.write(opt)
-
+    st.write("### ✅ Final Valid Options:")
+    for opt in valid_options:
+        st.write(opt)
+    st.code(str(valid_options))
     best = pick_best(valid_options)
 
     st.session_state.update({
