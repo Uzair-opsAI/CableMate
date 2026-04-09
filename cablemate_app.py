@@ -540,6 +540,10 @@ if run_btn:
 
     for size in catalog["sizes"]:
         for runs in range(1, rules["max_runs"] + 1):
+        # 🔴 ADD THIS BLOCK HERE (VERY IMPORTANT POSITION)
+            if feeder_to == "Transformer":
+                if size < S_min:
+                    continue
             if runs >= 2 and size < 95:
                 continue
 
