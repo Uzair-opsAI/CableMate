@@ -449,7 +449,7 @@ def calc_sc_min_area():
 
 # Round to next standard cable size
     for s in catalog["sizes"]:
-        if s >= raw:
+        if s > raw:
             return s
 
     return max(catalog["sizes"])
