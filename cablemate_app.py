@@ -516,7 +516,12 @@ open_card("⚡", "Load Details", "STEP 03", "amber")
 
 col1, col2 = st.columns(2)
 with col1:
-    load_type = st.selectbox("Load Type", ["Motor", "Transformer", "Power"])
+    if feeder_to == "Motor":
+        load_type = "Motor"
+    elif feeder_to == "Transformer":
+        load_type = "Transformer"
+    else:
+        load_type = st.selectbox("Load Type", ["Motor", "Transformer", "Power"])
     if load_type == "Transformer":
         power = st.number_input("Load (kVA)", value=500)
     else:
@@ -538,7 +543,10 @@ with col1:
 with col2:
     cable_type = st.selectbox("Cable Type", ["1-Core", "3-Core"])
 with col3:
-    starting_multiple = st.number_input("Motor Starting Current Multiple", value=9.5)
+    if feeder_to == "Motor":
+        starting_multiple = st.number_input("Motor Starting Current Multiple", value=6.0)
+    else:
+        starting_multiple = 1
 
 if voltage >= 66 and cable_type == "3-Core":
     st.warning("At 66 kV and above, single-core cables are typically used.")
@@ -850,32 +858,17 @@ if st.session_state.get("run_analysis", False):
         for runs in range(1, rules["max_runs"] + 1):
             if not rules["allow_multi_run"] and runs > 1:
                 continue
-
+            st.write({
+                "size": size,
+                "runs": runs,
+                "S_required": round(S, 2),
+                "available_area": size * runs,
+                "SC_pass": (size * runs) >= S
+            })
             kT_local = soil * depth * group * temp
-            debug_data = []
-
-                for size in catalog["sizes"]:
-                    for runs in range(1, rules["max_runs"] + 1):
-
-                        debug_data.append({
-                            "size": size,
-                            "runs": runs,
-                            "S_required": round(S, 2),
-                            "size>=S": size >= S
-                        })
-
-                st.write(debug_data)
-            if feeder_to == "Transformer":
-                if size <= S:
-                    continue
-            
-            elif feeder_to == "Motor":
-            # Each cable must independently withstand fault
-                if size < S:
-                    continue
-            else:
-                if (size * runs) < S:
-                    continue
+           # ✅ UNIFIED SC CHECK (correct engineering logic)
+            if (size * runs) < S:
+                continue
             
             amp = catalog["amp"][size] * kT_local * runs
             if amp < I:
@@ -899,17 +892,8 @@ if st.session_state.get("run_analysis", False):
         if feeder_to == "Transformer":
             best = sorted(valid_options, key=lambda x: x["size"])[0]
         elif feeder_to == "Motor":
-            single_run = [x for x in valid_options if x["runs"] == 1]
-            multi_run  = [x for x in valid_options if x["runs"] > 1]
-            if single_run:
-                best_single    = sorted(single_run, key=lambda x: x["size"])[0]
-                min_multi_size = min(x["size"] for x in multi_run) if multi_run else best_single["size"]
-                if best_single["size"] <= min_multi_size * 1.5:
-                    best = best_single
-                else:
-                    best = sorted(multi_run, key=lambda x: (x["runs"], x["size"]))[0]
-            else:
-                best = sorted(multi_run, key=lambda x: (x["runs"], x["size"]))[0]
+            # ✅ prioritize smaller cable size first, then runs
+            best = sorted(valid_options, key=lambda x: (x["size"], x["runs"]))[0]
         else:
             best = sorted(valid_options, key=lambda x: (x["runs"], x["size"]))[0]
 
@@ -977,10 +961,7 @@ if "calculated" in st.session_state:
         # (III) Short Circuit
         st.markdown("### (III) &nbsp; Short Circuit Check")
         st.caption("IEC 60949 / IEC 60364-5-54 — Short Circuit Withstand Capacity")
-        if feeder_to == "Motor":
-            sc_area_best = best["size"]   # per cable check
-        else:
-            sc_area_best = best["size"] * best["runs"]
+        sc_area_best = best["size"] * best["runs"]
         c1, c2 = st.columns(2)
         c1.metric("Required Area",  f"{round(S, 2)} mm²")
         c2.metric("Available Area", f"{round(sc_area_best, 2)} mm²")
@@ -1091,10 +1072,7 @@ if "calculated" in st.session_state and st.session_state.get("calculate_manual",
         amp            = catalog["amp"][manual_size_used] * kT_local * manual_runs_used
         v_manual       = vd(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used)
         vs_manual      = vd_start(I, catalog["R"][manual_size_used], catalog["X"][manual_size_used], manual_runs_used) if load_type == "Motor" else 0
-        if feeder_to == "Motor":
-            sc_area_manual = manual_size_used
-        else:
-            sc_area_manual = manual_size_used * manual_runs_used
+        sc_area_manual = manual_size_used * manual_runs_used
         amp_ok = amp >= I
         vd_ok  = v_manual <= vd_run_limit
         sc_ok  = sc_area_manual >= S
