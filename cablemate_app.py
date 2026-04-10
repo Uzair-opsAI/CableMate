@@ -191,9 +191,9 @@ with col1:
     from_tag    = st.text_input("From Equipment Tag", placeholder="e.g. TR-01 / SWGR-A1")
     voltage     = st.selectbox("System Voltage (kV)", [3.3, 6.6, 11, 25, 33, 66, 132])
 with col2:
-    project_name = st.write_input("Project Name", "Electrical Distribution System")
+    project_name = st.text_input("Project Name", "Electrical Distribution System")
     feeder_to    = st.selectbox("To Equipment", ["Motor", "Transformer", "Panel"])
-    to_tag       = st.write_input("To Equipment Tag", placeholder="e.g. MTR-01 / PNL-B2")
+    to_tag       = st.text_input("To Equipment Tag", placeholder="e.g. MTR-01 / PNL-B2")
     length       = st.number_input("Cable Length (m)", value=300, min_value=1)
 close_card()
 
