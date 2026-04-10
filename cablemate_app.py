@@ -186,7 +186,7 @@ def close_card():
 open_card("📁", "Project Information", "STEP 01", "blue")
 col1, col2 = st.columns(2)
 with col1:
-    client_name = st.write_input("Client Name", "ABC Pvt Ltd")
+    client_name = st.text_input("Client Name", "ABC Pvt Ltd")
     feeder_from = st.selectbox("From Equipment", ["Switchgear", "Transformer", "Generator"])
     from_tag    = st.write_input("From Equipment Tag", placeholder="e.g. TR-01 / SWGR-A1")
     voltage     = st.selectbox("System Voltage (kV)", [3.3, 6.6, 11, 25, 33, 66, 132])
