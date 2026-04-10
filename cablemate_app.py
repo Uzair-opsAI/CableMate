@@ -527,7 +527,7 @@ def pick_best(valid_options):
 # ENGINE
 # ─────────────────────────────────────────────────
 if run_btn:
-    st.session_state["valid_options"] = valid_options
+  
     st.write("🚀 ENGINE STARTED")
     I_fl  = calc_load_current()
     S_min = calc_sc_min_area()
