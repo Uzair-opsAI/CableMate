@@ -518,8 +518,8 @@ def pick_best(valid_options):
         return None
     return sorted(valid_options, key=lambda x: (
         x["runs"],              # 🔴 PRIORITY 1 → fewer runs (very important)
-        x["size"],              # 🔴 PRIORITY 2 → smaller cable
-        x["score"]              # 🔴 PRIORITY 3 → cost
+        x["score"],              # 🔴 PRIORITY 2 → smaller cable
+        x["size"]              # 🔴 PRIORITY 3 → cost
     ))[0]
 
 
