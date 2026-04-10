@@ -335,7 +335,7 @@ close_card()
 # ─────────────────────────────────────────────────
 # kT — OVERALL DERATING (all factors combined)
 # ─────────────────────────────────────────────────
-kT = soil * depth * group * temp * laying_factor
+kT = soil * depth * group * temp
 
 _, col_kt, _ = st.columns([1, 2, 1])
 with col_kt:
@@ -534,7 +534,7 @@ if run_btn:
     rules = get_feeder_rules()
 
     # Transformer feeders: add 20% safety margin to current per IEC practice
-    I_design = I_fl * 1.2 if feeder_to == "Transformer" else I_fl
+    I_design = I_fl * 1 if feeder_to == "Transformer" else I_fl
 
     valid_options = []
 
@@ -791,7 +791,7 @@ if "calculated" in st.session_state:
                     row(f"VD_start%  =  {round(vs,3)} %     Limit  =  {vd_start_limit} %     →  ✔  PASS")
 
                 section("6. DERATING SUMMARY", "(IEC 60364-5-52)")
-                row(f"kT  =  Soil({soil}) × Depth({depth}) × Group({group}) × Temp({temp}) × Laying({laying_factor})  =  {round(kT,4)}")
+                row(f"kT  =  Soil({soil}) × Depth({depth}) × Group({group}) × Temp({temp})")
 
                 y -= 25
                 if y < 120: c.showPage(); y = 760
