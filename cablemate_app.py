@@ -551,9 +551,6 @@ if run_btn:
             #DEBUG STARTS
             if not rules["allow_multi_run"] and runs > 1:
                 continue
-            st.write(f"Checking → {runs}R x {size} mm²")
-            st.write(f"SC: {size*runs} vs {round(S_min,1)}")
-            st.write(f"Ampacity: {round(catalog['amp'][size]*kT*runs,1)} vs {round(I_design,1)}")
             # ── CHECK 1: SHORT CIRCUIT WITHSTAND ─────────────────────────────
             # Total cross-section of all parallel conductors must ≥ S_min.
             # For Transformer feeder (1 run forced), compare the single cable size.
@@ -561,28 +558,24 @@ if run_btn:
     # 🔵 Motor / others → total area allowed
                 sc_area = size * runs
                 if sc_area < S_min:
-                    st.write(f"❌ SC reject: {sc_area} < {S_min}")
                     continue
 
             # ── CHECK 2: AMPACITY ─────────────────────────────────────────────
             # Derated ampacity of (runs) parallel cables must ≥ design current.
             amp_avail = catalog["amp"][size] * kT * runs
             if amp_avail < I_design:
-                st.write(f"❌ Rejected by Ampacity: {round(amp_avail,1)} < {round(I_design,1)}")
                 continue
 
             # ── CHECK 3: RUNNING VOLTAGE DROP ─────────────────────────────────
             vd_r = calc_vd_run(I_fl, catalog["R"][size], catalog["X"][size], runs)
             vd_limit = 1.0 if feeder_to == "Transformer" else vd_run_limit
             if vd_r > vd_limit:
-                st.write(f"❌ Rejected by VD Running: {vd_r:.2f}% > {vd_limit}%")
                 continue
 
             # ── CHECK 4: STARTING VOLTAGE DROP (Motor only) ───────────────────
             if load_type == "Motor":
                 vd_s = calc_vd_start(I_fl, catalog["R"][size], catalog["X"][size], runs)
                 if vd_s > vd_start_limit:
-                    st.write(f"❌ Rejected by VD Starting: {vd_s:.2f}% > {vd_start_limit}%")
                     continue
             else:
                 vd_s = 0.0
@@ -595,11 +588,6 @@ if run_btn:
                 "amp":   amp_avail,
                 "score": vd_r + (vd_s if load_type=="Motor" else 0)
             })
-    st.write("### ✅ Final Valid Options:")
-    for opt in valid_options:
-        st.write(opt)
-    st.code(str(valid_options))
-    print("VALID OPTIONS:", valid_options)
     best = pick_best(valid_options)
 
     st.session_state.update({
